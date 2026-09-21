@@ -21,19 +21,23 @@ How this site is put together and where things belong. Updated every phase.
 ```
 app/                    Routes. Every file here is a URL or a route convention.
   layout.tsx            Root layout: fonts, <html>/<body>, Header, Footer, skip link.
-  page.tsx              / — placeholder until Phase 3.
+  page.tsx              / — the homepage, composed from components/sections/.
   globals.css           The design system. Tokens, base layer, project utilities.
   robots.ts             Generates /robots.txt. Currently blocks everything.
 components/
   layout/               Shell chrome used on every page (Header, Footer).
-  sections/             Homepage sections — Phase 3.
+  sections/             Homepage sections. One per section, in page order.
+  ui/                   Shared primitives: Section, SectionHeading, Eyebrow,
+                        ButtonLink. Small and deliberately option-poor.
   reactbits/            Vendored React Bits components — Phase 7, hard cap of 3.
+lib/                    Framework-agnostic helpers (hooks, utilities).
 content/                Typed content modules. The single source of truth.
   site.ts               Brand, contact, nav, footer, trust line.
   services.ts           The service catalogue + price formatting helpers.
   work.ts               Case studies. Discriminated union on `status`.
   work.type-test.ts     Compile-time guard for that union. Imported by nothing.
   faq.ts                Objections, tagged by service for per-page subsets.
+  home.ts               Homepage section copy.
 public/                 Static assets served at the root.
 ```
 
@@ -116,9 +120,13 @@ Everything is a Server Component unless it needs state, effects or browser APIs.
 Today exactly one component opts out:
 
 - `components/layout/Header.tsx` — `"use client"` for the mobile menu's open
-  state, focus trap and Escape handling.
+  state, focus trap, Escape handling and the scroll-state observer.
+- `components/sections/LeadJourneyChain.tsx` — `"use client"` for the hero
+  animation's step cursor.
 
-Keep that list short. The `Footer` reads the same config and stays on the server.
+Keep that list short. The `Footer` reads the same config and stays on the
+server, and so does every homepage section — the hero's text and CTAs ship as
+HTML with the animated chain as the only client island inside it.
 
 ## Next.js 16 specifics
 

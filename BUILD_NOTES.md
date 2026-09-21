@@ -271,3 +271,90 @@ that no longer exist.
 **The audit is free.** No paid entry point anywhere. One `primaryCta` plus one
 `ctaMicrocopy` in `content/site.ts`, so every CTA on the site says the same
 words and the micro-copy cannot drift between sections.
+
+---
+
+## Phase 3 — Homepage (sections 1–4)
+
+Hero, Problem, What we build, Before/After. Sections 5–10 follow.
+
+**Lighthouse mobile: performance 98, accessibility 100, best practices 96.**
+Measured against `next build` + `next start`, mobile form factor, Lighthouse
+13.5. Numbers and caveats in the phase summary.
+
+### Everything is a Server Component except one island
+
+The only `"use client"` on the page is `LeadJourneyChain`. The hero's heading,
+subheading, CTAs and trust line are server-rendered HTML with no JavaScript
+attached, which is what keeps LCP at 1.6s — the largest element paints without
+waiting on hydration.
+
+### The chain is four states and one interval
+
+`setInterval` advancing a single `cursor`, with `% (steps.length + 1)` so there
+is an extra beat where all four are lit before the loop restarts. That pause is
+what makes it read as a completed journey rather than a spinner.
+
+Only `transform` and `opacity`/colour animate. The connector fills with
+`scaleX`/`scaleY` from a `transform-origin`, never by animating width or
+height — a width animation would run layout on every frame of every cycle, for
+the entire time the page is open.
+
+### Reduced motion is handled in JS, because CSS cannot reach it
+
+The global `prefers-reduced-motion: reduce` backstop in `globals.css` kills CSS
+transitions and animations. It cannot stop a `setInterval` from advancing React
+state, so the chain checks the preference itself and renders all four steps in
+their settled state without ever starting the timer.
+
+`lib/usePrefersReducedMotion.ts` uses `useSyncExternalStore` rather than
+`useState` + an effect. Subscribing to a browser API is what it is for, it
+avoids the extra render pass that `set-state-in-effect` flags, and it keeps
+following the setting if the visitor changes it with the page open.
+
+Verified both ways rather than assumed, by sampling the DOM under
+`--force-prefers-reduced-motion`:
+
+```
+motion allowed, t=500ms  -> dots lit: 1/4
+motion allowed, t=2000ms -> dots lit: 2/4
+motion allowed, t=3500ms -> dots lit: 3/4
+
+reduced motion,  t=500ms  -> dots lit: 4/4
+reduced motion,  t=2000ms -> dots lit: 4/4
+reduced motion,  t=3500ms -> dots lit: 4/4
+```
+
+All four labels are in the server HTML regardless, so the no-JavaScript case
+also shows the whole chain.
+
+### Before/After reads from the services, not from home.ts
+
+`content/home.ts` lists four `ServiceSlug`s; the copy comes from
+`content/services.ts`. The same pair therefore cannot say one thing on the
+homepage and another on the service page. `home.ts` also references
+`site.primaryCta`, `site.ctaMicrocopy` and `site.trustPoints` instead of
+restating them.
+
+### Running Lighthouse here took some setup
+
+Worth recording so the next person does not repeat it. This WSL box has no
+Chrome, no `unzip`, and no passwordless sudo, so:
+
+1. `@puppeteer/browsers` and `npm i puppeteer` both fail — no zip archiver.
+2. Chrome for Testing's `chrome-headless-shell` zip extracts fine with
+   Python's `zipfile` (restore the exec bit afterwards, `zipfile` drops it).
+3. It then fails on missing `libnspr4`/`libnss3`. Those come from `.deb`s
+   fetched with `apt-get download --print-uris`, unpacked with `dpkg-deb -x`
+   into a local directory, and pointed at with `LD_LIBRARY_PATH`. No root.
+
+Chrome lives in the scratchpad, not the repo, and nothing was added to
+`package.json`.
+
+One WSL trap: Lighthouse reads `LOCALAPPDATA` for its temporary Chrome
+profile, and under WSL interop that variable holds a *Windows* path. Lighthouse
+takes it literally and creates a directory in the current working directory
+named `C:\Users\...\lighthouse.12345678`, backslashes and all. Three of them
+landed in the repo root and had to be deleted before committing. Run Lighthouse
+with `LOCALAPPDATA` and `TMPDIR` pointed somewhere outside the repo, or check
+`git status` afterwards.
