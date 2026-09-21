@@ -40,6 +40,16 @@ These must be resolved before the domain is pointed at the site.
 
 ## Needed to finish the current build
 
+- [ ] **🚨 Launch dates for all three case studies.** `content/work.ts` has
+  `launchedAt: "TODO: confirm launch date"` on every entry — a deliberately
+  loud placeholder, because Phase 5 renders this field and a plausible-looking
+  wrong date would never be caught.
+  - **John Savoretti Realty — confirm it actually launched.**
+    `AGENCY_SITE_COPY.md` (2026-09-20) lists it as "targeted this week". If it
+    has not shipped, it should not be on the work page at all yet.
+  - Above All Tent Rentals — date needed.
+  - GC Kuts — date needed.
+
 - [ ] **Case study images.** `content/work.ts` seeds `images: []` for all three
   entries (Phase 2). Needs real screenshots — before/after where they exist —
   each with real alt text describing the actual image. No stock photography,
@@ -58,9 +68,26 @@ These must be resolved before the domain is pointed at the site.
   nothing. Add once the profiles exist; an icon row of dead links is worse than
   no icon row.
 
-- [ ] **Confirm pricing.** The `$300–500` audit and the three tiers come from
-  the positioning doc's *suggestion*, not from a decision. Confirm the real
-  numbers before Phase 3 section 7 puts them on the page.
+- [ ] **🚨 Confirm every price before Phase 3.** Each `pricing` block in
+  `content/services.ts` is calibrated against the competitor ladder in
+  `AGENCY_SITE_COPY.md` — a starting point for a decision, not a decision.
+  These go on a public page in Phase 3 section 7.
+
+  | Service | Build | Monthly |
+  | --- | --- | --- |
+  | Website Design & Build | $3,500–9,000 | — |
+  | AI Lead Response | $2,000–4,000 | $300–600 |
+  | Missed-Call Text-Back | $750–1,500 | $150–300 |
+  | Review Automation | $1,000–2,000 | $150–250 |
+  | Internal AI Assistant | $2,500–6,000 | $250–500 |
+
+  Plus the audit entry point (`$300–500`, credited toward any build) and the
+  three homepage tiers, both still from the positioning doc's suggestion.
+
+- [ ] **Confirm the delivery timeline in the FAQ.** `content/faq.ts` →
+  `how-long` currently promises "three to six weeks" for a website and "one to
+  two weeks" for a single automation. That is a commitment you have to keep, so
+  it should be your number, not mine.
 
 ---
 

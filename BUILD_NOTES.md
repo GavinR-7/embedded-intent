@@ -145,3 +145,74 @@ at launch.
 
 Lighthouse is not reported this phase — per `BUILD_PROMPT.md` it starts at
 Phase 3, and there is no real content to measure yet.
+
+---
+
+## Phase 2 — The content layer
+
+Types and data only, no components. Three modules plus one compile-time test.
+
+### `@ts-expect-error` is an assertion, not a suppression
+
+`content/work.type-test.ts` is the interesting file. It contains four
+deliberately-wrong `CaseStudy` values, each preceded by `@ts-expect-error`, plus
+one correct value as a positive control. Nothing imports it; it exists purely to
+be type-checked.
+
+The point is that `@ts-expect-error` **requires** the next line to fail. If
+someone adds an optional `results?` to `CaseStudyBase` — the exact change that
+would quietly defeat the union — those lines start compiling, the directives go
+unused, and TypeScript raises `TS2578: Unused '@ts-expect-error' directive`.
+So the build breaks whether the guarantee is violated *or* removed.
+
+Both directions were verified rather than assumed:
+
+```
+# results block on a launched case study
+content/work.ts(102,5): error TS2353: Object literal may only specify known
+  properties, and 'results' does not exist in type
+  'CaseStudyBase & { status: "launched"; launchedAt: string; }'.
+
+# optional results? added to CaseStudyBase
+content/work.type-test.ts(29,3): error TS2578: Unused '@ts-expect-error' directive.
+```
+
+The positive control matters as much as the failures. Without it, the tests
+would still "pass" if the type became impossible to satisfy at all.
+
+### Pricing is structured, not a string
+
+`ServicePricing` is `{ build: PriceBand; monthly?: PriceBand }` with amounts as
+numbers, rather than a pre-formatted `"$3,500–9,000"`. Two reasons: the Phase 8
+`Service` JSON-LD needs real numbers, and the optional `monthly` models the
+actual shape of the offer — a build cost plus a retainer for the automations,
+build-only for the website.
+
+`formatPriceBand` / `formatPricing` live in `content/services.ts` rather than in
+a component. Still data-only — they are pure functions, no JSX — but it means
+Phases 3 and 4 cannot drift into two different ways of writing a price.
+
+### FAQs are tagged by service
+
+`FaqItem.services` lists which service pages a question also belongs on, so
+Phase 4's "FAQ subset" is a filter rather than a second hand-maintained list.
+Empty array means homepage only. `faqsForService(slug)` does the filtering.
+
+Answers deliberately contain **no prices**. The pricing section is the single
+place numbers live; repeating them in the FAQ creates a second copy to keep in
+sync, and the stale one is always the FAQ.
+
+### What was not invented
+
+- **All three case studies are `status: "launched"`** with `images: []` and no
+  testimonial field at all. No placeholder quotes, no sample metrics, no
+  greyed-out example rows.
+- **`launchedAt` is the literal string `"TODO: confirm launch date"`** for all
+  three. I do not know the real dates, and `AGENCY_SITE_COPY.md` lists the
+  Savoretti launch as only *targeted* for the week of 2026-09-20 — so it may not
+  have shipped at all. A loud placeholder beats a plausible-looking wrong date;
+  Phase 5 renders this field, so it cannot hide.
+- **Every price is calibrated from the competitor ladder** in
+  `AGENCY_SITE_COPY.md`, which makes them proposals, not decisions. Same for the
+  "three to six weeks" timeline in the FAQ. Both are the owner's call and both
+  are logged in CONTENT_TODO.md as confirm-before-Phase-3.

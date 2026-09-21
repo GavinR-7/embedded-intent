@@ -30,6 +30,10 @@ components/
   reactbits/            Vendored React Bits components — Phase 7, hard cap of 3.
 content/                Typed content modules. The single source of truth.
   site.ts               Brand, contact, nav, footer, trust line.
+  services.ts           The service catalogue + price formatting helpers.
+  work.ts               Case studies. Discriminated union on `status`.
+  work.type-test.ts     Compile-time guard for that union. Imported by nothing.
+  faq.ts                Objections, tagged by service for per-page subsets.
 public/                 Static assets served at the root.
 ```
 
@@ -45,6 +49,27 @@ someone who does not read JSX, a service can be renamed in one place, and the
 type checker can enforce rules about the content itself — see the `CaseStudy`
 discriminated union arriving in Phase 2, which makes it a compile error to show
 a performance number for a client we have not measured.
+
+### Types that enforce honesty
+
+`content/work.ts` models `CaseStudy` as a discriminated union on `status`. The
+`launched` variant has **no** `results` field, so a performance number cannot be
+attached to a client that has not been measured — it is a compile error, not a
+code review comment.
+
+```ts
+type CaseStudy =
+  | (CaseStudyBase & { status: "measured"; results: MeasuredResult[] })
+  | (CaseStudyBase & { status: "launched"; launchedAt: string })
+```
+
+`MeasuredResult.source` is required and has no default, so a number cannot be
+published without stating how it was measured.
+
+Do **not** add an optional `results?` to `CaseStudyBase`. That would make the
+compiler stop caring, which is the one job it has here.
+`content/work.type-test.ts` fails the build if anyone tries — see BUILD_NOTES.md
+for how that guard works.
 
 ### Nullable over placeholder
 
