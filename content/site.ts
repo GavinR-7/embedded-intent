@@ -77,7 +77,7 @@ export const site: SiteConfig = {
   serviceArea: "Long Island & New York",
 
   email: "hello@embeddedintent.com",
-  phone: { display: "(631) 942-1211", e164: "+16319421211" },
+  phone: { display: "(631) 240-3073", e164: "+16312403073" },
 
   themeColor: "#060b0f",
 
@@ -90,7 +90,7 @@ export const site: SiteConfig = {
     { label: "FAQ", href: "/#faq" },
   ],
 
-  primaryCta: { label: "Get a free 30-minute audit", href: "/contact" },
+  primaryCta: { label: "Get a free audit", href: "/contact" },
   ctaMicrocopy: "Free · 30 minutes · You leave with a prioritised list either way",
 
   // A Services column, generated from content/services.ts, is added in Phase 4.

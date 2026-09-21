@@ -88,11 +88,33 @@ These must be resolved before the domain is pointed at the site.
 - [x] ~~The audit price.~~ The audit is **free**. There is no paid entry point
   anywhere on the site; every CTA is "Get a free 30-minute audit".
 
-- [ ] **Header CTA may be too wide on desktop.** `site.primaryCta.label` is now
-  the full "Get a free 30-minute audit", which is a long string for a nav-bar
-  button. If it crowds the header in Phase 3, the fix is a short variant in
-  `content/site.ts` — flag it rather than hard-coding different words in the
-  component.
+- [x] ~~Header CTA may be too wide on desktop.~~ Resolved 2026-09-21: the CTA
+  is now "Get a free audit" everywhere, with "Free · 30 minutes · …" carried by
+  `ctaMicrocopy` underneath. Shorter button, same offer.
+
+---
+
+## Decided — for Phase 6
+
+- **The audit is a form, not a calendar booking.** No Calendly, no scheduler,
+  no availability widget. The form submits via Resend to the owner, who
+  researches the business and follows up by email. The research step between
+  submission and reply *is* the product — a booking widget would skip it.
+
+- **Contact page layout.** Form on the left. On the right, two cards:
+  - "Reach us directly" — phone, email, hours, from `content/site.ts`
+  - "What the audit is NOT" — the anti-sell, so nobody turns up braced for a
+    sales call
+
+  Stacks to one column on mobile, form first.
+
+- **Form fields** (`*` required): full name\*, business name, website, email\*,
+  phone, a multi-select of what they're after, and a free-text box.
+  Multi-select options: new website or rebuild · getting found on Google ·
+  Google Ads · more Google reviews · more leads · AI / automation · not sure yet.
+
+- [ ] **Business hours** are not recorded anywhere yet. The "Reach us directly"
+  card needs them, so they will have to go in `content/site.ts` before Phase 6.
 
 ---
 

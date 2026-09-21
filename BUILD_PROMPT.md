@@ -247,8 +247,38 @@ metric, a sample number, or a greyed-out example row.
 
 ## PHASE 6 — Contact and the audit offer
 
-1. `app/contact/page.tsx` — short form: name, business, email, phone (optional),
-   website (optional), what's broken. Framed as booking the free 30-minute audit.
+1. `app/contact/page.tsx` — the audit request form.
+
+   > **Revised by the owner 2026-09-21. This supersedes the line below.**
+   >
+   > **The audit is a FORM, not a calendar booking.** No Calendly, no
+   > scheduler, no embedded availability widget. The form submits via Resend to
+   > the owner, who researches the business and follows up by email. Do not add
+   > a booking integration "for convenience" — the research step between
+   > submission and reply is the product.
+   >
+   > **Layout:** form on the left. On the right, two cards:
+   > - **"Reach us directly"** — phone, email, hours (all from `content/site.ts`)
+   > - **"What the audit is NOT"** — the anti-sell, so nobody arrives expecting
+   >   a sales call
+   >
+   > **Fields** (`*` = required):
+   > - Full name\*
+   > - Business name
+   > - Website
+   > - Email\*
+   > - Phone
+   > - What they're after — **multi-select**: new website or rebuild · getting
+   >   found on Google · Google Ads · more Google reviews · more leads ·
+   >   AI / automation · not sure yet
+   > - Free-text box
+   >
+   > Stacks to a single column on mobile, form first. The multi-select options
+   > belong in `content/` like everything else, and map onto `ServiceSlug`
+   > where they correspond to a real service.
+
+   ~~Short form: name, business, email, phone (optional), website (optional),
+   what's broken. Framed as booking the free 30-minute audit.~~
 2. API route using Resend. Key in `.env.local`, never in the repo. Add
    `.env.example` with the key names and no values.
 3. Server-side validation with zod. Honeypot field for spam. Real success and error
