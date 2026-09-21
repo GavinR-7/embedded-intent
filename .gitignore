@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# chrome-launcher (Lighthouse) temp profiles.
+# Under WSL, LOCALAPPDATA holds a Windows path, so chrome-launcher creates a
+# literal "C:\Users\...\lighthouse.12345678" directory in the working
+# directory. Never ours to commit.
+/C:*

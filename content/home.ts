@@ -2,21 +2,39 @@
  * Homepage copy.
  *
  * Section components under components/sections/ render this; none of them
- * contain a sentence of their own. Sections 5–10 are appended to this file as
- * they are built.
+ * contain a sentence of their own.
  *
  * Where copy already exists elsewhere it is referenced rather than repeated:
- * the trust line and both CTAs come from content/site.ts, the service cards
- * and every before/after pair come from content/services.ts. Retyping any of
- * it here would create a second copy to keep in sync.
+ * the trust line and both CTAs come from content/site.ts, the service cards,
+ * the pricing table and every before/after pair come from content/services.ts,
+ * the FAQ from content/faq.ts, the case study from content/work.ts, and the
+ * audit anti-sell from content/audit.ts. Retyping any of it here would create
+ * a second copy to keep in sync.
  */
 
 import type { ServiceSlug } from "./services";
 
-export type JourneyStep = {
+export type SystemRow = {
   /** Stable key. */
   id: string;
-  label: string;
+  title: string;
+  /** The detail line under the title — what actually happens at this step. */
+  detail: string;
+  /** Right-aligned status chip. */
+  status: string;
+};
+
+export type Step = {
+  id: string;
+  name: string;
+  body: string;
+};
+
+export type ComparisonRow = {
+  /** What is being compared. */
+  aspect: string;
+  typical: string;
+  ours: string;
 };
 
 export const home = {
@@ -31,18 +49,44 @@ export const home = {
 
   /**
    * The hero visual: a lead moving through the system with nobody touching it.
-   * The counter beside it is the actual claim — four things happened and the
-   * owner did none of them.
+   * Presented as a panel of working software rather than a diagram, because
+   * the claim is concrete — these are the four things that happen, and the
+   * footer counts how many of them need a human.
+   *
+   * NOTE: the "0.4s" on the first row is the only number on this panel, and it
+   * is not currently sourced. See CONTENT_TODO.md.
    */
-  leadJourney: {
-    steps: [
-      { id: "captured", label: "New lead captured" },
-      { id: "qualified", label: "AI qualifies & replies" },
-      { id: "booked", label: "Routed & booked" },
-      { id: "review", label: "Review request sent" },
-    ] satisfies JourneyStep[],
-    counterLabel: "Manual steps",
-    counterValue: "0",
+  leadSystem: {
+    title: "Lead system",
+    statusLabel: "Live",
+    rows: [
+      {
+        id: "captured",
+        title: "New lead captured",
+        detail: "Website form, call, or Google",
+        status: "0.4s",
+      },
+      {
+        id: "qualified",
+        title: "AI qualifies & replies",
+        detail: "Job type, timeline, budget, ZIP",
+        status: "AUTO",
+      },
+      {
+        id: "booked",
+        title: "Routed & booked",
+        detail: "SMS + calendar hold",
+        status: "AUTO",
+      },
+      {
+        id: "review",
+        title: "Job complete → review ask",
+        detail: "SMS 2h after sign-off",
+        status: "AUTO",
+      },
+    ] satisfies SystemRow[],
+    footerLabel: "Manual steps required",
+    footerValue: "0",
   },
 
   problem: {
@@ -63,6 +107,10 @@ export const home = {
     eyebrow: "What we build",
     heading: "Start with the website. Add the rest when it's earning.",
     body: "Everything below is bought one piece at a time, in whatever order makes you money soonest. There is no bundle, because a bundle would mean selling you something you don't need yet.",
+    /** Prices are deliberately not on these cards — see the pricing section. */
+    pricingNote: "Every price is published further down this page.",
+    primaryCardCta: "What's included, in full",
+    addOnCardCta: "What it does",
   },
 
   beforeAfter: {
@@ -78,5 +126,108 @@ export const home = {
       "get-more-google-reviews",
       "website-design-build",
     ] satisfies ServiceSlug[],
+  },
+
+  howItWorks: {
+    eyebrow: "How it works",
+    heading: "Find the leak. Close it. Prove it closed.",
+    steps: [
+      {
+        id: "find",
+        name: "Find",
+        body: "Thirty minutes on where the money is leaking — how leads reach you, what happens to the ones that arrive after hours, and where your team loses time. You leave with a prioritised list whether or not you hire me.",
+      },
+      {
+        id: "build",
+        name: "Build",
+        body: "The website first, in accounts created in your name. You get the credentials at handover and a walkthrough of how to run it, so nothing is hostage to the relationship.",
+      },
+      {
+        id: "automate",
+        name: "Automate",
+        body: "One automation at a time, starting with whichever one pays for itself fastest. It runs whether or not anyone remembers it, with approval rules on anything that commits you to a price or a date.",
+      },
+      {
+        id: "measure",
+        name: "Measure",
+        body: "Qualified leads, speed to first response, hours returned, cost per booked job. Not impressions, not reach. If a piece isn't earning its keep, I'll tell you to switch it off.",
+      },
+    ] satisfies Step[],
+  },
+
+  work: {
+    eyebrow: "Work",
+    heading: "One site, live, honestly reported.",
+    body: "There is one case study here because there is one client site currently live. When the others launch they'll appear, with real numbers once there are real numbers.",
+    viewAllLabel: "See the full case study",
+  },
+
+  pricing: {
+    eyebrow: "Pricing",
+    heading: "Published, so you don't have to book a call to find out.",
+    body: "Buy one piece at a time, in any order. The website is where most people start; the add-ons are bought when they start earning.",
+    columns: {
+      service: "Service",
+      build: "Build",
+      monthly: "Monthly",
+    },
+    /** Shown under the table. Honest scope-setting, not fine print. */
+    notes: [
+      "Website builds most often land in the middle of the published range — the full range is there because scope genuinely varies.",
+      "Third-party costs are passed through at cost and never marked up.",
+    ],
+  },
+
+  whyMe: {
+    eyebrow: "Why me",
+    /** The primary differentiator. It leads — it is not a table row. */
+    heading:
+      "You work directly with the person building it — not an account manager, not a sales rep, not an outsourced team.",
+    body: "Everything below follows from that one fact. A solo practice can't hide behind a process, so it doesn't have one to hide behind.",
+    columns: {
+      aspect: "",
+      typical: "Typical agency",
+      ours: "Embedded Intent",
+    },
+    rows: [
+      {
+        aspect: "Who does the work",
+        typical: "A junior, or a contractor you never meet",
+        ours: "Me. The person you talked to on the call",
+      },
+      {
+        aspect: "Who owns the accounts",
+        typical: "The agency, until you leave",
+        ours: "You, from the day they're created",
+      },
+      {
+        aspect: "What reporting means",
+        typical: "Impressions, reach, a PDF nobody reads",
+        ours: "Qualified leads, response time, cost per booked job",
+      },
+      {
+        aspect: "Contract length",
+        typical: "Twelve months, auto-renewing",
+        ours: "None. Month to month, cancel whenever",
+      },
+      {
+        aspect: "Who you talk to",
+        typical: "An account manager who relays your questions",
+        ours: "Me, directly",
+      },
+    ] satisfies ComparisonRow[],
+  },
+
+  faq: {
+    eyebrow: "Questions",
+    heading: "The things people actually ask.",
+  },
+
+  close: {
+    eyebrow: "Next step",
+    heading: "Let's find the fastest win in your business.",
+    body: "Thirty minutes. We look at how leads reach you, what happens to the ones that arrive after hours, and where your team is losing time — then I tell you what to build first and what it costs.",
+    auditIsNotHeading: "What the audit is not",
+    proofHeading: "Most recent build",
   },
 } as const;

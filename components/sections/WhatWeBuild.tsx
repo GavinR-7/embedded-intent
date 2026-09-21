@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Section, SectionHeading } from "@/components/ui/Section";
 import { home } from "@/content/home";
-import { addOnServices, formatPricing, primaryService } from "@/content/services";
+import { addOnServices, primaryService } from "@/content/services";
 import type { Service } from "@/content/services";
 
 const { whatWeBuild } = home;
@@ -24,6 +24,15 @@ export function WhatWeBuild() {
         heading={whatWeBuild.heading}
         body={whatWeBuild.body}
       />
+
+      {/* Cards sell the outcome. Price is disclosed in the pricing section
+          below and on each service page — deliberate sequencing, so this says
+          plainly where the numbers are rather than leaving a reader hunting. */}
+      <p className="mt-6 text-label text-ink-subtle">
+        <a href="#pricing" className="text-signal underline underline-offset-4">
+          {whatWeBuild.pricingNote}
+        </a>
+      </p>
 
       {/* The primary card gets the width and the deliverable list. The
           hierarchy is the argument: start here, add the rest later. */}
@@ -48,8 +57,8 @@ export function WhatWeBuild() {
           ))}
         </ul>
 
-        <p className="mt-7 border-t border-line pt-5 font-mono text-label tabular-nums text-ink">
-          {formatPricing(primaryService.pricing)}
+        <p className="mt-7 border-t border-line pt-5 text-label text-signal">
+          {whatWeBuild.primaryCardCta} →
         </p>
       </Link>
 
@@ -58,14 +67,14 @@ export function WhatWeBuild() {
           <li key={service.slug}>
             <Link
               href={serviceHref(service)}
-              className="flex h-full flex-col rounded-card border border-line bg-surface/50 p-6 transition-colors duration-[var(--duration-base)] ease-precise hover:border-signal"
+              className="group flex h-full flex-col rounded-card border border-line bg-surface/50 p-6 transition-colors duration-[var(--duration-base)] ease-precise hover:border-signal"
             >
               <h3 className="text-h3 text-ink">{service.name}</h3>
 
               <p className="mt-3 flex-1 text-label text-ink-muted">{service.promise}</p>
 
-              <p className="mt-6 border-t border-line pt-4 font-mono text-label tabular-nums text-ink-subtle">
-                {formatPricing(service.pricing)}
+              <p className="mt-6 border-t border-line pt-4 text-label text-ink-subtle transition-colors duration-[var(--duration-base)] group-hover:text-signal">
+                {whatWeBuild.addOnCardCta} →
               </p>
             </Link>
           </li>

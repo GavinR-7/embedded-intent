@@ -358,3 +358,81 @@ named `C:\Users\...\lighthouse.12345678`, backslashes and all. Three of them
 landed in the repo root and had to be deleted before committing. Run Lighthouse
 with `LOCALAPPDATA` and `TMPDIR` pointed somewhere outside the repo, or check
 `git status` afterwards.
+
+### Phase 3 design fixes (2026-09-21)
+
+**The background seam.** The `trace-grid` texture lived inside the hero, so it
+started *below* the 80px header and drew a hard horizontal line across the top
+of the page. It now lives in `app/layout.tsx` as an out-of-flow element pinned
+to `top-0` with a negative z-index, so it runs continuously from y=0 behind the
+transparent header — and it covers every route, not just the homepage.
+
+**The hero panel is now a vertical system readout.** The horizontal dot row
+read as decoration. As a bordered panel with a header, four rows (icon tile,
+title, detail line, status chip) and a footer counting manual steps, it reads
+as a screenshot of working software, which is the actual claim.
+
+Everything from the old implementation carried over: one client island, one
+`setInterval`, transform-and-colour only, the extra beat where all four are lit
+before the loop restarts, all labels in the server HTML, and reduced motion
+rendering every row lit and static. Re-verified after the rebuild:
+
+```
+motion allowed, t=500ms  -> rows lit: 1/4     reduced -> 4/4 at every sample
+motion allowed, t=2000ms -> rows lit: 2/4
+motion allowed, t=3500ms -> rows lit: 3/4
+```
+
+**The active-nav indicator is imperative on purpose.** A 20px underline that
+moves with `translateX`. Its position is measured from layout, so it is written
+straight to the element through a ref rather than held in state — putting a
+measured pixel value into state would re-render the whole header every time the
+reader scrolls past a section heading, to move one small bar. Width is constant
+so only `transform` and `opacity` ever animate.
+
+Which item is active comes from an IntersectionObserver with
+`rootMargin: "-80px 0px -75% 0px"`, which shrinks the viewport to a band just
+below the header. Whatever section sits in that band is the active one, so at
+most one matches at a time and there is no scroll arithmetic anywhere. A real
+route match (`/work`) beats an anchor match, so it stays underlined regardless
+of scroll position.
+
+**Prices came off the service cards.** Cards sell the outcome; the price is
+disclosed in the pricing section and on each service page. To keep that as
+sequencing rather than concealment, the section says plainly that every price
+is published further down, and links to it.
+
+### Two tables, one DOM
+
+The pricing and comparison tables are real `<table>` elements at `md` and up.
+Below that, the table elements are switched to `display: block` so each row
+becomes a card, the column headers are hidden, and each cell carries its own
+label instead.
+
+The alternative — a card list for mobile and a table for desktop — means the
+same content in the DOM twice, which doubles the maintenance and gives screen
+readers two copies of it. One DOM, two layouts.
+
+### The FAQ ships no JavaScript
+
+Native `<details>`/`<summary>`. Correct expand/collapse semantics, keyboard
+operation and screen-reader announcement for free, and the browser's own
+in-page search finds answers inside collapsed sections. Left uncontrolled, so
+more than one can be open — closing someone's answer because they opened
+another is not a feature.
+
+### Proof sits next to the CTA
+
+The case study also appears beside the closing button, in its honest
+"results tracking in progress" state. Someone deciding at the bottom of the
+page will not scroll back up to check whether the work is real.
+
+### Lighthouse mobile, full page
+
+Performance **96**, accessibility **100**, best practices 96. LCP moved 1.6s to
+2.6s when the page went from four sections to ten; total transfer is 233 KiB,
+of which 52 KiB is the two webfonts. Still clear of the ≥90 floor, with less
+headroom than before — worth remembering when Phase 7 adds motion.
+
+A `.gitignore` entry now covers chrome-launcher's `C:\Users\...` temp profiles,
+since setting `LOCALAPPDATA` alone did not stop them appearing in the repo.

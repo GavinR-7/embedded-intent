@@ -89,3 +89,31 @@ export const caseStudies: CaseStudy[] = [
 export function getCaseStudy(slug: string): CaseStudy | undefined {
   return caseStudies.find((study) => study.slug === slug);
 }
+
+/**
+ * "2026-08-20" -> "August 2026".
+ *
+ * Parsed by hand rather than with `new Date(iso)`. `new Date("2026-08-20")`
+ * is treated as UTC midnight, so formatting it in a timezone behind UTC —
+ * which includes every US timezone — renders the *previous* day, and a launch
+ * date can silently slide into the wrong month.
+ */
+export function formatLaunchMonth(iso: string): string {
+  const [year, month] = iso.split("-").map(Number);
+  const MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ];
+  return `${MONTHS[month - 1]} ${year}`;
+}
+
+/**
+ * The line shown for a launched case study, in one place because it appears
+ * both on the homepage work section and beside the closing CTA.
+ *
+ * It says results are in progress rather than showing a number, and there is
+ * no placeholder metric behind it — the type makes sure of that.
+ */
+export function launchedStatusLine(launchedAt: string): string {
+  return `Launched ${formatLaunchMonth(launchedAt)} — results tracking in progress`;
+}

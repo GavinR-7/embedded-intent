@@ -15,6 +15,15 @@ const FOCUSABLE_SELECTOR = "a[href], button:not([disabled])";
 /** Matches Tailwind's `md` breakpoint (--breakpoint-md: 48rem). */
 const DESKTOP_QUERY = "(min-width: 48rem)";
 
+/** Width of the active-nav underline, in px. Constant, so the indicator only
+ *  ever animates `transform` — never `width`, which would be layout. */
+const INDICATOR_WIDTH = 20;
+
+/** "/#pricing" -> "pricing". Null for anything that is not a homepage anchor. */
+function anchorId(href: string): string | null {
+  return href.startsWith("/#") ? href.slice(2) : null;
+}
+
 function ChipMark({ className }: { className?: string }) {
   return (
     <svg
@@ -64,6 +73,12 @@ export function Header() {
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const navListRef = useRef<HTMLUListElement | null>(null);
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const indicatorRef = useRef<HTMLSpanElement | null>(null);
+
+  /** Which homepage anchor section is currently under the header. */
+  const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
 
   /**
    * True once the page has scrolled past the sentinel, which is what flips the
@@ -123,6 +138,88 @@ export function Header() {
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, []);
+
+  /*
+   * Section spy for the active-nav indicator.
+   *
+   * Observes the homepage sections the nav points at, with a rootMargin that
+   * shrinks the viewport down to a band just below the header. Whatever
+   * section occupies that band is what the reader is looking at, so at most
+   * one is intersecting at a time and "which section am I on" needs no scroll
+   * arithmetic.
+   */
+  useEffect(() => {
+    if (pathname !== "/") return;
+
+    const targets = site.nav
+      .map((item) => anchorId(item.href))
+      .filter((id): id is string => id !== null)
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (targets.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveAnchor(entry.target.id);
+        }
+      },
+      { rootMargin: "-80px 0px -75% 0px" },
+    );
+
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [pathname]);
+
+  /**
+   * Which nav item to underline. A real route match wins over an anchor, so
+   * /work stays underlined no matter where the reader has scrolled.
+   */
+  const activeIndex = site.nav.findIndex((item) => {
+    const id = anchorId(item.href);
+    if (id !== null) return pathname === "/" && id === activeAnchor;
+    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  });
+
+  /*
+   * Move the underline.
+   *
+   * Written imperatively against a ref rather than through state: the position
+   * is derived from layout, and putting a measured pixel value into state
+   * would re-render the whole header every time the reader scrolls past a
+   * section heading, just to move one 20px bar.
+   *
+   * Only `transform` and `opacity` are touched, so it never triggers layout,
+   * and the CSS transition is neutralised by the global reduced-motion
+   * backstop in globals.css.
+   */
+  useEffect(() => {
+    const indicator = indicatorRef.current;
+    if (!indicator) return;
+
+    const link = activeIndex >= 0 ? linkRefs.current[activeIndex] : null;
+
+    if (!link) {
+      indicator.style.opacity = "0";
+      return;
+    }
+
+    const place = () => {
+      const centre = link.offsetLeft + link.offsetWidth / 2;
+      indicator.style.opacity = "1";
+      indicator.style.transform = `translateX(${centre - INDICATOR_WIDTH / 2}px)`;
+    };
+
+    place();
+
+    // Re-measure if the nav reflows — viewport resize, or the webfont swapping in.
+    const list = navListRef.current;
+    if (!list) return;
+    const observer = new ResizeObserver(place);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [activeIndex]);
 
   // Focus trap, Escape-to-close, and body scroll lock — all only while open.
   useEffect(() => {
@@ -219,17 +316,35 @@ export function Header() {
           </Link>
 
           <nav aria-label="Primary" className="hidden md:block">
-            <ul className="flex items-center gap-7">
-              {site.nav.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-ink"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+            <ul ref={navListRef} className="relative flex items-center gap-8 pb-1">
+              {site.nav.map((item, index) => {
+                const isActive = index === activeIndex;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      ref={(node) => {
+                        linkRefs.current[index] = node;
+                      }}
+                      href={item.href}
+                      aria-current={isActive ? "true" : undefined}
+                      className={`rounded-sm text-[0.9375rem] font-medium transition-colors duration-[var(--duration-fast)] ${
+                        isActive ? "text-ink" : "text-ink-muted hover:text-ink"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+
+              {/* Active indicator. Positioned from the list's origin and moved
+                  with translateX only — never width, which would be layout. */}
+              <span
+                ref={indicatorRef}
+                aria-hidden="true"
+                style={{ width: INDICATOR_WIDTH, opacity: 0 }}
+                className="absolute bottom-0 left-0 h-0.5 rounded-full bg-signal transition-[transform,opacity] duration-[var(--duration-base)] ease-out-expo"
+              />
             </ul>
           </nav>
 

@@ -1,17 +1,24 @@
 import { BeforeAfter } from "@/components/sections/BeforeAfter";
+import { Close } from "@/components/sections/Close";
+import { Faq } from "@/components/sections/Faq";
 import { Hero } from "@/components/sections/Hero";
+import { HowItWorks } from "@/components/sections/HowItWorks";
+import { Pricing } from "@/components/sections/Pricing";
 import { Problem } from "@/components/sections/Problem";
 import { WhatWeBuild } from "@/components/sections/WhatWeBuild";
+import { WhyMe } from "@/components/sections/WhyMe";
+import { Work } from "@/components/sections/Work";
 
 /**
  * Homepage.
  *
- * Sections 1–4 of Phase 3. How it works, Work, Pricing, Why me, FAQ and Close
- * follow in the second half of this phase.
+ * Every section is a Server Component. The only client island on the page is
+ * the lead system panel inside the hero, and the header's menu and scroll
+ * state — so the page ships as HTML with a small amount of JavaScript attached
+ * to two specific places.
  *
- * This is a Server Component, and so is every section except the animated
- * lead-journey chain inside the hero. The page ships as HTML with one small
- * client island attached.
+ * Section order is the argument the page makes: the problem, what we build,
+ * what changes, how it works, proof, price, why me, objections, close.
  */
 export default function Home() {
   return (
@@ -20,6 +27,12 @@ export default function Home() {
       <Problem />
       <WhatWeBuild />
       <BeforeAfter />
+      <HowItWorks />
+      <Work />
+      <Pricing />
+      <WhyMe />
+      <Faq />
+      <Close />
     </>
   );
 }

@@ -38,6 +38,8 @@ content/                Typed content modules. The single source of truth.
   work.type-test.ts     Compile-time guard for that union. Imported by nothing.
   faq.ts                Objections, tagged by service for per-page subsets.
   home.ts               Homepage section copy.
+  audit.ts              The audit offer. Shared by the homepage close and
+                        the Phase 6 contact page.
 public/                 Static assets served at the root.
 ```
 
@@ -121,8 +123,8 @@ Today exactly one component opts out:
 
 - `components/layout/Header.tsx` — `"use client"` for the mobile menu's open
   state, focus trap, Escape handling and the scroll-state observer.
-- `components/sections/LeadJourneyChain.tsx` — `"use client"` for the hero
-  animation's step cursor.
+- `components/sections/LeadSystemPanel.tsx` — `"use client"` for the hero
+  panel's step cursor.
 
 Keep that list short. The `Footer` reads the same config and stays on the
 server, and so does every homepage section — the hero's text and CTAs ship as

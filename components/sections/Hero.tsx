@@ -3,7 +3,7 @@ import { Eyebrow } from "@/components/ui/Section";
 import { home } from "@/content/home";
 import { site } from "@/content/site";
 
-import { LeadJourneyChain } from "./LeadJourneyChain";
+import { LeadSystemPanel } from "./LeadSystemPanel";
 
 const { hero } = home;
 
@@ -14,9 +14,7 @@ const { hero } = home;
  */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-16 pb-section sm:pt-24">
-      <div aria-hidden="true" className="trace-grid absolute inset-0 -z-10" />
-
+    <section className="pt-16 pb-section sm:pt-24">
       <div className="mx-auto max-w-content px-gutter">
         <div className="grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
           <div>
@@ -48,7 +46,7 @@ export function Hero() {
             </ul>
           </div>
 
-          <LeadJourneyChain />
+          <LeadSystemPanel />
         </div>
       </div>
     </section>

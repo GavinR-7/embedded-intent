@@ -57,7 +57,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-void font-sans text-body text-ink">
+      <body className="relative flex min-h-full flex-col bg-void font-sans text-body text-ink">
+        {/*
+          Page texture. It lives here, not in the hero, so it starts at y=0 and
+          runs continuously *behind* the transparent header — when it was inside
+          the hero it began below the 80px header and left a visible seam across
+          the top of the page. Negative z-index keeps it under all content.
+        */}
+        <div
+          aria-hidden="true"
+          className="trace-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem]"
+        />
         {/* First thing in the tab order: lets keyboard and screen-reader users
             jump the nav instead of tabbing through it on every page. */}
         <a href="#main" className="skip-link">
