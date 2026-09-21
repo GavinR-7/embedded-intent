@@ -23,6 +23,7 @@ const resultsOnLaunched: CaseStudy = {
   client: "Type Test",
   location: "Nowhere",
   summary: "Adding results to a launched case study must not compile.",
+  problem: "Type-test fixture.",
   built: [],
   images: [],
   launchedAt: "2026-01-01",
@@ -37,6 +38,7 @@ const launchedAtOnMeasured: CaseStudy = {
   client: "Type Test",
   location: "Nowhere",
   summary: "Measured entries carry results, not a launch date.",
+  problem: "Type-test fixture.",
   built: [],
   images: [],
   results: [
@@ -59,6 +61,7 @@ const resultWithoutSource: CaseStudy = {
   client: "Type Test",
   location: "Nowhere",
   summary: "Every measured result must state how it was measured.",
+  problem: "Type-test fixture.",
   built: [],
   images: [],
   // @ts-expect-error — missing required `source`.
@@ -73,6 +76,7 @@ const validMeasured: CaseStudy = {
   client: "Type Test",
   location: "Nowhere",
   summary: "This shape is legal and must stay legal.",
+  problem: "Type-test fixture.",
   built: ["A thing that was built"],
   images: [],
   results: [

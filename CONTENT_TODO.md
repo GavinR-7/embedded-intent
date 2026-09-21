@@ -32,62 +32,67 @@ These must be resolved before the domain is pointed at the site.
 - [ ] **Default OG image.** Nothing set; links shared to SMS or Facebook
   currently preview as bare text. (Wired up properly in Phase 8.)
 
-- [ ] **Above All Tent Rentals is at PageSpeed 64 mobile / 84 desktop.**
-  Flagged in `AGENCY_SITE_COPY.md`. We cannot sell speed while the flagship
-  portfolio piece scores 64. Fix before it is featured on the work page.
+- [ ] **🚨 Above All Tent Rentals is at PageSpeed 64 mobile / 84 desktop.**
+  Flagged in `AGENCY_SITE_COPY.md`. This got sharper, not softer: it is now the
+  *only* case study on the site, so the one piece of proof we show scores 64 on
+  the metric we sell. Fix it before launch — almost always images
+  (`next/image`, AVIF/WebP, correct sizing) or a heavy hero. Until then, do not
+  write speed claims around this client.
 
 ---
 
 ## Needed to finish the current build
 
-- [ ] **🚨 Launch dates for all three case studies.** `content/work.ts` has
-  `launchedAt: "TODO: confirm launch date"` on every entry — a deliberately
-  loud placeholder, because Phase 5 renders this field and a plausible-looking
-  wrong date would never be caught.
-  - **John Savoretti Realty — confirm it actually launched.**
-    `AGENCY_SITE_COPY.md` (2026-09-20) lists it as "targeted this week". If it
-    has not shipped, it should not be on the work page at all yet.
-  - Above All Tent Rentals — date needed.
-  - GC Kuts — date needed.
+- [x] ~~Launch dates for all three case studies.~~ Resolved 2026-09-21 by
+  cutting the list to the one site that is actually live: Above All Tent
+  Rentals, launched 2026-08-20.
 
-- [ ] **Case study images.** `content/work.ts` seeds `images: []` for all three
-  entries (Phase 2). Needs real screenshots — before/after where they exist —
-  each with real alt text describing the actual image. No stock photography,
-  no borrowed screenshots.
+- [ ] **GC Kuts — built and deployed, never launched by the client.**
+  Not live client work, so it is not in `content/work.ts` and does not go on
+  the site. It still exists as a real build and can be referenced on a call or
+  screen-shared in an audit. Add it only if the client ever puts it live.
+
+- [ ] **John Savoretti Realty — re-add the day it goes live.**
+  Custom Next.js build, live MLS/IDX listing pipeline, area pages. Removed
+  from `content/work.ts` because it has not launched. The moment it does, add
+  it back as `status: "launched"` with the real date.
+
+- [ ] **🚨 Above All Tent Rentals screenshots.** `content/work.ts` has
+  `images: []`. With one case study carrying the whole work page, this is now
+  the difference between a case study and a paragraph. Needs real screenshots
+  — mobile and desktop, plus the quote flow — each with real alt text
+  describing the actual image. No stock photography, no borrowed screenshots.
 
 - [ ] **Testimonials.** Omitted entirely rather than placeholdered. Add only in
   the client's own words, with permission. The field is optional in the type,
   so no entry is broken by its absence.
 
-- [ ] **Measured results.** All three case studies ship as `status: "launched"`.
-  A case study can only move to `status: "measured"` when there is a real
-  before/after number *and* a stated source for how it was measured. The type
-  will not let a results block exist otherwise — this is the point.
+- [ ] **Measured results for Above All.** It ships as `status: "launched"`,
+  which renders "results tracking in progress" and no results section. It can
+  only move to `status: "measured"` when there is a real before/after number
+  *and* a stated source for how it was measured. The type will not let a
+  results block exist otherwise — this is the point.
 
 - [ ] **Social profiles.** `content/site.ts` → `social` is `[]`, which renders
   nothing. Add once the profiles exist; an icon row of dead links is worse than
   no icon row.
 
-- [ ] **🚨 Confirm every price before Phase 3.** Each `pricing` block in
-  `content/services.ts` is calibrated against the competitor ladder in
-  `AGENCY_SITE_COPY.md` — a starting point for a decision, not a decision.
-  These go on a public page in Phase 3 section 7.
+- [x] ~~Confirm every price before Phase 3.~~ Confirmed by the owner
+  2026-09-21 and set in `content/services.ts`. Eight services, one primary plus
+  seven add-ons, sold modularly — there is deliberately no bundled tier.
 
-  | Service | Build | Monthly |
-  | --- | --- | --- |
-  | Website Design & Build | $3,500–9,000 | — |
-  | AI Lead Response | $2,000–4,000 | $300–600 |
-  | Missed-Call Text-Back | $750–1,500 | $150–300 |
-  | Review Automation | $1,000–2,000 | $150–250 |
-  | Internal AI Assistant | $2,500–6,000 | $250–500 |
+- [x] ~~Confirm the delivery timeline in the FAQ.~~ Confirmed 2026-09-21:
+  two to four weeks for a site, one to two for a single automation, with the
+  exact date committed on the call rather than estimated as a range.
 
-  Plus the audit entry point (`$300–500`, credited toward any build) and the
-  three homepage tiers, both still from the positioning doc's suggestion.
+- [x] ~~The audit price.~~ The audit is **free**. There is no paid entry point
+  anywhere on the site; every CTA is "Get a free 30-minute audit".
 
-- [ ] **Confirm the delivery timeline in the FAQ.** `content/faq.ts` →
-  `how-long` currently promises "three to six weeks" for a website and "one to
-  two weeks" for a single automation. That is a commitment you have to keep, so
-  it should be your number, not mine.
+- [ ] **Header CTA may be too wide on desktop.** `site.primaryCta.label` is now
+  the full "Get a free 30-minute audit", which is a long string for a nav-bar
+  button. If it crowds the header in Phase 3, the fix is a short variant in
+  `content/site.ts` — flag it rather than hard-coding different words in the
+  component.
 
 ---
 
@@ -101,8 +106,9 @@ These must be resolved before the domain is pointed at the site.
   `/#how-it-works`, `/#pricing` and `/#faq`. Phase 3 must give the sections
   exactly those `id`s or the nav silently does nothing.
 
-- [ ] **Google Business Profile.** Does not exist yet. Needed for local SEO and
-  for the review automation service to have somewhere to send people.
+- [ ] **Google Business Profile.** Does not exist yet. Needed for the Get Found
+  on Google service, and for Get More Google Reviews to have somewhere to send
+  people.
 
 ---
 

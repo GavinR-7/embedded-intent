@@ -216,3 +216,58 @@ sync, and the stale one is always the FAQ.
   `AGENCY_SITE_COPY.md`, which makes them proposals, not decisions. Same for the
   "three to six weeks" timeline in the FAQ. Both are the owner's call and both
   are logged in CONTENT_TODO.md as confirm-before-Phase-3.
+
+### Phase 2 revisions (2026-09-21)
+
+Owner corrections after reviewing the content layer. Recorded here because the
+*reasons* matter more than the diffs.
+
+**One case study, not three.** Only Above All Tent Rentals is actually live
+(2026-08-20). GC Kuts was built and deployed to a Vercel URL but the client
+never launched it; John Savoretti Realty has not launched. Neither is live
+client work, so neither goes on the site — they are logged in CONTENT_TODO.md,
+GC Kuts as a build to reference on a call, Savoretti to re-add the day it ships.
+
+`CaseStudyBase` gained a required `problem` field. With one case carrying the
+whole work page, "what was built" alone is a receipt rather than a story. The
+constraint on that field is written into its doc comment: the category and the
+job to be done are fair game, invented client history is not.
+
+Two knock-on consequences worth noting:
+
+- The PageSpeed 64 problem got *worse*, not better. Above All is now the only
+  proof on the site, and it scores 64 mobile on the exact metric this business
+  sells. Escalated in CONTENT_TODO.md.
+- `launchedAt` is now ISO 8601 (`"2026-08-20"`), not the `08/20/26` it was given
+  as. Display formatting belongs at render; ambiguous date strings in data are
+  how a site ends up showing August to Americans and nothing to anyone else.
+
+**Eight services, no bundle.** The offering is modular — one primary service
+plus seven add-ons bought when they start earning — so a fixed "full package"
+tier would misrepresent how it is actually sold. Phase 3 section 7 is therefore
+one table of all eight with build and monthly columns, not three named tiers.
+
+`ServicePricing` had to grow to stay honest about real offers:
+
+- `MonthlyPricing` is a union. Most services are `{ kind: "flat" }`, but Google
+  Ads is `{ kind: "greater-of", minimum: 500, percent: 15 }`. Forcing that into
+  a number would be a lie and forcing it into a string would put an
+  unformattable price in the data.
+- `buildTypical` narrows the website's `$1,500–5,000` to where most projects
+  actually land (`$2,500–4,000`). Publishing the wide band alone is technically
+  true and practically useless.
+- `passThrough` exists so "ad spend is paid directly to Google and never marked
+  up" and "Twilio usage is billed at cost" are *data*, not something a component
+  might forget to render. These are trust signals; burying them is the exact
+  behaviour the positioning is defined against.
+- `notThis` carries the anti-sell — Social Content Engine is explicitly not
+  "we run your social media".
+
+**The `ServiceSlug` union earned its keep.** Renaming two services broke
+`content/faq.ts` at compile time in four places, naming each stale tag. A
+`string` type would have shipped four FAQ entries silently attached to services
+that no longer exist.
+
+**The audit is free.** No paid entry point anywhere. One `primaryCta` plus one
+`ctaMicrocopy` in `content/site.ts`, so every CTA on the site says the same
+words and the micro-copy cannot drift between sections.

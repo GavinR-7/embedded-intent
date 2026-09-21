@@ -147,6 +147,21 @@ built into how a business already runs, not bolted on beside it.
 **STOP.** Show the `CaseStudy` type, demonstrate that adding `results` to a
 `launched` entry fails type-check, and wait.
 
+> **Revised by the owner after Phase 2 (2026-09-21). The seed lists above are
+> superseded — `content/` is the source of truth, not this section.**
+>
+> - **Services:** the five seeded services became **eight**, with confirmed
+>   prices. "Review Automation" is now "Get More Google Reviews"; "Internal AI
+>   Assistant" was replaced by "Custom AI Automation"; Get Found on Google,
+>   Google Ads Management and Social Content Engine were added. One primary
+>   service plus seven add-ons, sold modularly — **no bundled tier.**
+> - **Case studies:** **one** entry, not three. Above All Tent Rentals is the
+>   only live client site (launched 2026-08-20). GC Kuts was built and deployed
+>   but never launched by the client; John Savoretti Realty has not launched
+>   yet. Neither goes on the site. `CaseStudyBase` gained a required `problem`
+>   field so a single case can be told with depth.
+> - **The audit is free.** There is no paid entry point anywhere on the site.
+
 ---
 
 ## PHASE 3 — Homepage
@@ -174,17 +189,24 @@ imported from `content/`.
    gets seen Monday. Four hundred jobs and thirty-one Google reviews. Quotes that
    wait on whoever remembers to chase them.
 
-3. **What we build** — one primary card (Website Design & Build) plus four add-on
+3. **What we build** — heading: "Start with the website. Add the rest when it's
+   earning." One primary card (Website Design & Build) plus **seven** add-on
    cards, mapped from `content/services.ts`.
 
 4. **Before / After** — four pairs, two-column on desktop, stacked on mobile.
 
 5. **How it works** — Find → Build → Automate → Measure.
 
-6. **Work** — three case study cards linking to `/work/[slug]`.
+6. **Work** — **one** case study (Above All Tent Rentals), given real space
+   rather than a thin card in a three-up grid with two holes in it. Links to
+   `/work/[slug]`.
 
-7. **Pricing** — three tiers plus the audit entry point ($300–500, credited toward
-   any build). Prices visible on the page, no "contact for pricing."
+7. **Pricing** — a **single table of all eight services** with build and monthly
+   columns, mapped from `content/services.ts`. Not three named tiers, and no
+   bundled "full package" — the offering is modular and a fixed bundle would
+   misrepresent it. Prices visible on the page, no "contact for pricing".
+   State explicitly that Google ad spend is paid directly to Google and never
+   marked up, and that Twilio usage is passed through at cost.
 
 8. **Why me** — comparison table, typical agency vs. Embedded Intent. Rows: who does
    the work · who owns the accounts · what reporting means · contract length ·

@@ -45,7 +45,7 @@ export const faqs: readonly FaqItem[] = [
     id: "how-long",
     question: "How long does it take?",
     answer:
-      "A website is typically three to six weeks from kickoff. The long pole is almost always content and photos coming back, not the build. A single automation is usually one to two weeks. We agree the date before anything starts, and you get an update every week whether or not there is good news.",
+      "Most sites launch in two to four weeks, depending on how quickly we get your content — photos and copy coming back is almost always the long pole, not the build. A single automation is usually one to two weeks. I don't estimate your date as a range: we commit to an exact launch date on the call, once I've seen what I'm working with, and you get an update every week whether or not there is good news.",
     services: ["website-design-build"],
   },
   {
@@ -60,13 +60,13 @@ export const faqs: readonly FaqItem[] = [
     question: "Does it work with my CRM?",
     answer:
       "Usually. The common ones in the trades are built to connect to other tools, and most of what we do is read a job and write back a status. Before you pay for anything, I check yours specifically and tell you what will connect cleanly, what needs a workaround, and what is not worth doing. If the honest answer is that your CRM makes this more trouble than it is worth, you get that answer.",
-    services: ["ai-lead-response", "review-automation", "internal-ai-assistant"],
+    services: ["ai-lead-response", "get-more-google-reviews", "custom-ai-automation"],
   },
   {
     id: "what-does-it-cost",
     question: "What does it actually cost?",
     answer:
-      "The prices are on this page — you should not have to book a call to find out whether you can afford someone. Websites are a one-time build. Automations are a build cost plus a monthly, because they keep running. The audit is paid, and it comes off whatever you build afterwards.",
+      "The prices are on this page — you should not have to book a call to find out whether you can afford someone. Websites are a one-time build plus site care. Automations are a build cost plus a monthly, because they keep running. You buy them one at a time, in whatever order makes you money soonest. The audit is free, and there is no obligation attached to it.",
     services: [],
   },
   {
@@ -74,14 +74,14 @@ export const faqs: readonly FaqItem[] = [
     question: "Will AI replace my people?",
     answer:
       "For most of my clients there is nobody to replace — it is the owner answering texts after dinner, and that is the part that goes. If you do have a team, the honest version is that it removes the repetitive slice of their day, not the job: the twentieth person asking your hours, the review request nobody remembered. What it buys you is more volume without hiring for it. If you are hoping to cut staff, I am the wrong person to call.",
-    services: ["ai-lead-response", "internal-ai-assistant"],
+    services: ["ai-lead-response", "custom-ai-automation"],
   },
   {
     id: "when-the-ai-gets-it-wrong",
     question: "What happens when the AI gets something wrong?",
     answer:
       "It will, eventually, so it is built on that assumption. It answers only from what you gave it. It hands off to a person when it is unsure or when the customer asks for one. Anything that commits you to a price or a date can require your approval first. And every conversation is logged in full, so when something goes wrong you can read exactly what was said, and we change the rule rather than guess.",
-    services: ["ai-lead-response", "missed-call-text-back", "internal-ai-assistant"],
+    services: ["ai-lead-response", "missed-call-text-back", "custom-ai-automation"],
   },
 ];
 

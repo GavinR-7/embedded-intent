@@ -54,7 +54,13 @@ export type SiteConfig = {
   /** Mirrors --color-void in app/globals.css, for <meta name="theme-color">. */
   themeColor: string;
   nav: readonly NavItem[];
+  /**
+   * The one CTA used everywhere on the site. There is no second offer and no
+   * paid entry point — the audit is free, full stop.
+   */
   primaryCta: NavItem;
+  /** Sits directly under the CTA wherever it appears. */
+  ctaMicrocopy: string;
   footerColumns: readonly FooterColumn[];
   social: readonly SocialLink[];
   /** The three-part trust line used under the hero and in the footer. */
@@ -84,7 +90,8 @@ export const site: SiteConfig = {
     { label: "FAQ", href: "/#faq" },
   ],
 
-  primaryCta: { label: "Get a free audit", href: "/contact" },
+  primaryCta: { label: "Get a free 30-minute audit", href: "/contact" },
+  ctaMicrocopy: "Free · 30 minutes · You leave with a prioritised list either way",
 
   // A Services column, generated from content/services.ts, is added in Phase 4.
   // It is not hard-coded here — that would create a second list of services to

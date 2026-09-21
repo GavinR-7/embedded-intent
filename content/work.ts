@@ -16,6 +16,11 @@
  * Moving an entry from `launched` to `measured` requires, per result: a real
  * before number, a real after number, and a stated source describing how it
  * was measured. `source` has no default for the same reason.
+ *
+ * There is exactly one entry, and that is correct — it is the one site that is
+ * actually live. A single case told properly beats three thin ones, and two of
+ * those three would not have been true. CONTENT_TODO.md tracks the two builds
+ * waiting to be added if and when they genuinely launch.
  */
 
 export type MeasuredResult = {
@@ -37,7 +42,15 @@ export type CaseStudyBase = {
   slug: string;
   client: string;
   location: string;
+  /** One or two sentences. Used on cards and in metadata. */
   summary: string;
+  /**
+   * The situation the work was built to address, written as a scene. This is
+   * what gives a case study depth — a list of deliverables is a receipt, not a
+   * story. Keep it to what is genuinely known: the category and the job to be
+   * done are fair game, invented client history is not.
+   */
+  problem: string;
   /** What was actually built. Deliverables, not adjectives. */
   built: string[];
   images: { src: string; alt: string }[];
@@ -51,54 +64,24 @@ export type CaseStudy =
 
 export const caseStudies: CaseStudy[] = [
   {
-    slug: "john-savoretti-realty",
-    status: "launched",
-    client: "John Savoretti Realty",
-    location: "Long Island, NY",
-    // TODO: confirm launch date. AGENCY_SITE_COPY.md (2026-09-20) lists the
-    // Savoretti launch as "targeted this week" — confirm it actually shipped
-    // before this entry goes on a public page. See CONTENT_TODO.md.
-    launchedAt: "TODO: confirm launch date",
-    summary:
-      "A residential brokerage site built around live listings rather than a contact form. The MLS/IDX pipeline pulls current inventory straight onto the site, so the listings visitors see are the listings that exist.",
-    built: [
-      "Custom Next.js build",
-      "Live MLS/IDX listing pipeline",
-      "Area pages for the towns he sells in",
-    ],
-    // TODO: real screenshots with real alt text. See CONTENT_TODO.md.
-    images: [],
-  },
-  {
     slug: "above-all-tent-rentals",
     status: "launched",
     client: "Above All Tent Rentals",
     location: "Saint James, NY",
-    // TODO: confirm launch date.
-    launchedAt: "TODO: confirm launch date",
+    /** ISO 8601. Display formatting happens at render, never in the data. */
+    launchedAt: "2026-08-20",
     summary:
-      "A mobile-first rebuild for an event rental company whose customers are almost all on a phone, planning around a date. The quote request flow asks for the date and the site first, so a usable enquiry arrives instead of a name and a number.",
+      "A mobile-first rebuild for a Long Island event rental company, built around a quote request that asks for the date and the site first — so a usable enquiry arrives instead of a name and a number.",
+    problem:
+      "Tent rental is a deadline purchase, researched on a phone, usually at night. By the time someone is looking they already know their date and roughly how many people they need to cover; what they want is to find out quickly whether you are free and what it will cost. Anything that makes them wait until business hours for that answer is the point where most of them stop looking and start calling somebody else.",
     built: [
-      "Custom site",
-      "Mobile-first rebuild",
-      "Quote request flow",
+      "Custom site, built mobile-first",
+      "Rebuilt from the ground up rather than restyled",
+      "Quote request flow that captures event date, location and guest count up front",
     ],
+    // TODO: real screenshots with real alt text — see CONTENT_TODO.md.
     images: [],
-  },
-  {
-    slug: "gc-kuts",
-    status: "launched",
-    client: "GC Kuts",
-    location: "Smithtown, NY",
-    // TODO: confirm launch date.
-    launchedAt: "TODO: confirm launch date",
-    summary:
-      "A barbershop site whose job is to get someone into a chair. Booksy booking is integrated directly, so a customer books in place rather than being handed off to a platform and losing interest on the way.",
-    built: [
-      "Custom site",
-      "Booksy booking integration",
-    ],
-    images: [],
+    // No `testimonial` field: there is no quote yet. Omitted, not invented.
   },
 ];
 
