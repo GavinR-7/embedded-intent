@@ -1,26 +1,289 @@
+/* ---------------------------------------------------------------------------
+   Embedded Intent — design system
+   ---------------------------------------------------------------------------
+   Tailwind v4 is configured here, in CSS. There is no tailwind.config.js.
+   The `@theme` block below IS the config: every custom property declared in it
+   becomes (a) a real CSS variable on :root and (b) a Tailwind utility class.
+
+     --color-signal: ...   ->  bg-signal  text-signal  border-signal  ring-signal
+     --text-h1: ...        ->  text-h1
+     --spacing-section:... ->  py-section  mt-section  gap-section
+
+   The variable's *namespace* (the part before the second dash) decides which
+   family of utilities it generates. That is the whole mental model.
+   --------------------------------------------------------------------------- */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ---------------------------------------------------------------------------
+   Fonts.
+   `@theme inline` (rather than plain `@theme`) matters here: it makes the
+   generated utility emit `font-family: var(--font-geist-sans)` directly instead
+   of pointing at `--font-sans`, which would be one hop of indirection away from
+   the variable next/font actually defines on <html>.
+   Swapping a typeface later is a change to these two lines plus the import in
+   app/layout.tsx — no component references a font by name.
+   --------------------------------------------------------------------------- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  /* -------------------------------------------------------------------------
+     Colour.
+
+     `--color-*: initial` wipes Tailwind's stock palette. After this line
+     `bg-zinc-800`, `text-blue-500` and friends do not exist. That is on
+     purpose: the palette below is the only palette, so nobody can quietly
+     introduce a sixth grey at 11pm. To restore the defaults, delete that line.
+
+     Colours are authored in OKLCH: perceptually uniform, so equal steps in the
+     L channel look like equal steps of brightness. Every value below was
+     checked to sit inside the sRGB gamut — an out-of-gamut OKLCH colour gets
+     silently clipped by the browser, and then the colour you reasoned about is
+     not the colour on screen.
+
+     Measured WCAG contrast (sRGB, 8-bit), against --color-void / surface /
+     surface-raised respectively:
+
+       ink            18.08 : 17.07 : 15.57   body + headings      AAA
+       ink-muted       9.86 :  9.31 :  8.49   secondary prose      AAA
+       ink-subtle      5.86 :  5.53 :  5.04   labels, meta         AA
+       signal         13.14 : 12.40 : 11.31   links, accents       AAA
+       signal-dim      7.18 :  6.78 :  6.18   hover, quiet accent  AA
+       alert           7.39 :  6.97 :  6.36   form errors          AA
+
+     Non-text (the 3:1 bar for control boundaries and focus rings):
+       line-interactive 3.62 : 3.42 : 3.12    input + control edges
+       signal on void  13.14                  focus ring
+
+     --line and --line-strong are 1.45:1 and 2.33:1. They are deliberately
+     below 3:1 because they are decorative hairlines only. Anything that
+     carries meaning — a field boundary, a toggle edge — uses
+     --color-line-interactive instead.
+
+     The accent is cyan, not amber. Two reasons. An amber bright enough to
+     clear AA on a near-black background drifts toward yellow and reads as a
+     caution state, which collides with the meaning we actually need amber/red
+     to carry on form errors. And cyan holds its saturation at high lightness,
+     so the same accent works as 13:1 link text, as a focus ring, and as a
+     button fill — one accent covering every job instead of three variants.
+     ------------------------------------------------------------------------- */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Backgrounds — near-black with a faint blue cast, so it reads as
+     instrument panel rather than muddy brown-black. */
+  --color-void: oklch(0.145 0.012 245);
+  --color-surface: oklch(0.185 0.014 245);
+  --color-surface-raised: oklch(0.225 0.016 245);
+
+  /* Rules and edges. */
+  --color-line: oklch(0.3 0.018 245);
+  --color-line-strong: oklch(0.42 0.02 245);
+  --color-line-interactive: oklch(0.52 0.022 245);
+
+  /* Text ramp. */
+  --color-ink: oklch(0.97 0.003 245);
+  --color-ink-muted: oklch(0.78 0.012 245);
+  --color-ink-subtle: oklch(0.64 0.016 245);
+
+  /* Accent. */
+  --color-signal: oklch(0.85 0.13 195);
+  --color-signal-dim: oklch(0.68 0.1 200);
+  --color-signal-wash: oklch(0.28 0.045 200);
+
+  /* Semantic — reserved for genuine error states (Phase 6 forms). */
+  --color-alert: oklch(0.72 0.17 25);
+
+  /* -------------------------------------------------------------------------
+     Type scale.
+
+     Sizes are fluid: clamp(mobile, preferred, desktop). The first value is the
+     mobile size, which is the one that was designed first. Tailwind's stock
+     text-xs … text-9xl are left in place for UI chrome; the semantic steps
+     below are what page content uses.
+
+     `--text-x--line-height`, `--text-x--letter-spacing` and
+     `--text-x--font-weight` are Tailwind v4 modifier syntax: one utility
+     (`text-h1`) sets all four properties at once, so a heading cannot be half
+     styled.
+     ------------------------------------------------------------------------- */
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.16em;
+  --text-eyebrow--font-weight: 500;
+
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.02em;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.65;
+
+  --text-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.1875rem);
+  --text-lead--line-height: 1.6;
+
+  --text-h3: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --text-h3--line-height: 1.3;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 600;
+
+  --text-h2: clamp(1.75rem, 1.4rem + 1.6vw, 2.75rem);
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+
+  --text-h1: clamp(2.5rem, 1.9rem + 3vw, 4.25rem);
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h1--font-weight: 600;
+
+  --text-display: clamp(3rem, 2.1rem + 4.2vw, 5.5rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 600;
+
+  /* -------------------------------------------------------------------------
+     Spacing rhythm.
+
+     `--spacing` is Tailwind's base unit — p-4 is 4 × 0.25rem. The named keys
+     below sit in the same namespace, so `py-section` and `px-gutter` are real
+     utilities. Vertical rhythm lives in exactly these three tokens, which is
+     what keeps sections from drifting to 78px here and 96px there.
+     ------------------------------------------------------------------------- */
+  --spacing: 0.25rem;
+  --spacing-gutter: clamp(1.25rem, 5vw, 2rem);
+  --spacing-section: clamp(4rem, 10vw, 8rem);
+  --spacing-section-lg: clamp(5.5rem, 14vw, 11rem);
+
+  /* Content widths — max-w-content for full sections, max-w-prose-tight for
+     running text (a readable measure is ~65 characters). */
+  --container-content: 75rem;
+  --container-prose-tight: 42rem;
+
+  /* Radii — small and consistent. Technical, not friendly. */
+  --radius-field: 0.375rem;
+  --radius-card: 0.5rem;
+
+  /* Easing. `--ease-precise` is the default UI curve; `--ease-out-expo`
+     is for things that should feel like they settle into place. */
+  --ease-precise: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------------------------------------------------------------------------
+   Durations live outside @theme: they are consumed by hand-written CSS
+   transitions, not by utilities, so they do not need to generate classes.
+   --------------------------------------------------------------------------- */
+:root {
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+}
+
+@layer base {
+  html {
+    /* Tell the browser (and form controls, scrollbars, etc.) this is a dark
+       UI, so it stops rendering white default surfaces. */
+    color-scheme: dark;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-ink);
+  }
+
+  /* Numbers should line up in columns — relevant the moment pricing and
+     before/after figures land. */
+  :is(th, td) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background-color: var(--color-signal);
+    color: var(--color-void);
+  }
+
+  /* Accessibility floor: a visible focus ring on every focusable thing.
+     :focus-visible means it appears for keyboard users and not on mouse
+     click, so there is no incentive for anyone to remove it later. */
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Global reduced-motion backstop. Individual components still branch on the
+     media query where a static alternative is needed (the Phase 3 hero chain
+     renders all four states at once, for example) — but this guarantees that
+     nothing added later can animate against the user's stated preference. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---------------------------------------------------------------------------
+   Keyframes. Consumed via `motion-safe:animate-[...]`, so they never run for
+   a visitor who asked for reduced motion.
+   --------------------------------------------------------------------------- */
+
+/* Mobile menu entrance. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Project utilities. `@utility` is the v4 replacement for writing a plugin or
+   stuffing things in @layer utilities — these participate in Tailwind's
+   ordering and only ship when actually used.
+   --------------------------------------------------------------------------- */
+
+/* Faint circuit-board ruling. Masked so it fades out rather than ending on a
+   hard edge, which is what would make it read as a table instead of texture. */
+@utility trace-grid {
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  background-position: center;
+  mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, #000 20%, transparent 75%);
+}
+
+/* Skip link — offscreen until focused, then pinned to the top-left. */
+@utility skip-link {
+  position: absolute;
+  left: var(--spacing-gutter);
+  top: -100%;
+  z-index: 100;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-field);
+  background-color: var(--color-signal);
+  color: var(--color-void);
+  font-weight: 600;
+  &:focus-visible {
+    top: 0.75rem;
+  }
 }
