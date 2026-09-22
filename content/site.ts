@@ -62,6 +62,8 @@ export type SiteConfig = {
   /** Sits directly under the CTA wherever it appears. */
   ctaMicrocopy: string;
   footerColumns: readonly FooterColumn[];
+  /** Heading for the footer column generated from content/services.ts. */
+  footerServicesHeading: string;
   social: readonly SocialLink[];
   /** The three-part trust line used under the hero and in the footer. */
   trustPoints: readonly string[];
@@ -93,9 +95,11 @@ export const site: SiteConfig = {
   primaryCta: { label: "Get a free audit", href: "/contact" },
   ctaMicrocopy: "Free · 30 minutes · You leave with a prioritised list either way",
 
-  // A Services column, generated from content/services.ts, is added in Phase 4.
-  // It is not hard-coded here — that would create a second list of services to
-  // keep in sync with the first.
+  // The Services column is generated from content/services.ts in the Footer —
+  // only its heading lives here. Listing the services again would create a
+  // second list to keep in sync with the first.
+  footerServicesHeading: "Services",
+
   footerColumns: [
     {
       heading: "Explore",

@@ -542,3 +542,76 @@ and needs no system libraries.)
 The hero panel's "0.4s" is now `AUTO`, matching the other three rows. A panel
 styled as live instrumentation is the context most likely to make a number read
 as a real reading, which is exactly why one should not sit there unsourced.
+
+---
+
+## Phase 4 — Service pages
+
+`app/services/[slug]/page.tsx`, eight pages prerendered from
+`content/services.ts`. Lighthouse mobile on `/services/website-design-build`:
+performance **98**, accessibility **100**, best practices 96.
+
+### Next 16 async params, for real this time
+
+```tsx
+export default async function ServicePage(props: PageProps<"/services/[slug]">) {
+  const { slug } = await props.params;
+```
+
+Three things worth internalising:
+
+- **`params` is a Promise.** The synchronous destructure that worked in Next 15
+  is removed in 16, not deprecated. `generateMetadata` gets the same Promise
+  and must await it too.
+- **`PageProps` is a generated global — never import it.** It is emitted into
+  `.next/types` by `next build`/`next dev`. It is also route-aware: the string
+  literal is checked against the real directory, so a typo in
+  `PageProps<'/services/[slgu]'>` fails to compile, and `params` is typed
+  `Promise<{ slug: string }>` without anyone writing that type out.
+- **`generateStaticParams` is the exception** — it *returns* plain objects and
+  is not async-params-based.
+
+### `dynamicParams = false`
+
+The catalogue is a fixed list in the repo; there is no runtime source of new
+slugs. Without this, an unknown slug would be rendered on demand, which is only
+ever a way to serve a page for a service that does not exist. With it, the
+router 404s before any of our code runs.
+
+`notFound()` is still called after the lookup, because that is what narrows
+`Service | undefined` to `Service` for the rest of the component. Verified:
+`/services/does-not-exist` returns 404, the eight real slugs return 200.
+
+### The pricing model paid off here
+
+Every awkward case renders from the same three fields, with no special-casing
+in the page:
+
+```
+website-design-build   $1,500–5,000   $150/mo    + "Most projects land $2,500–4,000"
+google-ads-management  No setup fee   $500/mo or 15% of ad spend, whichever is greater
+custom-ai-automation   from $1,500    No monthly
+```
+
+`passThrough` renders directly beneath the price, which is the point of it
+being data rather than a note someone remembers to add.
+
+### FAQ coverage was a real gap
+
+`faqsForService` returned nothing for Get Found on Google, Google Ads
+Management and Social Content Engine — three pages that would have shipped with
+no objection handling. Fixed by tagging existing questions where they genuinely
+apply rather than writing filler: account ownership is the sharpest question
+for a Google Business Profile and an ad account, both of which agencies
+routinely hold hostage. Every service now has at least one.
+
+The section is still conditional, so a service with no tagged questions omits
+it rather than rendering an empty heading, and the closing band flips tone to
+keep the alternation correct either way.
+
+### Footer services column
+
+Generated from `content/services.ts` in the Footer; only its heading lives in
+`content/site.ts`. Listing the eight services again in config would have been a
+second list to forget to update — the comment in `site.ts` that promised this
+for Phase 4 is now fulfilled rather than left as a lie.

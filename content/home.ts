@@ -230,7 +230,6 @@ export const home = {
     eyebrow: "Next step",
     heading: "Let's find the fastest win in your business.",
     body: "Thirty minutes. We look at how leads reach you, what happens to the ones that arrive after hours, and where your team is losing time — then I tell you what to build first and what it costs.",
-    auditIsNotHeading: "What the audit is not",
     proofHeading: "Most recent build",
   },
 } as const;

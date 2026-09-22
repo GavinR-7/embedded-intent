@@ -11,6 +11,8 @@
  * the reply is the product.
  */
 export const audit = {
+  isNotHeading: "What the audit is not",
+
   /**
    * The anti-sell. Naming what this is not buys more credibility than another
    * claim would, and it stops anyone arriving braced for a pitch.

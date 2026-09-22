@@ -42,7 +42,7 @@ export function Close() {
               content/audit.ts, so the promise cannot drift between them. */}
           <div className="rounded-card border border-line bg-void/40 p-7">
             <h3 className="text-eyebrow font-mono uppercase text-ink-subtle">
-              {close.auditIsNotHeading}
+              {audit.isNotHeading}
             </h3>
 
             <ul className="mt-5 flex flex-col gap-3">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { services } from "@/content/services";
 import { site } from "@/content/site";
 
 export function Footer() {
@@ -24,6 +25,27 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-10 sm:flex-row sm:gap-16">
+            {/* Generated from the catalogue rather than listed in site.ts —
+                a second hand-maintained list of services is a second list to
+                forget to update. */}
+            <nav aria-label={site.footerServicesHeading}>
+              <h2 className="text-eyebrow font-mono uppercase text-ink-subtle">
+                {site.footerServicesHeading}
+              </h2>
+              <ul className="mt-4 flex flex-col gap-3">
+                {services.map((service) => (
+                  <li key={service.slug}>
+                    <Link
+                      href={`/services/${service.slug}`}
+                      className="rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                    >
+                      {service.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
             {site.footerColumns.map((column) => (
               <nav key={column.heading} aria-label={column.heading}>
                 <h2 className="text-eyebrow font-mono uppercase text-ink-subtle">{column.heading}</h2>

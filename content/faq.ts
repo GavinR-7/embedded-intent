@@ -52,8 +52,8 @@ export const faqs: readonly FaqItem[] = [
     id: "who-owns-the-accounts",
     question: "Who owns the accounts?",
     answer:
-      "You do. Every account — domain, hosting, Google Business Profile, the AI platform, the phone number — is created in your name with you as the owner, and you get the credentials. If you stop working with me tomorrow, everything keeps running and you can hand it to anyone. Nothing is hostage to the relationship.",
-    services: [],
+      "You do. Every account — domain, hosting, Google Business Profile, the AI platform, the ad account, the phone number — is created in your name with you as the owner, and you get the credentials. If you stop working with me tomorrow, everything keeps running and you can hand it to anyone. Nothing is hostage to the relationship.",
+    services: ["get-found-on-google", "google-ads-management"],
   },
   {
     id: "works-with-my-crm",
@@ -74,14 +74,19 @@ export const faqs: readonly FaqItem[] = [
     question: "Will AI replace my people?",
     answer:
       "For most of my clients there is nobody to replace — it is the owner answering texts after dinner, and that is the part that goes. If you do have a team, the honest version is that it removes the repetitive slice of their day, not the job: the twentieth person asking your hours, the review request nobody remembered. What it buys you is more volume without hiring for it. If you are hoping to cut staff, I am the wrong person to call.",
-    services: ["ai-lead-response", "custom-ai-automation"],
+    services: ["ai-lead-response", "custom-ai-automation", "social-content-engine"],
   },
   {
     id: "when-the-ai-gets-it-wrong",
     question: "What happens when the AI gets something wrong?",
     answer:
       "It will, eventually, so it is built on that assumption. It answers only from what you gave it. It hands off to a person when it is unsure or when the customer asks for one. Anything that commits you to a price or a date can require your approval first. And every conversation is logged in full, so when something goes wrong you can read exactly what was said, and we change the rule rather than guess.",
-    services: ["ai-lead-response", "missed-call-text-back", "custom-ai-automation"],
+    services: [
+      "ai-lead-response",
+      "missed-call-text-back",
+      "custom-ai-automation",
+      "social-content-engine",
+    ],
   },
 ];
 
