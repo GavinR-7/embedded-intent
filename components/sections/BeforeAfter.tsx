@@ -18,7 +18,7 @@ export function BeforeAfter() {
     .filter((service) => service !== undefined);
 
   return (
-    <Section id="what-changes">
+    <Section id="what-changes" tone="surface">
       <SectionHeading eyebrow={beforeAfter.eyebrow} heading={beforeAfter.heading} />
 
       <div className="mt-14 flex flex-col gap-px overflow-hidden rounded-card bg-line">

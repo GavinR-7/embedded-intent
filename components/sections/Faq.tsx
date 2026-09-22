@@ -18,7 +18,7 @@ const { faq } = home;
  */
 export function Faq() {
   return (
-    <Section id="faq">
+    <Section id="faq" tone="void">
       <SectionHeading eyebrow={faq.eyebrow} heading={faq.heading} />
 
       <div className="mt-14 border-t border-line">

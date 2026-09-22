@@ -1,5 +1,5 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
-import { Eyebrow } from "@/components/ui/Section";
+import { Eyebrow, Section } from "@/components/ui/Section";
 import { home } from "@/content/home";
 import { site } from "@/content/site";
 
@@ -14,9 +14,8 @@ const { hero } = home;
  */
 export function Hero() {
   return (
-    <section className="pt-16 pb-section sm:pt-24">
-      <div className="mx-auto max-w-content px-gutter">
-        <div className="grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
+    <Section tone="void" size="lg" divider={false} bleedTop>
+      <div className="grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
           <div>
             <Eyebrow>{hero.eyebrow}</Eyebrow>
 
@@ -46,9 +45,8 @@ export function Hero() {
             </ul>
           </div>
 
-          <LeadSystemPanel />
-        </div>
+        <LeadSystemPanel />
       </div>
-    </section>
+    </Section>
   );
 }

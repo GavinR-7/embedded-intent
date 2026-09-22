@@ -22,7 +22,7 @@ export function Close() {
   const mostRecent = caseStudies[0];
 
   return (
-    <Section id="close" className="pb-section-lg">
+    <Section id="close" tone="surface" size="lg">
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <Eyebrow>{close.eyebrow}</Eyebrow>
@@ -40,7 +40,7 @@ export function Close() {
         <div className="flex flex-col gap-5">
           {/* The anti-sell. Shared with the contact page in Phase 6 via
               content/audit.ts, so the promise cannot drift between them. */}
-          <div className="rounded-card border border-line bg-surface/40 p-7">
+          <div className="rounded-card border border-line bg-void/40 p-7">
             <h3 className="text-eyebrow font-mono uppercase text-ink-subtle">
               {close.auditIsNotHeading}
             </h3>
@@ -59,7 +59,7 @@ export function Close() {
           {mostRecent && (
             <Link
               href={`/work/${mostRecent.slug}`}
-              className="group rounded-card border border-line bg-surface/40 p-7 transition-colors duration-[var(--duration-base)] ease-precise hover:border-signal"
+              className="group rounded-card border border-line bg-void/40 p-7 transition-colors duration-[var(--duration-base)] ease-precise hover:border-signal"
             >
               <h3 className="text-eyebrow font-mono uppercase text-signal">
                 {close.proofHeading}

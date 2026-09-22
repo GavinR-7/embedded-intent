@@ -436,3 +436,109 @@ headroom than before — worth remembering when Phase 7 adds motion.
 
 A `.gitignore` entry now covers chrome-launcher's `C:\Users\...` temp profiles,
 since setting `LOCALAPPDATA` alone did not stop them appearing in the repo.
+
+---
+
+## Phase 3 fixes — rhythm, banding, fonts (2026-09-21)
+
+### The section gap was 2x the token, and the token was not the problem
+
+Measured before touching anything, via CDP against a production build:
+
+```
+1440px   token 128px   actual gap between adjacent sections  256px
+390px    token  64px   actual gap between adjacent sections  128px
+```
+
+Every adjacent pair applies both sections' padding, so the gap a reader sees is
+always the sum. Tightening the token alone would have kept the doubling and
+just made every band cramped.
+
+After tightening to `clamp(3.5rem, 7vw, 6rem)` / `clamp(5rem, 10vw, 8rem)` and
+banding the page:
+
+```
+1440px   192px standard, 224px at the two act breaks   (mean 199px)
+390px    112px standard, 136px at the two act breaks   (mean 117px)
+```
+
+The doubling is still there and is now correct: the padding is a band's
+internal breathing room, and the boundary is the hairline border, not the empty
+space. `--spacing-section-lg` is reserved for the hero and the close.
+
+### One Section component owns the band rhythm
+
+`tone` ("void" | "surface"), `size` ("default" | "lg"), `divider`, `bleedTop`.
+Every homepage section routes through it. Band backgrounds as per-section
+classes would be ten files' worth of alternation state that nothing enforces —
+the same argument as the content layer, applied to layout.
+
+The texture renders on void bands only. That is what makes the alternation read
+as a change of material rather than a slight change of grey.
+
+### Two Tailwind traps, both of which fail silently
+
+Both cost real time, and both produce *no error at all* — just a missing style.
+
+1. **A class assembled at runtime is never generated.** Tailwind finds classes
+   by scanning source text; it does not execute the code. `` `pt-[calc(${spacing}+5rem)]` ``
+   never appears in the file as a complete string, so the utility is never
+   emitted and the element simply gets no padding. Variants now come from
+   lookup tables of whole class names.
+
+2. **`calc()` requires whitespace around `+`.** In a Tailwind arbitrary value
+   that means underscores: `pt-[calc(var(--spacing-section-lg)_+_5rem)]`.
+   Written without them the declaration is invalid CSS and the browser drops
+   it — the same silent zero.
+
+The hero's top padding was 0px from both bugs at once, which is only visible if
+you measure. It is 208px at 1440px now (128px band + 80px header).
+
+### Fonts: measured, and the answer was not the one expected
+
+The LCP element is the **hero subheading paragraph**, set in Geist Sans —
+identified with a CDP probe rather than guessed. Geist Mono is not the LCP face;
+it was only competing for bandwidth.
+
+Findings:
+
+- Both faces already use `font-display: swap`; Lighthouse's `font-display`
+  audit passes and fonts are not render-blocking.
+- Geist Sans is a **single variable file spanning `font-weight: 100 900`**.
+  We render 400, 500 and 600 out of that one file, so there are no unused
+  static weights to remove — the axis is inherent to the file.
+- next/font generates `@font-face` rules for cyrillic, greek, vietnamese and
+  latin-ext too, but `unicode-range` means they are never fetched for this
+  content. They cost disk, not bandwidth.
+- **Both faces were preloaded**, putting a non-LCP face in the highest priority
+  band alongside the one face LCP waits on.
+
+Lighthouse mobile LCP, repeated runs because single runs vary by ±0.6s:
+
+```
+baseline (both preloaded)  2.50 2.45 2.47                    median 2.47s
+mono preload: false        2.48 1.89 1.89 2.43 1.88 2.52     median 2.16s
+mono removed entirely      2.35 1.71 2.37                    median 2.35s  (n=3)
+```
+
+Shipped `preload: false` on Geist Mono. It is free, keeps the designed face,
+and improves the median by ~0.3s. Note the distribution is **bimodal** — runs
+land near either 1.89s or 2.45s, which looks like a race between the mono
+request and the sans finishing. It does not reliably break 2s.
+
+Hard character-subsetting was attempted and measured rather than assumed:
+subsetting Geist Mono's latin file to 107 characters gives **22.57 KiB →
+14.26 KiB, 36.8%**. Only 8.3 KiB, because a variable font's axis data and
+hinting dominate, not glyph count. That is not worth committing a font binary,
+an OFL notice and a missing-glyph hazard for, so it was not shipped — the
+numbers are recorded here so the decision can be revisited.
+
+(`pyftsubset` is unavailable here — no pip, no venv, no root. The measurement
+used the `subset-font` npm package in the scratchpad, which is harfbuzz/WASM
+and needs no system libraries.)
+
+### No unsourced numbers anywhere
+
+The hero panel's "0.4s" is now `AUTO`, matching the other three rows. A panel
+styled as live instrumentation is the context most likely to make a number read
+as a real reading, which is exactly why one should not sit there unsourced.

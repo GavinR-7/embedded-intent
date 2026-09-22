@@ -5,7 +5,7 @@ const { howItWorks } = home;
 
 export function HowItWorks() {
   return (
-    <Section id="how-it-works">
+    <Section id="how-it-works" tone="void">
       <SectionHeading eyebrow={howItWorks.eyebrow} heading={howItWorks.heading} />
 
       <ol className="mt-14 grid gap-px overflow-hidden rounded-card bg-line md:grid-cols-2 lg:grid-cols-4">

@@ -5,7 +5,7 @@ const { problem } = home;
 
 export function Problem() {
   return (
-    <Section id="problem">
+    <Section id="problem" tone="surface">
       <SectionHeading
         eyebrow={problem.eyebrow}
         heading={problem.heading}

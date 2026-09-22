@@ -116,6 +116,24 @@ Component-specific CSS that cannot be expressed in utilities goes in a
 `*.module.css` beside the component — not in `globals.css`, which is reserved
 for the system itself.
 
+**Two Tailwind rules that fail silently**, both learned the hard way:
+
+- **Class names must appear in the source as complete literals.** Tailwind
+  scans text, it does not run the code, so a class built from template
+  variables is never generated and the element silently gets no style. Use
+  lookup tables of whole class names for variants — see
+  `components/ui/Section.tsx`.
+- **`calc()` needs whitespace around `+` and `-`.** Inside a Tailwind arbitrary
+  value that means underscores: `pt-[calc(var(--spacing-section)_+_5rem)]`.
+  Without them the declaration is invalid and the browser drops it.
+
+### Band rhythm
+
+`components/ui/Section.tsx` owns every section's background, boundary, texture
+and vertical rhythm. Sections alternate `void` and `surface` with a hairline
+top border at each transition, and the circuit-trace texture renders on `void`
+bands only. Never set a band background on an individual section.
+
 ## Server and client components
 
 Everything is a Server Component unless it needs state, effects or browser APIs.

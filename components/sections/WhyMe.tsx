@@ -9,7 +9,7 @@ const { whyMe } = home;
  */
 export function WhyMe() {
   return (
-    <Section id="why-me">
+    <Section id="why-me" tone="surface">
       <div className="max-w-3xl">
         <Eyebrow>{whyMe.eyebrow}</Eyebrow>
         <h2 className="mt-5 text-h2 text-ink">{whyMe.heading}</h2>

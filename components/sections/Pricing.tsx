@@ -21,7 +21,7 @@ function monthlyCell(servicePricing: ServicePricing): string {
  */
 export function Pricing() {
   return (
-    <Section id="pricing">
+    <Section id="pricing" tone="void">
       <SectionHeading
         eyebrow={pricing.eyebrow}
         heading={pricing.heading}

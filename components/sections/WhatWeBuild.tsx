@@ -18,7 +18,7 @@ function serviceHref(service: Service) {
 
 export function WhatWeBuild() {
   return (
-    <Section id="what-we-build">
+    <Section id="what-we-build" tone="void">
       <SectionHeading
         eyebrow={whatWeBuild.eyebrow}
         heading={whatWeBuild.heading}

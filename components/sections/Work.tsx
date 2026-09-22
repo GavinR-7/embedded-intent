@@ -16,7 +16,7 @@ const { work } = home;
  */
 export function Work() {
   return (
-    <Section id="work">
+    <Section id="work" tone="surface">
       <SectionHeading
         eyebrow={work.eyebrow}
         heading={work.heading}
@@ -27,7 +27,7 @@ export function Work() {
         {caseStudies.map((study) => (
           <article
             key={study.slug}
-            className="overflow-hidden rounded-card border border-line bg-surface/40"
+            className="overflow-hidden rounded-card border border-line bg-void/40"
           >
             <div className="grid gap-px bg-line lg:grid-cols-5">
               <div className="bg-void p-7 sm:p-9 lg:col-span-3">

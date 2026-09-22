@@ -156,8 +156,15 @@
      ------------------------------------------------------------------------- */
   --spacing: 0.25rem;
   --spacing-gutter: clamp(1.25rem, 5vw, 2rem);
-  --spacing-section: clamp(4rem, 10vw, 8rem);
-  --spacing-section-lg: clamp(5.5rem, 14vw, 11rem);
+  /*
+     Note these are *per section*. Adjacent sections each apply their own
+     padding, so the gap a reader sees between two bands is twice the value
+     below — 192px at 1440px, not 96px. That doubling is intentional now that
+     sections are visually banded: the padding is a band's internal breathing
+     room and the boundary is the hairline border, not the empty space.
+  */
+  --spacing-section: clamp(3.5rem, 7vw, 6rem);
+  --spacing-section-lg: clamp(5rem, 10vw, 8rem);
 
   /* Content widths — max-w-content for full sections, max-w-prose-tight for
      running text (a readable measure is ~65 characters). */

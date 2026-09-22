@@ -22,10 +22,23 @@ const geistSans = Geist({
   display: "swap",
 });
 
+/*
+ * `preload: false` is deliberate, and measured.
+ *
+ * The LCP element on the homepage is the hero subheading, which is set in
+ * Geist Sans. Preloading the mono face put a second font in the highest
+ * priority band, competing for bandwidth with the one face LCP actually waits
+ * on. Mono is only used for eyebrows, labels, status chips and figures —
+ * small text, never the largest paint — so it can load at normal priority and
+ * swap in a moment later.
+ *
+ * `display: "swap"` on both means no invisible text either way.
+ */
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -57,17 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="relative flex min-h-full flex-col bg-void font-sans text-body text-ink">
-        {/*
-          Page texture. It lives here, not in the hero, so it starts at y=0 and
-          runs continuously *behind* the transparent header — when it was inside
-          the hero it began below the 80px header and left a visible seam across
-          the top of the page. Negative z-index keeps it under all content.
-        */}
-        <div
-          aria-hidden="true"
-          className="trace-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem]"
-        />
+      <body className="flex min-h-full flex-col bg-void font-sans text-body text-ink">
         {/* First thing in the tab order: lets keyboard and screen-reader users
             jump the nav instead of tabbing through it on every page. */}
         <a href="#main" className="skip-link">

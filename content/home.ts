@@ -53,8 +53,11 @@ export const home = {
    * the claim is concrete — these are the four things that happen, and the
    * footer counts how many of them need a human.
    *
-   * NOTE: the "0.4s" on the first row is the only number on this panel, and it
-   * is not currently sourced. See CONTENT_TODO.md.
+   * Every row's status reads AUTO. An earlier draft had "0.4s" on the first
+   * row; it was removed because nothing measured it. A panel styled as live
+   * instrumentation is the last place an unsourced number should sit — it is
+   * the context most likely to be read as a real reading. The only numbers on
+   * this site are published prices and measured results with a stated source.
    */
   leadSystem: {
     title: "Lead system",
@@ -64,7 +67,7 @@ export const home = {
         id: "captured",
         title: "New lead captured",
         detail: "Website form, call, or Google",
-        status: "0.4s",
+        status: "AUTO",
       },
       {
         id: "qualified",

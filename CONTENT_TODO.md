@@ -92,12 +92,9 @@ These must be resolved before the domain is pointed at the site.
   is now "Get a free audit" everywhere, with "Free · 30 minutes · …" carried by
   `ctaMicrocopy` underneath. Shorter button, same offer.
 
-- [ ] **🚨 Source the "0.4s" on the hero panel, or cut it.** `content/home.ts`
-  → `leadSystem.rows[0].status`. It is the only number on the homepage that is
-  not a published price, and it currently has nothing behind it. Either it is a
-  real measured response time with a stated source, or it should become `AUTO`
-  like the other three rows. Same rule as case study results: a number with no
-  source does not go on the site.
+- [x] ~~Source the "0.4s" on the hero panel, or cut it.~~ Cut 2026-09-21. It
+  now reads `AUTO` like the other three rows. No unsourced numbers anywhere on
+  the site.
 
 ---
 
