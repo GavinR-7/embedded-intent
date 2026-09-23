@@ -23,6 +23,8 @@ app/                    Routes. Every file here is a URL or a route convention.
   layout.tsx            Root layout: fonts, <html>/<body>, Header, Footer, skip link.
   page.tsx              / — the homepage, composed from components/sections/.
   services/[slug]/      One page per service, prerendered from content/services.ts.
+  contact/              The audit request form.
+  api/audit/route.ts    POST endpoint: zod validation, honeypot, Resend.
   work/                 Case study index.
   work/[slug]/          Case study detail. Branches on the CaseStudy union.
   globals.css           The design system. Tokens, base layer, project utilities.
@@ -34,6 +36,7 @@ components/
                         ButtonLink. Small and deliberately option-poor.
   reactbits/            Vendored React Bits components — Phase 7, hard cap of 3.
 lib/                    Framework-agnostic helpers (hooks, utilities).
+  auditRequest.ts       Zod schema + email formatting. Server-only by design.
 content/                Typed content modules. The single source of truth.
   site.ts               Brand, contact, nav, footer, trust line.
   services.ts           The service catalogue + price formatting helpers.
@@ -158,6 +161,22 @@ for the system itself.
 and vertical rhythm. Sections alternate `void` and `surface` with a hairline
 top border at each transition, and the circuit-trace texture renders on `void`
 bands only. Never set a band background on an individual section.
+
+## Environment variables
+
+`.env.example` lists the names with no values and **is committed**; `.gitignore`
+needs the `!.env.example` exception or the `.env*` rule swallows it. Real values
+go in `.env.local` (git-ignored) and in the Vercel project settings.
+
+| Variable | Used by |
+| --- | --- |
+| `RESEND_API_KEY` | `app/api/audit/route.ts` |
+| `AUDIT_TO_EMAIL` | where audit requests are delivered |
+| `AUDIT_FROM_EMAIL` | sender identity; must be on a Resend-verified domain |
+
+If any is missing the endpoint returns **500 and sends nothing**. It does not
+log a warning and return success — a misconfigured deploy that silently eats
+every lead while showing a thank-you page is the worst outcome this form has.
 
 ## Server and client components
 

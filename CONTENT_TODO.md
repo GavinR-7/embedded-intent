@@ -154,8 +154,21 @@ These must be resolved before the domain is pointed at the site.
   Multi-select options: new website or rebuild · getting found on Google ·
   Google Ads · more Google reviews · more leads · AI / automation · not sure yet.
 
-- [ ] **Business hours** are not recorded anywhere yet. The "Reach us directly"
-  card needs them, so they will have to go in `content/site.ts` before Phase 6.
+- [x] ~~Business hours.~~ Set 2026-09-22: `Mon–Fri, 9am–6pm ET`, alongside
+  `responseCommitment` ("Forms answered within one business day") in
+  `content/site.ts`. Both are commitments — change them in one place if they
+  change.
+
+- [ ] **🚨 Resend is not configured.** `/contact` renders and validates, but no
+  email can be sent until `RESEND_API_KEY`, `AUDIT_TO_EMAIL` and
+  `AUDIT_FROM_EMAIL` exist in `.env.local` *and* in the Vercel project. The
+  endpoint fails loudly (500) rather than pretending to succeed, so an
+  unconfigured deploy is visible — but it is still a form that cannot receive
+  anything. Verify with a real submission before launch.
+
+- [ ] **Verify the From: domain in Resend.** `AUDIT_FROM_EMAIL` has to be on a
+  domain verified in Resend or every send is rejected. This is the same DNS
+  work as getting `hello@embeddedintent.com` receiving.
 
 ---
 

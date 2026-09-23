@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template, which carries key NAMES and no values. Without this
+# exception `.env*` above would swallow it and nobody would know which keys to
+# set.
+!.env.example
 
 # vercel
 .vercel

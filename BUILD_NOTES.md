@@ -868,3 +868,72 @@ listing both. Then reverted.
 The index handles 1..N with a single `grid-cols` decision and no placeholder
 slots, and both the index and homepage copy dropped their counts — "one site"
 goes stale the moment a second one launches.
+
+---
+
+## Phase 6 — Contact and the audit form
+
+`/contact` plus `POST /api/audit`. Lighthouse mobile: performance **97**,
+accessibility **100**, best practices **100**, CLS 0.
+
+### Dependencies added
+
+- **zod 4.6.5** — server-side validation of the submission.
+- **resend 6.28.1** — the email client. ~0.3MB installed.
+
+zod is ~5.9MB installed but **none of it reaches the browser**:
+`lib/auditRequest.ts` is imported only by the route handler. Validating in the
+client would ship roughly 13KB gzipped to every visitor to pre-check what the
+server has to check again anyway. The form uses native `required` and
+`type="email"` for instant feedback, and renders whatever field-keyed errors
+the server returns.
+
+### Failing loudly is the whole design
+
+The worst outcome for this form is not an error — it is a **silent success**: a
+misconfigured deploy that swallows every lead while showing a thank-you page.
+So every path that cannot deliver says so. Verified against the running server:
+
+```
+malformed body              400  {"ok":false,"message":"Malformed request."}
+missing name + email        400  field errors for both
+bad email                   400  {"email":"That email address doesn't look right."}
+honeypot filled             200  {"ok":true}          (nothing sent)
+valid, server unconfigured  500  "The form is not configured to send yet."
+valid, key rejected         502  "The email service rejected the message."
+GET                         405
+```
+
+Two of those deserve explanation.
+
+**The honeypot returns 200.** Telling a bot it was caught teaches whoever wrote
+it which field to skip next time. A success response makes a dropped submission
+indistinguishable from a delivered one. Nothing is sent.
+
+**A rejected send is 502, not 200.** The Resend SDK reports delivery failures
+in the returned payload rather than throwing, so `result.error` has to be
+checked explicitly — without that check a rejected send looks exactly like a
+successful one. Tested with a deliberately invalid API key, which is how that
+line got written.
+
+### Form details worth keeping
+
+- The honeypot is `hidden`, `aria-hidden` and `tabIndex={-1}`, so no real
+  person — sighted, screen-reader or keyboard — can reach it.
+- The interest checkboxes are a real `<fieldset>`/`<legend>`, so they are
+  announced as one question rather than seven unrelated checkboxes. Each
+  option carries the `ServiceSlug` it maps to, so a submission names services
+  from the catalogue rather than free text, and two options carry `slug: null`
+  honestly — "more leads" spans several services and "not sure yet" is the
+  answer the audit exists to resolve.
+- On failure every typed value stays on screen. Nothing has to be retyped.
+- Success replaces the form and is announced with `role="status"`, since the
+  thing that had focus is gone.
+- The form comes **first in the DOM** and sits left on desktop, so nobody tabs
+  through two cards to reach it.
+
+### `.env.example` needed a gitignore exception
+
+`.gitignore` had `.env*`, which swallows `.env.example` too. Added
+`!.env.example` and verified with `git check-ignore`. A template nobody can
+commit is a template nobody knows exists.
