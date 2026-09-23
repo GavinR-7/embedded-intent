@@ -32,6 +32,40 @@
  * Prices are the owner's confirmed numbers as of 2026-09-21.
  */
 
+import type { IconName } from "@/components/ui/icons";
+
+/**
+ * Grouping for the Services mega menu. The menu reads this from the data
+ * rather than holding its own list, so adding a service puts it in the nav
+ * automatically and it can never appear in the catalogue but not the menu.
+ */
+export type ServiceCategory = "websites" | "get-found" | "ai-automation";
+
+export const serviceCategories: readonly {
+  id: ServiceCategory;
+  label: string;
+}[] = [
+  { id: "websites", label: "Websites" },
+  { id: "get-found", label: "Get found" },
+  { id: "ai-automation", label: "AI & automation" },
+];
+
+/** Services in a category, in catalogue order. */
+export function servicesByCategory(category: ServiceCategory): readonly Service[] {
+  return services.filter((service) => service.category === category);
+}
+
+/**
+ * One step in the service's flow panel — the vertical "this is what actually
+ * happens" readout beside the service page hero.
+ */
+export type FlowStep = {
+  title: string;
+  /** The line under the title. How the step actually works. */
+  detail: string;
+  icon: IconName;
+};
+
 export type ServiceSlug =
   | "website-design-build"
   | "website-refresh"
@@ -111,6 +145,10 @@ export type Service = {
   name: string;
   /** Whether this is the entry product or something added to it. */
   tier: "primary" | "add-on";
+  /** Which mega-menu column this belongs in. */
+  category: ServiceCategory;
+  /** Shown in the nav and on the flow panel. */
+  icon: IconName;
   /** One line. What it is, in the owner's language. */
   promise: string;
   /** The thing that actually changes in the business. */
@@ -131,6 +169,13 @@ export type Service = {
    * it becomes a refund conversation.
    */
   notThis?: string;
+  /** What actually happens, step by step. Rendered as the flow panel. */
+  flow: AtLeastThree<FlowStep>;
+  /**
+   * The compounding result, as a short chain. Rendered as a footer strip on
+   * the flow panel. These are directions, not measurements — no numbers.
+   */
+  outcomeChain?: readonly string[];
   pricing: ServicePricing;
 };
 
@@ -139,6 +184,8 @@ export const services: readonly Service[] = [
     slug: "website-design-build",
     name: "Website Design & Build",
     tier: "primary",
+    category: "websites",
+    icon: "browser",
     promise:
       "A fast, custom site that turns the people already searching for you into booked jobs.",
     outcome:
@@ -178,6 +225,17 @@ export const services: readonly Service[] = [
         after: "You text me, or change it yourself",
       },
     ],
+    flow: [
+      { title: "Someone finds you on Google", detail: "Search, the map pack, or a card you handed them", icon: "search" },
+      { title: "The page opens in under two seconds", detail: "Static pages, compressed photos, no builder bloat", icon: "bolt" },
+      { title: "They tap the call button", detail: "Reachable by thumb on every screen", icon: "phone" },
+      { title: "Or the quote lands on your phone", detail: "Job, address and date, before they close the tab", icon: "inbox" },
+    ],
+    outcomeChain: [
+      "Faster pages",
+      "More people who stay",
+      "More calls from the same traffic",
+    ],
     pricing: {
       build: { from: 1500, to: 5000 },
       buildTypical: { from: 2500, to: 4000 },
@@ -188,6 +246,8 @@ export const services: readonly Service[] = [
     slug: "website-refresh",
     name: "Website Refresh",
     tier: "add-on",
+    category: "websites",
+    icon: "refresh",
     promise: "Keep the site you have. Fix the parts that are costing you.",
     outcome:
       "A site that looks current and opens fast, without starting over or changing your address.",
@@ -226,6 +286,17 @@ export const services: readonly Service[] = [
     ],
     notThis:
       "Not a rebuild wearing a refresh's price tag. If what's underneath is past saving, I'll say so — and a new build costs more than this.",
+    flow: [
+      { title: "We look at what's worth keeping", detail: "Structure, addresses, anything already working", icon: "search" },
+      { title: "Photos get compressed and resized", detail: "Usually the entire speed problem", icon: "bolt" },
+      { title: "Layout rebuilt on your existing pages", detail: "Mobile-first, same addresses", icon: "browser" },
+      { title: "Prices and copy brought current", detail: "What you actually do today", icon: "document" },
+    ],
+    outcomeChain: [
+      "Same web address",
+      "Faster on a phone",
+      "A site you're willing to send people to",
+    ],
     pricing: {
       build: { from: 800, to: 2000 },
       monthly: { kind: "flat", amount: 150 },
@@ -235,6 +306,8 @@ export const services: readonly Service[] = [
     slug: "ai-lead-response",
     name: "AI Lead Response",
     tier: "add-on",
+    category: "ai-automation",
+    icon: "chat",
     promise:
       "Answers their questions, qualifies the job and books it — in under a minute, at any hour.",
     outcome:
@@ -274,6 +347,18 @@ export const services: readonly Service[] = [
     ],
     notThis:
       "Not a chatbot that makes things up. It answers from what you gave it, says it doesn't know otherwise, and anything that commits you to a price or a date waits for you.",
+    flow: [
+      { title: "New lead captured", detail: "Website form, call, or Google", icon: "inbox" },
+      { title: "It answers their questions", detail: "Service area, rough price, what you take on", icon: "chat" },
+      { title: "It asks yours", detail: "Job type, timeline, budget, ZIP", icon: "filter" },
+      { title: "Routed and booked", detail: "Real slots from your calendar", icon: "calendar" },
+      { title: "You get the briefing", detail: "Everything they said, before you speak", icon: "document" },
+    ],
+    outcomeChain: [
+      "Answered in under a minute",
+      "Qualified before it reaches you",
+      "Fewer calls that go nowhere",
+    ],
     pricing: {
       build: { from: 1500, to: 2500 },
       monthly: { kind: "flat", amount: 250 },
@@ -283,6 +368,8 @@ export const services: readonly Service[] = [
     slug: "missed-call-text-back",
     name: "Missed-Call Text-Back",
     tier: "add-on",
+    category: "ai-automation",
+    icon: "phone",
     promise: "Every call you can't pick up gets a text back within seconds.",
     outcome: "A missed call stops being a lost job.",
     forWhom:
@@ -316,6 +403,17 @@ export const services: readonly Service[] = [
         after: "After six they get an answer and a time you'll call",
       },
     ],
+    flow: [
+      { title: "A call goes unanswered", detail: "Your hands are full. It happens.", icon: "phone" },
+      { title: "A text goes out in seconds", detail: "From your business line, not a new number", icon: "send" },
+      { title: "They reply with the job", detail: "What they need, and where", icon: "chat" },
+      { title: "Routed to you or the calendar", detail: "Once the job is clear enough to book", icon: "calendar" },
+    ],
+    outcomeChain: [
+      "No missed call left cold",
+      "A written record of every one",
+      "Jobs you used to lose",
+    ],
     pricing: {
       build: { from: 800, to: 1200 },
       monthly: { kind: "flat", amount: 100 },
@@ -326,6 +424,8 @@ export const services: readonly Service[] = [
     slug: "get-more-google-reviews",
     name: "Get More Google Reviews",
     tier: "add-on",
+    category: "get-found",
+    icon: "star",
     promise:
       "The review request fires when the job closes, without anyone remembering to send it.",
     outcome:
@@ -364,6 +464,18 @@ export const services: readonly Service[] = [
         after: "One tap from the text to your review box",
       },
     ],
+    flow: [
+      { title: "Job marked complete", detail: "From your CRM, your field app, or a text", icon: "check" },
+      { title: "Request goes out", detail: "SMS and email, while they're still happy", icon: "send" },
+      { title: "Happy? Public. Unhappy?", detail: "Unhappy customers reach you privately first", icon: "shield" },
+      { title: "One tap to your review box", detail: "No searching, no login", icon: "link" },
+      { title: "Reminder if they forget", detail: "Stops the moment they've left one", icon: "clock" },
+    ],
+    outcomeChain: [
+      "More reviews",
+      "Better map ranking",
+      "More calls from people who trust you",
+    ],
     pricing: {
       build: { from: 1200, to: 2000 },
       monthly: { kind: "flat", amount: 100 },
@@ -373,6 +485,8 @@ export const services: readonly Service[] = [
     slug: "get-found-on-google",
     name: "Get Found on Google",
     tier: "add-on",
+    category: "get-found",
+    icon: "map",
     promise: "Show up in the map pack when someone nearby searches for what you do.",
     outcome:
       "You appear in the three results Google puts above everything else, for the towns you actually drive to.",
@@ -409,6 +523,17 @@ export const services: readonly Service[] = [
         after: "Calls and direction requests, by town, every month",
       },
     ],
+    flow: [
+      { title: "Profile claimed and filled", detail: "Categories, service areas, hours, photos", icon: "map" },
+      { title: "Your details matched everywhere", detail: "The same name, address and phone Google checks", icon: "check" },
+      { title: "Pages written for your towns", detail: "The places you actually drive to", icon: "document" },
+      { title: "Tracked by town, monthly", detail: "Rank, calls, direction requests", icon: "chart" },
+    ],
+    outcomeChain: [
+      "Visible in the map pack",
+      "Calls from the next town over",
+      "Proof of which town produced what",
+    ],
     pricing: {
       build: { from: 800, to: 1500 },
       monthly: { kind: "flat", amount: 300 },
@@ -418,6 +543,8 @@ export const services: readonly Service[] = [
     slug: "google-ads-management",
     name: "Google Ads Management",
     tier: "add-on",
+    category: "get-found",
+    icon: "target",
     promise: "Paid search that gets switched off when it stops earning.",
     outcome:
       "A steady flow of people searching for your job right now, with a real cost per booked job attached.",
@@ -453,6 +580,18 @@ export const services: readonly Service[] = [
     ],
     notThis:
       "Not a retainer that keeps billing while the campaign loses money. If the cost per booked job doesn't work in your market, I'll tell you, and we stop.",
+    flow: [
+      { title: "Built around the jobs you want", detail: "Not the ones with the most searches", icon: "target" },
+      { title: "Negatives cut the waste", detail: "Where the money is actually saved", icon: "filter" },
+      { title: "The ad points at a matching page", detail: "Not your homepage", icon: "link" },
+      { title: "Calls tracked back to the ad", detail: "You see which one paid", icon: "phone" },
+      { title: "Monthly read, honest call", detail: "Including when to stop", icon: "chart" },
+    ],
+    outcomeChain: [
+      "A known cost per booked job",
+      "Spend only where it works",
+      "A switch you can turn off",
+    ],
     pricing: {
       monthly: {
         kind: "greater-of",
@@ -468,6 +607,8 @@ export const services: readonly Service[] = [
     slug: "social-content-engine",
     name: "Social Content Engine",
     tier: "add-on",
+    category: "get-found",
+    icon: "megaphone",
     promise: "Posts drafted from your own jobs and your own prices. You approve them in minutes.",
     outcome:
       "A steady feed that shows your actual work and sounds like you, without you writing anything.",
@@ -501,6 +642,17 @@ export const services: readonly Service[] = [
     ],
     notThis:
       "This is not 'we run your social media'. Nobody here is pretending to be you in your comments. It drafts, you approve, it posts — you stay the author.",
+    flow: [
+      { title: "You finish a job and take photos", detail: "The part you already do", icon: "user" },
+      { title: "Drafts come back written", detail: "From your real work and your real prices", icon: "document" },
+      { title: "You approve on your phone", detail: "A couple of minutes, not an afternoon", icon: "check" },
+      { title: "It posts on schedule", detail: "Nothing goes out unapproved", icon: "send" },
+    ],
+    outcomeChain: [
+      "A feed that stays alive",
+      "Work customers can actually see",
+      "Still your voice",
+    ],
     pricing: {
       build: { from: 600, to: 1000 },
       monthly: { kind: "flat", amount: 200 },
@@ -510,6 +662,8 @@ export const services: readonly Service[] = [
     slug: "custom-ai-automation",
     name: "Custom AI Automation",
     tier: "add-on",
+    category: "ai-automation",
+    icon: "gears",
     promise: "The repetitive thing eating your week, automated. Scoped on the call.",
     outcome:
       "The task that used to need someone to remember it now happens whether or not anyone does.",
@@ -550,6 +704,18 @@ export const services: readonly Service[] = [
     ],
     notThis:
       "If the honest answer is that a process shouldn't be automated — too rare, too high-stakes, or just broken and needing fixing first — that's the answer you get.",
+    flow: [
+      { title: "We map what actually happens", detail: "Not what the manual says happens", icon: "search" },
+      { title: "Fixed scope, fixed price", detail: "Written down before any work starts", icon: "document" },
+      { title: "Built into the tools you use", detail: "No new system for anyone to learn", icon: "gears" },
+      { title: "Guardrails on anything irreversible", detail: "It asks you first", icon: "shield" },
+      { title: "Everything logged", detail: "You can audit exactly what it did", icon: "chart" },
+    ],
+    outcomeChain: [
+      "A week that runs itself",
+      "An audit trail",
+      "Nothing that commits you without asking",
+    ],
     pricing: {
       build: { from: 1500, to: null },
     },

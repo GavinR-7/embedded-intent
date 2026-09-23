@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
+import { SystemPanel } from "@/components/ui/SystemPanel";
+import { TraceGrid } from "@/components/ui/TraceGrid";
 import { audit } from "@/content/audit";
 import { faqsForService } from "@/content/faq";
 import {
@@ -69,7 +71,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
 
   return (
     <>
-      <Section tone="void" size="lg" divider={false} bleedTop>
+      <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
         <Link
           href="/#what-we-build"
           className="rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
@@ -95,23 +97,41 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             </div>
           </div>
 
+          {/* The flow panel: the same component as the homepage hero, fed
+              this service's own steps. What actually happens, in order. */}
           <div className="lg:col-span-2">
-            <div className="rounded-card border border-line bg-surface/60 p-7">
-              <h2 className="text-eyebrow font-mono uppercase text-signal">
-                {servicePage.forWhomHeading}
-              </h2>
-              <p className="mt-4 text-label text-ink-muted">{service.forWhom}</p>
+            <SystemPanel
+              title={service.name}
+              statusLabel={servicePage.panelStatusLabel}
+              rows={service.flow.map((step, index) => ({
+                id: `${service.slug}-${index}`,
+                title: step.title,
+                detail: step.detail,
+                icon: step.icon,
+              }))}
+              footerChain={service.outcomeChain}
+            />
 
-              <h2 className="mt-7 border-t border-line pt-6 text-eyebrow font-mono uppercase text-signal">
-                {servicePage.timelineHeading}
-              </h2>
-              <p className="mt-4 text-label text-ink-muted">{service.timeline}</p>
-
-              <h2 className="mt-7 border-t border-line pt-6 text-eyebrow font-mono uppercase text-signal">
-                {servicePage.outcomeHeading}
-              </h2>
-              <p className="mt-4 text-label text-ink">{service.outcome}</p>
-            </div>
+            <dl className="mt-5 grid gap-px overflow-hidden rounded-card bg-line">
+              <div className="bg-void p-6">
+                <dt className="text-eyebrow font-mono uppercase text-signal">
+                  {servicePage.forWhomHeading}
+                </dt>
+                <dd className="mt-3 text-label text-ink-muted">{service.forWhom}</dd>
+              </div>
+              <div className="bg-void p-6">
+                <dt className="text-eyebrow font-mono uppercase text-signal">
+                  {servicePage.timelineHeading}
+                </dt>
+                <dd className="mt-3 text-label text-ink-muted">{service.timeline}</dd>
+              </div>
+              <div className="bg-void p-6">
+                <dt className="text-eyebrow font-mono uppercase text-signal">
+                  {servicePage.outcomeHeading}
+                </dt>
+                <dd className="mt-3 text-label text-ink">{service.outcome}</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </Section>

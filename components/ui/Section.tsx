@@ -9,13 +9,17 @@
  *
  * The rhythm:
  *
- *   tone="void"     page background, with the circuit-trace texture
- *   tone="surface"  one step lighter, rendered flat
+ *   tone="void"     page background
+ *   tone="surface"  one step lighter
  *
  * Alternating those two with a hairline top border at each transition makes a
- * boundary read as a crisp edge rather than as dead space. The texture showing
- * on void bands only is what does most of the work — it means the two tones
- * differ in more than lightness.
+ * boundary read as a crisp edge rather than as dead space.
+ *
+ * Section knows nothing about the circuit-trace texture. It used to render it
+ * on every void band, which meant the texture appeared five or six times down
+ * a page and stopped reading as a treatment for the top of the page. It is now
+ * passed in as `overlay`, by the one band per route that wants it — see
+ * `components/ui/TraceGrid.tsx`.
  *
  * `size="lg"` is reserved for genuine act breaks: the hero and the close.
  * Everything between them uses the default.
@@ -66,6 +70,7 @@ export function Section({
   size = "default",
   divider = true,
   bleedTop = false,
+  overlay,
   className = "",
   contentClassName = "",
   children,
@@ -82,6 +87,12 @@ export function Section({
    * by the header height to put the content back where it belongs.
    */
   bleedTop?: boolean;
+  /**
+   * Full-bleed decoration rendered behind the content. Used by the first band
+   * of a page for the circuit-trace texture; every other band leaves it unset
+   * and renders flat.
+   */
+  overlay?: React.ReactNode;
   className?: string;
   /**
    * Applied to the inner max-width wrapper. Only needed when a section has to
@@ -112,11 +123,7 @@ export function Section({
         .filter(Boolean)
         .join(" ")}
     >
-      {/* Texture on void bands only. Absolutely positioned and behind the
-          content wrapper, which is `relative` and therefore paints above it. */}
-      {tone === "void" && (
-        <div aria-hidden="true" className="trace-grid pointer-events-none absolute inset-0" />
-      )}
+      {overlay}
 
       <div
         className={`relative mx-auto w-full max-w-content px-gutter ${contentClassName}`.trim()}

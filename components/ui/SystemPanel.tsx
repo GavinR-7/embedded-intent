@@ -2,49 +2,33 @@
 
 import { useEffect, useState } from "react";
 
-import { home } from "@/content/home";
+import { IconTile } from "@/components/ui/icons";
+import type { IconName } from "@/components/ui/icons";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
-
-const { title, statusLabel, rows, footerLabel, footerValue } = home.leadSystem;
 
 /** Dwell time per row. Slow enough to read the detail line before it moves on. */
 const STEP_MS = 1500;
 
-/* Row icons. Decorative — the title next to them carries the meaning, so they
-   are aria-hidden and never the only way to tell rows apart. */
-const ICONS: Record<string, React.ReactNode> = {
-  // Inbound: something arriving in a tray.
-  captured: <path d="M12 3v8m0 0 3-3m-3 3-3-3M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4h-5l-1 2h-4l-1-2H4Z" />,
-  // A reply.
-  qualified: <path d="M4 5h16v10H9l-5 4V5Zm4 4h8m-8 3h5" />,
-  // A calendar hold.
-  booked: <path d="M4 6h16v14H4V6Zm0 4h16M9 3v4m6-4v4m-4 8 2 2 3-3" />,
-  // The review.
-  review: <path d="m12 4 2.3 4.9 5.2.7-3.8 3.8.9 5.4-4.6-2.5-4.6 2.5.9-5.4L4.5 9.6l5.2-.7L12 4Z" />,
+export type PanelRow = {
+  id: string;
+  title: string;
+  detail: string;
+  icon: IconName;
+  /** Right-aligned chip. The homepage panel uses it; flow panels don't. */
+  status?: string;
 };
 
-function RowIcon({ id }: { id: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-4.5 w-4.5"
-    >
-      {ICONS[id]}
-    </svg>
-  );
-}
-
 /**
- * The hero visual: the lead system as a panel of working software.
+ * The vertical system readout.
  *
- * Rows illuminate top-down in sequence, with an extra beat where all four are
- * lit before the loop restarts — that pause is what makes it read as a
+ * Used twice: the homepage hero ("this is what the system does") and every
+ * service page hero ("this is what *this* service does"). It takes its rows as
+ * props rather than reading a content module, because the two callers pass
+ * different data — that generalisation is the only reason it lives in ui/
+ * rather than sections/.
+ *
+ * Rows illuminate top-down in sequence, with an extra beat where all of them
+ * are lit before the loop restarts — that pause is what makes it read as a
  * completed cycle rather than a spinner.
  *
  * Hand-built: CSS transforms and one piece of state. No WebGL, no canvas, no
@@ -53,14 +37,27 @@ function RowIcon({ id }: { id: string }) {
  * would run layout on every frame, for as long as the page is open.
  *
  * Under `prefers-reduced-motion: reduce` every row renders lit and the interval
- * never starts. That is handled here in JS rather than in CSS because the
- * sequencing is JS-driven, and the global CSS backstop in globals.css cannot
- * reach a setInterval.
+ * never starts. Handled here in JS rather than CSS because the sequencing is
+ * JS-driven, and the global CSS backstop cannot reach a setInterval.
  *
- * This is the page's only client component. Every label is in the server HTML,
- * so the panel is complete and readable with no JavaScript at all.
+ * Every label is in the server HTML, so the panel is complete and readable
+ * with no JavaScript at all.
  */
-export function LeadSystemPanel() {
+export function SystemPanel({
+  title,
+  statusLabel,
+  rows,
+  footerStat,
+  footerChain,
+}: {
+  title: string;
+  statusLabel: string;
+  rows: readonly PanelRow[];
+  /** "Manual steps required ....... 0" */
+  footerStat?: { label: string; value: string };
+  /** The compounding outcome, as a chain of short phrases. */
+  footerChain?: readonly string[];
+})  {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   // rows.length is the extra "all complete" beat before the loop restarts.
@@ -74,7 +71,7 @@ export function LeadSystemPanel() {
       STEP_MS,
     );
     return () => clearInterval(id);
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, rows.length]);
 
   // With reduced motion, everything is simply done.
   const isComplete = (index: number) => prefersReducedMotion || index < cursor;
@@ -107,16 +104,7 @@ export function LeadSystemPanel() {
                   to the next row. The rail stretches to the row's height, so
                   the connector's flex-1 covers exactly the space between. */}
               <div className="flex flex-col items-center">
-                <span
-                  aria-hidden="true"
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-field border transition-colors duration-[var(--duration-base)] ease-precise ${
-                    lit
-                      ? "border-signal/40 bg-signal-wash text-signal"
-                      : "border-line bg-transparent text-ink-subtle"
-                  }`}
-                >
-                  <RowIcon id={row.id} />
-                </span>
+                <IconTile name={row.icon} lit={lit} />
 
                 {!isLast && (
                   <span aria-hidden="true" className="relative my-1.5 w-px flex-1 bg-line">
@@ -140,15 +128,15 @@ export function LeadSystemPanel() {
                     {row.title}
                   </p>
 
-                  <span
-                    className={`shrink-0 rounded-field border px-2 py-0.5 font-mono text-eyebrow tabular-nums transition-colors duration-[var(--duration-base)] ease-precise ${
-                      lit
-                        ? "border-signal/40 text-signal"
-                        : "border-line text-ink-subtle"
-                    }`}
-                  >
-                    {row.status}
-                  </span>
+                  {row.status && (
+                    <span
+                      className={`shrink-0 rounded-field border px-2 py-0.5 font-mono text-eyebrow tabular-nums transition-colors duration-[var(--duration-base)] ease-precise ${
+                        lit ? "border-signal/40 text-signal" : "border-line text-ink-subtle"
+                      }`}
+                    >
+                      {row.status}
+                    </span>
+                  )}
                 </div>
 
                 <p className="mt-1 text-eyebrow text-ink-subtle normal-case tracking-normal">
@@ -160,14 +148,35 @@ export function LeadSystemPanel() {
         })}
       </ol>
 
-      {/* Panel footer — the actual claim. */}
-      <div className="flex items-baseline gap-3 border-t border-line px-5 py-4">
-        <span className="text-eyebrow font-mono uppercase text-ink-subtle">
-          {footerLabel}
-        </span>
-        <span aria-hidden="true" className="flex-1 border-b border-dotted border-line" />
-        <span className="font-mono text-h3 tabular-nums text-signal">{footerValue}</span>
-      </div>
+      {footerStat && (
+        <div className="flex items-baseline gap-3 border-t border-line px-5 py-4">
+          <span className="text-eyebrow font-mono uppercase text-ink-subtle">
+            {footerStat.label}
+          </span>
+          <span aria-hidden="true" className="flex-1 border-b border-dotted border-line" />
+          <span className="font-mono text-h3 tabular-nums text-signal">
+            {footerStat.value}
+          </span>
+        </div>
+      )}
+
+      {/* The outcome chain. Directions of travel, not measurements — there are
+          deliberately no numbers in it. */}
+      {footerChain && footerChain.length > 0 && (
+        <ul className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line px-5 py-4">
+          {footerChain.map((item, index) => (
+            <li key={item} className="flex items-center gap-2">
+              {index > 0 && (
+                <span aria-hidden="true" className="text-ink-subtle">
+                  →
+                </span>
+              )}
+              <span className="text-eyebrow font-mono uppercase text-signal">{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
     </div>
   );
 }

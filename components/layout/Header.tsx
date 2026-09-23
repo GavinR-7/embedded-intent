@@ -4,7 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { IconTile } from "@/components/ui/icons";
+import { serviceCategories, servicesByCategory } from "@/content/services";
 import { site } from "@/content/site";
+
+import { NavDropdown } from "./NavDropdown";
 
 /**
  * Elements that can receive keyboard focus, for the mobile menu's focus trap.
@@ -19,11 +23,6 @@ const DESKTOP_QUERY = "(min-width: 48rem)";
  *  ever animates `transform` — never `width`, which would be layout. */
 const INDICATOR_WIDTH = 20;
 
-/** "/#pricing" -> "pricing". Null for anything that is not a homepage anchor. */
-function anchorId(href: string): string | null {
-  return href.startsWith("/#") ? href.slice(2) : null;
-}
-
 function ChipMark({ className }: { className?: string }) {
   return (
     <svg
@@ -35,18 +34,8 @@ function ChipMark({ className }: { className?: string }) {
       aria-hidden="true"
       className={className}
     >
-      {/* Package outline */}
       <rect x="5.5" y="5.5" width="13" height="13" rx="1.5" />
-      {/* The die */}
-      <rect
-        x="10"
-        y="10"
-        width="4"
-        height="4"
-        fill="currentColor"
-        stroke="none"
-      />
-      {/* Pins — the traces leaving the package */}
+      <rect x="10" y="10" width="4" height="4" fill="currentColor" stroke="none" />
       <path d="M9 5.5V2.5M15 5.5V2.5M9 18.5v3M15 18.5v3M5.5 9h-3M5.5 15h-3M18.5 9h3M18.5 15h3" />
     </svg>
   );
@@ -56,40 +45,67 @@ export function Header() {
   const pathname = usePathname();
 
   /*
-   * The menu's open state is stored as *the path it was opened on*, and
-   * "is it open" is derived from that.
-   *
-   * The obvious alternative — a boolean plus an effect that closes it when
-   * `pathname` changes — calls setState inside an effect, which costs a second
-   * render pass on every navigation. Deriving it means a route change closes
-   * the menu for free, with no effect at all.
-   *
-   * Anchor links (/#pricing) do not change the pathname, so those links also
-   * close the menu in their own onClick.
+   * The mobile menu's open state is stored as *the path it was opened on*, and
+   * "is it open" is derived from that. A boolean plus an effect that closes it
+   * on route change would call setState inside an effect, costing a second
+   * render pass on every navigation.
    */
   const [openPath, setOpenPath] = useState<string | null>(null);
   const open = openPath !== null && openPath === pathname;
+
+  /*
+   * Which desktop dropdown is open, and which mobile accordion group is
+   * expanded. Both store the path they were opened on, and both derive "is it
+   * open" from it — the same trick as the mobile menu above.
+   *
+   * The obvious alternative is to reset them when `pathname` changes, but
+   * doing that during render mutates a ref mid-render (which React forbids,
+   * and `react-hooks/refs` catches), and doing it in an effect costs a second
+   * render pass on every navigation. Storing the path makes a route change
+   * close them for free.
+   */
+  const [openMenuState, setOpenMenuState] = useState<{
+    label: string;
+    path: string;
+  } | null>(null);
+  const openLabel =
+    openMenuState !== null && openMenuState.path === pathname
+      ? openMenuState.label
+      : null;
+
+  const setOpenLabel = useCallback(
+    (label: string | null) =>
+      setOpenMenuState(label === null ? null : { label, path: pathname }),
+    [pathname],
+  );
+
+  const [openGroupState, setOpenGroupState] = useState<{
+    label: string;
+    path: string;
+  } | null>(null);
+  const openGroup =
+    openGroupState !== null && openGroupState.path === pathname
+      ? openGroupState.label
+      : null;
+
+  const setOpenGroup = useCallback(
+    (label: string | null) =>
+      setOpenGroupState(label === null ? null : { label, path: pathname }),
+    [pathname],
+  );
 
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const navListRef = useRef<HTMLUListElement | null>(null);
-  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const triggerRefs = useRef<(HTMLElement | null)[]>([]);
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
-
-  /** Which homepage anchor section is currently under the header. */
-  const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
-
-  /**
-   * True once the page has scrolled past the sentinel, which is what flips the
-   * header from transparent to solid.
-   */
   const [scrolled, setScrolled] = useState(false);
 
   /**
    * Whether closing should send focus back to the toggle. True when the user
-   * dismissed the menu (Escape, tapping the toggle, tapping the backdrop) and
-   * false when navigation is taking focus somewhere better on its own.
+   * dismissed the menu (Escape, tapping the toggle) and false when navigation
+   * is taking focus somewhere better on its own.
    */
   const restoreFocusRef = useRef(false);
 
@@ -100,32 +116,14 @@ export function Header() {
 
   const openMenu = useCallback(() => setOpenPath(pathname), [pathname]);
 
-  // The menu is hidden at md and up. If the viewport widens while it is open,
-  // close it — otherwise the body scroll lock survives with no visible menu.
-  useEffect(() => {
-    const mql = window.matchMedia(DESKTOP_QUERY);
-    const onChange = (event: MediaQueryListEvent) => {
-      if (event.matches) closeMenu(false);
-    };
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, [closeMenu]);
-
   /*
    * Transparent-to-solid on scroll, via IntersectionObserver rather than a
-   * scroll listener.
+   * scroll listener: the observer fires twice in the life of the page instead
+   * of on every scroll frame, and never reads scrollY.
    *
-   * A scroll handler fires on every frame of every scroll and has to read
-   * scrollY, which forces layout. The observer fires twice in the life of the
-   * page — once crossing down, once crossing back — and does its geometry off
-   * the main thread. Same result, none of the jank, on a site whose whole
-   * pitch is speed.
-   *
-   * The sentinel is an out-of-flow 80px box pinned to the top of the document.
-   * When it stops intersecting the viewport, we are scrolled past it. It sits
-   * *outside* the sticky <header> deliberately: `position: sticky` establishes
-   * a containing block, so a sentinel inside the header would travel with it
-   * and never stop intersecting.
+   * The sentinel sits *outside* the sticky <header> deliberately —
+   * `position: sticky` establishes a containing block, so a sentinel inside
+   * the header would travel with it and never stop intersecting.
    */
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -139,81 +137,53 @@ export function Header() {
     return () => observer.disconnect();
   }, []);
 
-  /*
-   * Section spy for the active-nav indicator.
-   *
-   * Observes the homepage sections the nav points at, with a rootMargin that
-   * shrinks the viewport down to a band just below the header. Whatever
-   * section occupies that band is what the reader is looking at, so at most
-   * one is intersecting at a time and "which section am I on" needs no scroll
-   * arithmetic.
-   */
+  // The mobile menu is hidden at md and up. If the viewport widens while it is
+  // open, close it — otherwise the body scroll lock survives with no menu.
   useEffect(() => {
-    if (pathname !== "/") return;
-
-    const targets = site.nav
-      .map((item) => anchorId(item.href))
-      .filter((id): id is string => id !== null)
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
-
-    if (targets.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActiveAnchor(entry.target.id);
-        }
-      },
-      { rootMargin: "-80px 0px -75% 0px" },
-    );
-
-    targets.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [pathname]);
-
-  /**
-   * Which nav item to underline. A real route match wins over an anchor, so
-   * /work stays underlined no matter where the reader has scrolled.
-   */
-  const activeIndex = site.nav.findIndex((item) => {
-    const id = anchorId(item.href);
-    if (id !== null) return pathname === "/" && id === activeAnchor;
-    return pathname === item.href || pathname.startsWith(`${item.href}/`);
-  });
+    const mql = window.matchMedia(DESKTOP_QUERY);
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) closeMenu(false);
+    };
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [closeMenu]);
 
   /*
-   * Move the underline.
+   * The active indicator tracks the ROUTE, not scroll position.
    *
-   * Written imperatively against a ref rather than through state: the position
-   * is derived from layout, and putting a measured pixel value into state
-   * would re-render the whole header every time the reader scrolls past a
-   * section heading, just to move one 20px bar.
-   *
-   * Only `transform` and `opacity` are touched, so it never triggers layout,
-   * and the CSS transition is neutralised by the global reduced-motion
-   * backstop in globals.css.
+   * It used to follow whichever homepage section sat under the header, via an
+   * IntersectionObserver over the anchor targets. That observer is gone. With
+   * the nav rebuilt around Services and Company, the honest signal is where
+   * you are: Services on any /services/* page, Company on /work*, and nothing
+   * on the homepage, which belongs to neither.
+   */
+  const activeIndex = site.navMenus.findIndex((menu) => pathname.startsWith(menu.match));
+
+  /*
+   * Move the underline. Written imperatively against a ref rather than through
+   * state: the position is derived from layout, and putting a measured pixel
+   * value into state would re-render the header to move one 20px bar. Only
+   * `transform` and `opacity` are touched, so it never triggers layout.
    */
   useEffect(() => {
     const indicator = indicatorRef.current;
     if (!indicator) return;
 
-    const link = activeIndex >= 0 ? linkRefs.current[activeIndex] : null;
+    const trigger = activeIndex >= 0 ? triggerRefs.current[activeIndex] : null;
 
-    if (!link) {
+    if (!trigger) {
       indicator.style.opacity = "0";
       return;
     }
 
     const place = () => {
-      const centre = link.offsetLeft + link.offsetWidth / 2;
+      const centre = trigger.offsetLeft + trigger.offsetWidth / 2;
       indicator.style.opacity = "1";
       indicator.style.transform = `translateX(${centre - INDICATOR_WIDTH / 2}px)`;
     };
 
     place();
 
-    // Re-measure if the nav reflows — viewport resize, or the webfont swapping in.
     const list = navListRef.current;
     if (!list) return;
     const observer = new ResizeObserver(place);
@@ -221,25 +191,17 @@ export function Header() {
     return () => observer.disconnect();
   }, [activeIndex]);
 
-  // Focus trap, Escape-to-close, and body scroll lock — all only while open.
+  // Focus trap, Escape-to-close, and body scroll lock — mobile menu only.
   useEffect(() => {
     if (!open) return;
 
     const panel = panelRef.current;
     if (!panel) return;
 
-    // Captured once, so the cleanup below closes over this element rather than
-    // reading toggleRef.current after the effect has been torn down. The button
-    // itself is never unmounted, so this stays valid for the life of the menu.
     const toggle = toggleRef.current;
 
-    // The toggle is part of the cycle: it is the visible "close" control, so
-    // Shift+Tab off the first link should reach it rather than escape to the
-    // page behind the overlay.
     const getFocusable = (): HTMLElement[] => {
-      const inPanel = Array.from(
-        panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      );
+      const inPanel = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
       return toggle ? [toggle, ...inPanel] : inPanel;
     };
 
@@ -284,9 +246,9 @@ export function Header() {
     };
   }, [open, closeMenu]);
 
-  // Solid whenever the page has scrolled, and also while the mobile menu is
-  // open — a transparent bar floating over an opaque menu panel looks broken.
-  const solid = scrolled || open;
+  // Solid when scrolled, while the mobile menu is open, or while a dropdown is
+  // open — a transparent bar floating over an opaque panel looks broken.
+  const solid = scrolled || open || openLabel !== null;
 
   return (
     <>
@@ -310,35 +272,37 @@ export function Header() {
             onClick={() => closeMenu(false)}
           >
             <ChipMark className="h-9 w-9 text-signal" />
-            <span className="text-xl font-semibold tracking-tight">
-              {site.name}
-            </span>
+            <span className="text-xl font-semibold tracking-tight">{site.name}</span>
           </Link>
 
           <nav aria-label="Primary" className="hidden md:block">
             <ul ref={navListRef} className="relative flex items-center gap-8 pb-1">
-              {site.nav.map((item, index) => {
-                const isActive = index === activeIndex;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      ref={(node) => {
-                        linkRefs.current[index] = node;
-                      }}
-                      href={item.href}
-                      aria-current={isActive ? "true" : undefined}
-                      className={`rounded-sm text-[0.9375rem] font-medium transition-colors duration-[var(--duration-fast)] ${
-                        isActive ? "text-ink" : "text-ink-muted hover:text-ink"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
+              {site.navMenus.map((menu, index) => (
+                <li key={menu.label}>
+                  <NavDropdown
+                    menu={menu}
+                    isActive={index === activeIndex}
+                    state={{ openLabel, setOpenLabel }}
+                    triggerRef={(node) => {
+                      triggerRefs.current[index] = node;
+                    }}
+                  />
+                </li>
+              ))}
 
-              {/* Active indicator. Positioned from the list's origin and moved
-                  with translateX only — never width, which would be layout. */}
+              {site.navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className={`rounded-sm text-[0.9375rem] font-medium transition-colors duration-[var(--duration-fast)] ${
+                      pathname === link.href ? "text-ink" : "text-ink-muted hover:text-ink"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+
               <span
                 ref={indicatorRef}
                 aria-hidden="true"
@@ -383,10 +347,9 @@ export function Header() {
         </div>
 
         {/*
-        Rendered only while open, so the menu's links are never in the tab order
-        while hidden — the most common keyboard bug in a mobile nav. The
-        trade-off is that there is an open animation but no close animation.
-      */}
+          Rendered only while open, so the menu's links are never in the tab
+          order while hidden — the most common keyboard bug in a mobile nav.
+        */}
         {open && (
           <div
             id="mobile-menu"
@@ -394,15 +357,86 @@ export function Header() {
             className="fixed inset-x-0 top-20 bottom-0 z-40 overflow-y-auto border-t border-line bg-void md:hidden motion-safe:animate-[menu-in_var(--duration-base)_var(--ease-out-expo)]"
           >
             <nav aria-label="Mobile" className="px-gutter py-8">
-              <ul className="flex flex-col gap-1">
-                {site.nav.map((item) => (
-                  <li key={item.href}>
+              {/* The dropdowns become accordion groups. Same disclosure
+                  semantics as the desktop panels — aria-expanded on a button,
+                  and the region unmounted while collapsed so its links stay
+                  out of the tab order. */}
+              <ul className="flex flex-col">
+                {site.navMenus.map((menu) => {
+                  const expanded = openGroup === menu.label;
+                  return (
+                    <li key={menu.label} className="border-b border-line">
+                      <button
+                        type="button"
+                        aria-expanded={expanded}
+                        onClick={() => setOpenGroup(expanded ? null : menu.label)}
+                        className="flex w-full items-center justify-between py-4 text-h3 text-ink"
+                      >
+                        {menu.label}
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          aria-hidden="true"
+                          className={`h-4 w-4 text-signal transition-transform duration-[var(--duration-fast)] ease-precise ${
+                            expanded ? "rotate-180" : ""
+                          }`}
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+
+                      {expanded && (
+                        <div className="pb-4">
+                          {menu.kind === "services"
+                            ? serviceCategories.map((category) => (
+                                <div key={category.id} className="mb-5 last:mb-0">
+                                  <h2 className="text-eyebrow font-mono uppercase text-signal">
+                                    {category.label}
+                                  </h2>
+                                  <ul className="mt-2 flex flex-col">
+                                    {servicesByCategory(category.id).map((service) => (
+                                      <li key={service.slug}>
+                                        <Link
+                                          href={`/services/${service.slug}`}
+                                          onClick={() => closeMenu(false)}
+                                          className="flex items-center gap-3 py-2.5 text-label text-ink-muted"
+                                        >
+                                          <IconTile name={service.icon} />
+                                          {service.name}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))
+                            : menu.items.map((item) => (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  onClick={() => closeMenu(false)}
+                                  className="flex items-center gap-3 py-2.5 text-label text-ink-muted"
+                                >
+                                  <IconTile name={item.icon} />
+                                  {item.label}
+                                </Link>
+                              ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+
+                {site.navLinks.map((link) => (
+                  <li key={link.href} className="border-b border-line">
                     <Link
-                      href={item.href}
+                      href={link.href}
                       onClick={() => closeMenu(false)}
-                      className="block border-b border-line py-4 text-h3 text-ink"
+                      className="block py-4 text-h3 text-ink"
                     >
-                      {item.label}
+                      {link.label}
                     </Link>
                   </li>
                 ))}

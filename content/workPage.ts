@@ -10,10 +10,15 @@
  * `content/work.ts` is what guarantees there is nothing to render.
  */
 export const workPage = {
-  indexEyebrow: "Work",
-  indexHeading: "One site, live, honestly reported.",
+  /*
+   * Evergreen: no counts anywhere. "One site" and "three case studies" both
+   * go stale the moment the list changes, and a count in copy is the kind of
+   * thing nobody remembers to update.
+   */
+  indexEyebrow: "Our work",
+  indexHeading: "Built, launched, and still running.",
   indexBody:
-    "There is one case study here because there is one client site currently live. When the others launch they'll appear, with real numbers once there are real numbers.",
+    "Every site here is live and used by a real business. Results are published once they've been measured, not before.",
 
   backLabel: "All work",
   detailEyebrow: "Case study",

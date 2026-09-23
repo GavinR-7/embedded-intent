@@ -105,6 +105,13 @@ These must be resolved before the domain is pointed at the site.
   now reads `AUTO` like the other three rows. No unsourced numbers anywhere on
   the site.
 
+- [ ] **About page — needs a photo and a bio.** Deliberately absent from the
+  Company menu rather than stubbed: an empty page in the nav is worse than a
+  missing one. For a solo practice whose main differentiator is "you work
+  directly with the person building it", a real face and a short honest bio is
+  probably the highest-value page still missing. Needs a photo and a few
+  paragraphs from the owner before it can exist.
+
 ---
 
 ## Decided — for Phase 7

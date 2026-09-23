@@ -12,7 +12,7 @@
  * a second copy to keep in sync.
  */
 
-import type { ServiceSlug } from "./services";
+import type { IconName } from "@/components/ui/icons";
 
 export type SystemRow = {
   /** Stable key. */
@@ -20,14 +20,17 @@ export type SystemRow = {
   title: string;
   /** The detail line under the title — what actually happens at this step. */
   detail: string;
-  /** Right-aligned status chip. */
-  status: string;
+  icon: IconName;
+  /** Right-aligned status chip. Optional: service flow panels have none. */
+  status?: string;
 };
 
 export type Step = {
   id: string;
   name: string;
   body: string;
+  /** Deliverables, as short chips. What the step actually hands you. */
+  chips: readonly string[];
 };
 
 export type ComparisonRow = {
@@ -65,24 +68,28 @@ export const home = {
     rows: [
       {
         id: "captured",
+        icon: "inbox",
         title: "New lead captured",
         detail: "Website form, call, or Google",
         status: "AUTO",
       },
       {
         id: "qualified",
+        icon: "chat",
         title: "AI qualifies & replies",
         detail: "Job type, timeline, budget, ZIP",
         status: "AUTO",
       },
       {
         id: "booked",
+        icon: "calendar",
         title: "Routed & booked",
         detail: "SMS + calendar hold",
         status: "AUTO",
       },
       {
         id: "review",
+        icon: "star",
         title: "Job complete → review ask",
         detail: "SMS 2h after sign-off",
         status: "AUTO",
@@ -117,18 +124,31 @@ export const home = {
   },
 
   beforeAfter: {
-    eyebrow: "What changes",
-    heading: "The same business, with the gaps closed.",
+    eyebrow: "Where AI actually plugs in",
+    heading: "Four places it earns its keep.",
     /**
-     * Which services' before/after pairs to show, in order. The copy itself
-     * lives on the service, so a page and its card can never disagree.
+     * Homepage-specific, unlike the service pages, which use their own
+     * service-specific pairs. The question this section answers — where does
+     * AI touch my business at all — is not one any single service answers.
      */
-    services: [
-      "ai-lead-response",
-      "missed-call-text-back",
-      "get-more-google-reviews",
-      "website-design-build",
-    ] satisfies ServiceSlug[],
+    pairs: [
+      {
+        before: "A form arrives at 8:40pm and sits until morning",
+        after: "Answered, qualified and booked before you've finished dinner",
+      },
+      {
+        before: "The review ask depends on who remembers",
+        after: "It fires when the job is marked complete, every time",
+      },
+      {
+        before: "Every estimate is written from scratch",
+        after: "Drafted from your own pricing, for you to check and send",
+      },
+      {
+        before: "Every new hire asks you the same twenty questions",
+        after: "They ask the assistant and get the page the answer came from",
+      },
+    ],
   },
 
   howItWorks: {
@@ -139,29 +159,54 @@ export const home = {
         id: "find",
         name: "Find",
         body: "Thirty minutes on where the money is leaking — how leads reach you, what happens to the ones that arrive after hours, and where your team loses time. You leave with a prioritised list whether or not you hire me.",
+        chips: ["Lead path audit", "Review gap check", "Time-drain list", "Tool map"],
       },
       {
         id: "build",
         name: "Build",
         body: "The website first, in accounts created in your name. You get the credentials at handover and a walkthrough of how to run it, so nothing is hostage to the relationship.",
+        chips: ["In your accounts", "Documented as we go", "2–4 weeks"],
       },
       {
         id: "automate",
         name: "Automate",
         body: "One automation at a time, starting with whichever one pays for itself fastest. It runs whether or not anyone remembers it, with approval rules on anything that commits you to a price or a date.",
+        chips: ["Runs 24/7", "Human handoff where it matters", "Fails loudly"],
       },
       {
         id: "measure",
         name: "Measure",
         body: "Qualified leads, speed to first response, hours returned, cost per booked job. Not impressions, not reach. If a piece isn't earning its keep, I'll tell you to switch it off.",
+        chips: ["Monthly review", "Source-level tracking", "Cut what doesn't work"],
       },
     ] satisfies Step[],
   },
 
+  whatWeMeasure: {
+    eyebrow: "What we measure",
+    heading: "Outcomes, not activity.",
+    body: "Impressions and reach don't pay anyone. These are the things we track, and the ones we'll show you every month.",
+    /**
+     * IMPORTANT: these are the metrics we track — not results, not claims.
+     * There are no numbers here and there must never be. A figure only goes
+     * on this site once it has been measured for a named client with a stated
+     * source, which is what content/work.ts enforces.
+     */
+    outcomes: [
+      { name: "Qualified leads per month", detail: "People who want the job you actually do" },
+      { name: "Speed to first response", detail: "Minutes from enquiry to a real reply" },
+      { name: "New reviews per month", detail: "And how many came from the automated ask" },
+      { name: "Hours returned to your team", detail: "Work nobody has to do by hand any more" },
+      { name: "Cost per new customer", detail: "Across every channel, not just the ads" },
+      { name: "Missed calls recovered", detail: "Calls that turned into a conversation anyway" },
+    ],
+  },
+
   work: {
-    eyebrow: "Work",
-    heading: "One site, live, honestly reported.",
-    body: "There is one case study here because there is one client site currently live. When the others launch they'll appear, with real numbers once there are real numbers.",
+    eyebrow: "Our work",
+    heading: "Built, launched, and still running.",
+    // No counts. "One site" goes stale the moment a second one launches.
+    body: "Every site here is live and used by a real business. Results are published once they've been measured, not before.",
     viewAllLabel: "See the full case study",
   },
 

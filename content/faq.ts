@@ -66,7 +66,7 @@ export const faqs: readonly FaqItem[] = [
     id: "what-does-it-cost",
     question: "What does it actually cost?",
     answer:
-      "The prices are on this page — you should not have to book a call to find out whether you can afford someone. Websites are a one-time build plus site care. Automations are a build cost plus a monthly, because they keep running. You buy them one at a time, in whatever order makes you money soonest. The audit is free, and there is no obligation attached to it.",
+      "Every service page lists its own price — you should not have to book a call to find out whether you can afford someone. Websites are a one-time build plus site care. Automations are a build cost plus a monthly, because they keep running. You buy them one at a time, in whatever order makes you money soonest. The audit itself is free, with no obligation attached to it.",
     services: [],
   },
   {

@@ -1,9 +1,11 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Eyebrow, Section } from "@/components/ui/Section";
+import { TraceGrid } from "@/components/ui/TraceGrid";
 import { home } from "@/content/home";
 import { site } from "@/content/site";
 
-import { LeadSystemPanel } from "./LeadSystemPanel";
+import { SystemPanel } from "@/components/ui/SystemPanel";
+import { home as homeContent } from "@/content/home";
 
 const { hero } = home;
 
@@ -30,6 +32,7 @@ export function Hero() {
       size="lg"
       divider={false}
       bleedTop
+      overlay={<TraceGrid />}
       className="flex min-h-svh flex-col"
       contentClassName="flex flex-1 flex-col"
     >
@@ -53,7 +56,15 @@ export function Hero() {
           <p className="mt-4 text-label text-ink-subtle">{site.ctaMicrocopy}</p>
         </div>
 
-        <LeadSystemPanel />
+        <SystemPanel
+          title={homeContent.leadSystem.title}
+          statusLabel={homeContent.leadSystem.statusLabel}
+          rows={homeContent.leadSystem.rows}
+          footerStat={{
+            label: homeContent.leadSystem.footerLabel,
+            value: homeContent.leadSystem.footerValue,
+          }}
+        />
       </div>
 
       {/* The trust line. A list rather than a sentence with separators, so a

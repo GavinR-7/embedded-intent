@@ -82,6 +82,26 @@ compiler stop caring, which is the one job it has here.
 `content/work.type-test.ts` fails the build if anyone tries — see BUILD_NOTES.md
 for how that guard works.
 
+### Adding a case study
+
+Two steps, and genuinely nothing else:
+
+1. **Add one object to `content/work.ts`.** Pick `status: "launched"` with a
+   `launchedAt` date, or `status: "measured"` with `results` — each result
+   needing a real before, a real after, and a stated `source`.
+2. **Drop its images in `public/work/<slug>/`** and reference them from the
+   object's `images` array as `/work/<slug>/<file>`, each with real alt text.
+
+Everything downstream follows from the data: the route is prerendered by
+`generateStaticParams`, the `/work` index picks it up and switches from a
+single full-width card to a grid at two or more, the homepage work section and
+the closing proof card both read the same array, and the detail page renders a
+results table or a launch line depending on the status.
+
+This was verified rather than assumed — a second entry was added with no other
+file touched, and the new route, the index grid and the homepage all updated on
+the next build.
+
 ### Nullable over placeholder
 
 `content/site.ts` types contact channels as `string | null`, not as a

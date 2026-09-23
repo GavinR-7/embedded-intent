@@ -765,3 +765,106 @@ live client work.
 resolve. The CTA still points at `/contact`, which arrives in Phase 6 — that
 remains the single console error in the Lighthouse best-practices audit on
 pages that prefetch it.
+
+---
+
+## Structural pass (2026-09-22)
+
+Lighthouse mobile: `/` **99**, `/services/get-more-google-reviews` **99**,
+`/work` **98**. Accessibility 100 on all three, CLS 0 on all three.
+
+### Nav: two dropdowns, and the grouping is data
+
+`Services ▾ · Company ▾ · Contact`. The mega menu reads
+`serviceCategories` and `servicesByCategory()` from `content/services.ts`, so
+adding a service puts it in the nav automatically and a service cannot exist in
+the catalogue but be missing from the menu. Each item reuses the service's
+existing `promise` as its one-liner rather than introducing a second
+description field to keep in sync.
+
+**A disclosure, not a menubar.** The trigger is a real `<button>` with
+`aria-expanded` and `aria-controls`, and the panel is a plain region of links.
+The ARIA `menu`/`menuitem` pattern is for application menus and brings keyboard
+expectations — arrow-key roving focus, type-ahead — that a list of page links
+does not need and that actively hurt when half-implemented. Tab moves through
+the links, which is what people expect of navigation.
+
+Open delay 120ms, close delay 200ms. The asymmetry is the point: a short open
+delay stops a menu flashing open when you brush past a trigger on the way
+somewhere else, and a longer close delay survives the diagonal mouse travel
+from trigger to panel, which momentarily leaves both elements.
+
+Open state is lifted to the Header so only one panel is open at a time.
+
+**The active indicator now tracks the route.** The section IntersectionObserver
+is gone. Services underlines on `/services/*`, Company on `/work*`, and nothing
+on the homepage, which belongs to neither.
+
+**No About, Blog or Guides.** An empty page in the nav is worse than a missing
+one. About is logged in CONTENT_TODO.md — it needs a photo and a bio, and for a
+practice selling "you work directly with the person building it" it is probably
+the highest-value page still absent.
+
+### A React rule I broke, and the fix
+
+Closing the dropdowns on route change looked like a job for a ref compared
+during render:
+
+```
+Cannot update ref during render   react-hooks/refs
+```
+
+Correct catch — mutating a ref mid-render is not allowed. The alternative,
+resetting in an effect, costs a second render pass on every navigation. Both
+dropdown and accordion state now store *the path they were opened on* and
+derive openness from it, exactly like the mobile menu. A route change closes
+them for free, with no effect and no ref mutation.
+
+### Texture: out of Section entirely
+
+`Section` no longer knows the texture exists. It renders whatever `overlay` it
+is handed, and only the first band of each route passes `<TraceGrid />`. It was
+previously tied to `tone="void"`, which meant it appeared on five or six bands
+down a page and stopped reading as a treatment for the top of the page.
+
+Verified per route — one element each on `/`, both service pages checked,
+`/work` and the case study.
+
+### Homepage: pricing out, proof and process in
+
+Prices now live only on service pages. The "what does it cost" FAQ points there
+and carries no numbers itself.
+
+In its place: **How it works** gained a deliverable chip row per step, and a new
+**What we measure** section lists six outcomes as *things we track* — with no
+numbers, and a comment in `content/home.ts` saying there must never be any. A
+figure in that section would be a performance claim with no client and no
+source behind it, which is the exact failure `content/work.ts` exists to
+prevent.
+
+**Before/After is now AI-specific** and carries its own copy rather than
+borrowing four services' pairs. The question it answers — where does AI touch
+my business at all — is not one any single service answers.
+
+### One panel component, two callers
+
+`LeadSystemPanel` became `components/ui/SystemPanel`, taking rows as props. The
+homepage feeds it the lead journey; every service page feeds it that service's
+`flow`. Same sequencing, same reduced-motion behaviour, same
+"every label in the server HTML" guarantee.
+
+Service flows are data (`AtLeastThree<FlowStep>`), so a service cannot ship
+without one, and the optional `outcomeChain` renders as a footer strip —
+directions of travel, deliberately no numbers.
+
+### "Adding a case study" — verified, not asserted
+
+ARCHITECTURE.md now documents it as one object in `content/work.ts` plus images
+in `public/work/<slug>/`. That claim was tested: a second entry was added with
+no other file touched, and the next build produced a new prerendered route, an
+index that switched from a full-width card to a grid, and a homepage section
+listing both. Then reverted.
+
+The index handles 1..N with a single `grid-cols` decision and no placeholder
+slots, and both the index and homepage copy dropped their counts — "one site"
+goes stale the moment a second one launches.

@@ -3,9 +3,9 @@ import { Close } from "@/components/sections/Close";
 import { Faq } from "@/components/sections/Faq";
 import { Hero } from "@/components/sections/Hero";
 import { HowItWorks } from "@/components/sections/HowItWorks";
-import { Pricing } from "@/components/sections/Pricing";
 import { Problem } from "@/components/sections/Problem";
 import { WhatWeBuild } from "@/components/sections/WhatWeBuild";
+import { WhatWeMeasure } from "@/components/sections/WhatWeMeasure";
 import { WhyMe } from "@/components/sections/WhyMe";
 import { Work } from "@/components/sections/Work";
 
@@ -29,7 +29,7 @@ export default function Home() {
       <BeforeAfter />
       <HowItWorks />
       <Work />
-      <Pricing />
+      <WhatWeMeasure />
       <WhyMe />
       <Faq />
       <Close />

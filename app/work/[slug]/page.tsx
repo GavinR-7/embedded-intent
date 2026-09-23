@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
+import { TraceGrid } from "@/components/ui/TraceGrid";
 import { audit } from "@/content/audit";
 import { site } from "@/content/site";
 import { caseStudies, getCaseStudy, launchedStatusLine } from "@/content/work";
@@ -45,7 +46,7 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
 
   return (
     <>
-      <Section tone="void" size="lg" divider={false} bleedTop>
+      <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
         <Link
           href="/work"
           className="rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"

@@ -23,7 +23,20 @@ export function HowItWorks() {
 
             <h3 className="mt-4 text-h3 text-ink">{step.name}</h3>
 
-            <p className="mt-3 text-label text-ink-muted">{step.body}</p>
+            <p className="mt-3 flex-1 text-label text-ink-muted">{step.body}</p>
+
+            {/* Deliverables, as chips. What the step actually hands you —
+                the data lives in content/home.ts. */}
+            <ul className="mt-6 flex flex-wrap gap-2">
+              {step.chips.map((chip) => (
+                <li
+                  key={chip}
+                  className="rounded-field border border-line px-2.5 py-1 font-mono text-eyebrow uppercase text-ink-subtle"
+                >
+                  {chip}
+                </li>
+              ))}
+            </ul>
           </li>
         ))}
       </ol>

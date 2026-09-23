@@ -16,6 +16,8 @@
  * before launch — see CONTENT_TODO.md.
  */
 
+import type { IconName } from "@/components/ui/icons";
+
 export type NavItem = {
   label: string;
   href: string;
@@ -39,6 +41,22 @@ export type PhoneNumber = {
   e164: string;
 };
 
+/**
+ * A dropdown in the primary nav.
+ *
+ * `kind: "services"` is filled from content/services.ts at render time rather
+ * than listed here — a second list of services in config is a second list to
+ * forget. `kind: "links"` carries its own items.
+ */
+export type NavMenu =
+  | { kind: "services"; label: string; /** Route prefix the underline tracks. */ match: string }
+  | {
+      kind: "links";
+      label: string;
+      match: string;
+      items: readonly { label: string; href: string; description: string; icon: IconName }[];
+    };
+
 export type SiteConfig = {
   name: string;
   /** Short positioning line. Not a slogan — it says what the business does. */
@@ -53,7 +71,12 @@ export type SiteConfig = {
   phone: PhoneNumber | null;
   /** Mirrors --color-void in app/globals.css, for <meta name="theme-color">. */
   themeColor: string;
-  nav: readonly NavItem[];
+  /** Primary nav: two dropdowns plus one direct link. */
+  navMenus: readonly NavMenu[];
+  /** Direct links sitting beside the dropdowns. */
+  navLinks: readonly NavItem[];
+  /** Footer row under the services mega menu. */
+  servicesMenuFooter: { prompt: string; label: string; href: string };
   /**
    * The one CTA used everywhere on the site. There is no second offer and no
    * paid entry point — the audit is free, full stop.
@@ -67,6 +90,10 @@ export type SiteConfig = {
   social: readonly SocialLink[];
   /** The three-part trust line used under the hero and in the footer. */
   trustPoints: readonly string[];
+  /** Business hours, for the contact page's "Reach us directly" card. */
+  hours: string;
+  /** What we promise about replies. Stated where the form is. */
+  responseCommitment: string;
 };
 
 export const site: SiteConfig = {
@@ -83,14 +110,44 @@ export const site: SiteConfig = {
 
   themeColor: "#060b0f",
 
-  // Anchors (/#id) point at homepage sections built in Phase 3. /work and
-  // /contact are real routes arriving in Phases 5 and 6 — they 404 until then.
-  nav: [
-    { label: "What we build", href: "/#what-we-build" },
-    { label: "Work", href: "/work" },
-    { label: "Pricing", href: "/#pricing" },
-    { label: "FAQ", href: "/#faq" },
+  navMenus: [
+    { kind: "services", label: "Services", match: "/services" },
+    {
+      kind: "links",
+      label: "Company",
+      match: "/work",
+      // Deliberately no About, Blog or Guides. An empty page in the nav is
+      // worse than an absent one — see CONTENT_TODO.md for About.
+      items: [
+        {
+          label: "How it works",
+          href: "/#how-it-works",
+          description: "Find, build, automate, measure — and what each step produces",
+          icon: "gears",
+        },
+        {
+          label: "Our work",
+          href: "/work",
+          description: "Live client sites, with results published once measured",
+          icon: "browser",
+        },
+        {
+          label: "FAQ",
+          href: "/#faq",
+          description: "Ownership, timelines, CRMs, and what happens when AI gets it wrong",
+          icon: "chat",
+        },
+      ],
+    },
   ],
+
+  navLinks: [{ label: "Contact", href: "/contact" }],
+
+  servicesMenuFooter: {
+    prompt: "Not sure which one you need?",
+    label: "Start with a free audit",
+    href: "/contact",
+  },
 
   primaryCta: { label: "Get a free audit", href: "/contact" },
   ctaMicrocopy: "Free · You leave with a prioritised list either way",
@@ -102,13 +159,12 @@ export const site: SiteConfig = {
 
   footerColumns: [
     {
-      heading: "Explore",
+      heading: "Company",
       links: [
-        { label: "What we build", href: "/#what-we-build" },
         { label: "How it works", href: "/#how-it-works" },
-        { label: "Work", href: "/work" },
-        { label: "Pricing", href: "/#pricing" },
+        { label: "Our work", href: "/work" },
         { label: "FAQ", href: "/#faq" },
+        { label: "Contact", href: "/contact" },
       ],
     },
   ],
@@ -116,6 +172,9 @@ export const site: SiteConfig = {
   // TODO(launch): add profiles once they exist. An empty array renders nothing,
   // which is correct — an icon row linking to dead profiles is worse than none.
   social: [],
+
+  hours: "Mon–Fri, 9am–6pm ET",
+  responseCommitment: "Forms answered within one business day",
 
   trustPoints: [
     "No contracts",

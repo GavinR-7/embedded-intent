@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
+import { TraceGrid } from "@/components/ui/TraceGrid";
 import { audit } from "@/content/audit";
 import { site } from "@/content/site";
 import { caseStudies, launchedStatusLine } from "@/content/work";
@@ -17,14 +18,17 @@ export const metadata: Metadata = {
 /**
  * The work index.
  *
- * One card today. The layout is a list rather than a grid on purpose — a
- * three-up grid holding one item reads as two things missing, and there is no
- * honest way to fill those slots yet.
+ * Scales from one entry to many without anyone editing this file.
+ *
+ * A single entry renders full-width; two or more flow into a responsive grid.
+ * That is one `grid-cols` decision driven by `caseStudies.length`, not a
+ * special case — and crucially there are no placeholder or "coming soon"
+ * slots, so a short list looks deliberate rather than unfinished.
  */
 export default function WorkIndexPage() {
   return (
     <>
-      <Section tone="void" size="lg" divider={false} bleedTop>
+      <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
         <SectionHeading
           eyebrow={workPage.indexEyebrow}
           heading={workPage.indexHeading}
@@ -33,7 +37,13 @@ export default function WorkIndexPage() {
       </Section>
 
       <Section tone="surface">
-        <ul className="flex flex-col gap-6">
+        <ul
+          className={
+            caseStudies.length === 1
+              ? "flex flex-col gap-6"
+              : "grid gap-6 md:grid-cols-2"
+          }
+        >
           {caseStudies.map((study) => (
             <li key={study.slug}>
               <Link

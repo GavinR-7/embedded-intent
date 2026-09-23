@@ -8,6 +8,7 @@
  */
 export const servicePage = {
   eyebrow: "Service",
+  panelStatusLabel: "How it runs",
   backLabel: "All services",
 
   forWhomHeading: "Who it's for",
