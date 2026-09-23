@@ -1,26 +1,20 @@
-import Link from "next/link";
-
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Eyebrow, Section } from "@/components/ui/Section";
 import { audit } from "@/content/audit";
 import { home } from "@/content/home";
 import { site } from "@/content/site";
-import { caseStudies, launchedStatusLine } from "@/content/work";
 
 const { close } = home;
 
 /**
  * The closing CTA.
  *
- * Carries the proof with it. A reader who has scrolled this far is deciding
- * now, and sending them back up the page — or off to /work — to check whether
- * the work is real is a decision they mostly will not make. So the most recent
- * build sits next to the button, in its honest "results tracking in progress"
- * state.
+ * The case study that used to sit beside this CTA has been removed along with
+ * the homepage work section: case studies live on /work, reached through
+ * Company. One live client is not a proof strip, and a strip of one reads as
+ * two missing. See CONTENT_TODO.md for when it comes back.
  */
 export function Close() {
-  const mostRecent = caseStudies[0];
-
   return (
     <Section id="close" tone="surface" size="lg">
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
@@ -55,29 +49,6 @@ export function Close() {
             </ul>
           </div>
 
-          {/* Compact proof. Same data as the work section, same honest status. */}
-          {mostRecent && (
-            <Link
-              href={`/work/${mostRecent.slug}`}
-              className="lift group rounded-card border border-line bg-void/40 p-7"
-            >
-              <h3 className="text-eyebrow font-mono uppercase text-signal">
-                {close.proofHeading}
-              </h3>
-
-              <p className="mt-4 text-h3 text-ink">{mostRecent.client}</p>
-
-              <p className="mt-1 text-label text-ink-subtle">{mostRecent.location}</p>
-
-              <p className="mt-4 text-label text-ink-muted">{mostRecent.summary}</p>
-
-              {mostRecent.status === "launched" && (
-                <p className="mt-5 border-t border-line pt-4 font-mono text-eyebrow uppercase text-ink-subtle">
-                  {launchedStatusLine(mostRecent.launchedAt)}
-                </p>
-              )}
-            </Link>
-          )}
         </div>
       </div>
     </Section>

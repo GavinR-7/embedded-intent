@@ -69,6 +69,8 @@ export type FlowStep = {
 export type ServiceSlug =
   | "website-design-build"
   | "website-refresh"
+  | "online-booking-setup"
+  | "quote-price-calculator"
   | "ai-lead-response"
   | "missed-call-text-back"
   | "get-more-google-reviews"
@@ -169,6 +171,12 @@ export type Service = {
    * it becomes a refund conversation.
    */
   notThis?: string;
+  /**
+   * Named things this actually does, for services whose scope is otherwise
+   * abstract. "Custom automation" means nothing until you can point at four
+   * jobs it replaces.
+   */
+  examples?: readonly string[];
   /** What actually happens, step by step. Rendered as the flow panel. */
   flow: AtLeastThree<FlowStep>;
   /**
@@ -303,6 +311,96 @@ export const services: readonly Service[] = [
     },
   },
   {
+    slug: "online-booking-setup",
+    name: "Online Booking Setup",
+    tier: "add-on",
+    category: "websites",
+    icon: "calendar",
+    promise: "Let people book you at 11pm without picking up the phone.",
+    outcome:
+      "A calendar that fills itself, with deposits taken and reminders sent, in an account that stays yours.",
+    forWhom:
+      "Businesses that book appointments by phone or DM, and quietly lose everyone who won't do either.",
+    timeline: "One week.",
+    includes: [
+      "Booking set up in a tool the account for which is in your name",
+      "Your real availability, with buffers and travel time already subtracted",
+      "Deposits taken at the time of booking, if you want them",
+      "Confirmation by text and email the moment it's booked",
+      "Reminders before the appointment, so fewer people forget",
+      "Reschedule and cancel links, so changes stop coming through you",
+      "Wired into the site, so it's one tap from any page",
+    ],
+    symptoms: [
+      "Someone messages at 10pm asking if you're free Saturday. You answer at 7am. They booked someone else.",
+      "Six messages back and forth to agree one appointment time.",
+      "You get no-shows because nobody reminded them, and you eat the slot.",
+      "Your calendar lives in your head and on a whiteboard in the shop.",
+    ],
+    beforeAfter: [
+      { before: "Booking takes six messages back and forth", after: "They pick a slot you actually have free" },
+      { before: "A no-show costs you the whole slot", after: "A deposit at booking and a reminder before" },
+      { before: "Someone has to answer for anything to get booked", after: "It books at 11pm while you're asleep" },
+      { before: "Every change comes through you", after: "They reschedule themselves with a link" },
+    ],
+    flow: [
+      { title: "They tap Book on any page", detail: "Not a phone number and a hope", icon: "calendar" },
+      { title: "They see your real availability", detail: "Buffers and travel time already subtracted", icon: "clock" },
+      { title: "Deposit taken, if you want one", detail: "The no-show stops being free", icon: "shield" },
+      { title: "Confirmation goes out instantly", detail: "Text and email, with the details", icon: "send" },
+      { title: "Reminder before the appointment", detail: "And a link to move it if they must", icon: "check" },
+    ],
+    outcomeChain: ["Bookings after hours", "Fewer no-shows", "A calendar you didn't have to manage"],
+    pricing: {
+      build: { from: 600, to: 1200 },
+      passThrough:
+        "The booking tool's own subscription is billed to you directly by them, at their price, and is never marked up. There is no monthly from me on this one.",
+    },
+  },
+  {
+    slug: "quote-price-calculator",
+    name: "Quote & Price Calculator",
+    tier: "add-on",
+    category: "websites",
+    icon: "calculator",
+    promise: "A ballpark price on your site, before they ever call you.",
+    outcome:
+      "People arrive already knowing roughly what it costs, and the ones who were never close stop filling your inbox.",
+    forWhom:
+      "Businesses whose first question on every single call is \"roughly what does this run?\"",
+    timeline: "One to two weeks.",
+    includes: [
+      "A few questions a customer can actually answer — size, date, guest count, square footage",
+      "A ballpark built from your own pricing, not a guess",
+      "Ranges rather than fake precision, with the things that move the number named",
+      "A quote request pre-filled with everything they just answered",
+      "You see the number they were shown before you call them back",
+      "Kept current under the $150/mo site care plan that covers your site — no second monthly for this",
+    ],
+    symptoms: [
+      "Every call opens with \"roughly what does this run?\" and you're guessing on the spot.",
+      "You spend forty minutes quoting someone whose budget was never close.",
+      "Plenty of people never call at all, because nobody in your trade will say what anything costs.",
+      "Two customers got different numbers for the same job, because you quoted from memory.",
+    ],
+    beforeAfter: [
+      { before: "Every call starts with \"what does it cost?\"", after: "They arrive already knowing the range" },
+      { before: "Forty minutes quoting someone who was never close", after: "The mismatch shows up before you drive out" },
+      { before: "Quotes from memory, different every time", after: "The same pricing every time, from your own numbers" },
+      { before: "A contact form with a name and a phone number", after: "A request with the size, the date and the number they saw" },
+    ],
+    flow: [
+      { title: "They answer a few questions", detail: "Size, date, guest count, square footage", icon: "filter" },
+      { title: "They see a ballpark, not a riddle", detail: "A range built from your own pricing", icon: "calculator" },
+      { title: "The quote request fills itself in", detail: "Everything they just answered, attached", icon: "document" },
+      { title: "It lands on your phone", detail: "With the number they were shown", icon: "inbox" },
+    ],
+    outcomeChain: ["Fewer tyre-kicker calls", "Quotes that start informed", "Pricing that doesn't vary by memory"],
+    pricing: {
+      build: { from: 900, to: 2000 },
+    },
+  },
+  {
     slug: "ai-lead-response",
     name: "AI Lead Response",
     tier: "add-on",
@@ -323,12 +421,14 @@ export const services: readonly Service[] = [
       "Hands off to you the moment someone asks for a person, or when it isn't sure",
       "Every conversation logged in full, so you can read exactly what was said",
       "Approval rules on anything that commits you to a price or a date",
+      "Automatic follow-up when a quote goes cold — day 2, day 5, day 14, then it stops",
     ],
     symptoms: [
       "A form comes in at 8:40pm. You see it at 7am. They booked someone else at 9.",
       "Half your calls are the same four questions: do you cover my town, what does it cost roughly, how soon, do you even do this kind of job.",
       "You're up a ladder. The phone rings. You call back at six and they've moved on.",
       "Saturday and Sunday leads sit there until Monday morning.",
+      "You sent a quote nine days ago. You don't know if they opened it, and you're not going to chase it.",
     ],
     beforeAfter: [
       {
@@ -343,6 +443,10 @@ export const services: readonly Service[] = [
       {
         before: "You find out what the job is on the call",
         after: "Job type, address and timeline are written down before you speak",
+      },
+      {
+        before: "A quote goes quiet and stays quiet",
+        after: "Follow-ups at day 2, day 5 and day 14, until they answer either way",
       },
     ],
     notThis:
@@ -439,6 +543,7 @@ export const services: readonly Service[] = [
       "One polite follow-up, then it stops",
       "Unhappy customers routed privately to you first, before they post",
       "A simple view of what went out and what came back",
+      "A drafted reply to every review, good or bad, for you to approve before it posts",
     ],
     symptoms: [
       "Four hundred finished jobs. Thirty-one reviews.",
@@ -470,6 +575,7 @@ export const services: readonly Service[] = [
       { title: "Happy? Public. Unhappy?", detail: "Unhappy customers reach you privately first", icon: "shield" },
       { title: "One tap to your review box", detail: "No searching, no login", icon: "link" },
       { title: "Reminder if they forget", detail: "Stops the moment they've left one", icon: "clock" },
+      { title: "Replies drafted for every review", detail: "Good or bad. You approve, or edit, then it posts", icon: "reply" },
     ],
     outcomeChain: [
       "More reviews",
@@ -701,6 +807,12 @@ export const services: readonly Service[] = [
         before: "Automation nobody can check",
         after: "Every action logged, and anything irreversible asks you first",
       },
+    ],
+    examples: [
+      "Quote to invoice: an approved estimate becomes an invoice without anyone retyping it",
+      "Intake forms landing straight in your CRM or your spreadsheet",
+      "Estimates drafted from your own pricing and past jobs, for you to approve",
+      "An internal assistant that answers your team's questions out of your own documents",
     ],
     notThis:
       "If the honest answer is that a process shouldn't be automated — too rare, too high-stakes, or just broken and needing fixing first — that's the answer you get.",

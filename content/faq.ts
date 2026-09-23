@@ -38,29 +38,34 @@ export const faqs: readonly FaqItem[] = [
     id: "already-have-a-website",
     question: "I already have a website.",
     answer:
-      "Then the first job is working out whether it is the problem. Often it is not: the site is fine and the leads are dying after they arrive, which is an automation job, not a rebuild. The audit tells you which one you have. If the site is the problem, you will see exactly why — how long it takes to open on a phone, where people leave, and what a thumb cannot reach.",
-    services: ["website-design-build"],
+      "Then the first job is working out whether it is the problem. Often it is not: the site is fine and the leads are dying after they arrive, which is an automation job, not a rebuild. The audit tells you which one you have. If the site is the problem, you will see exactly why — how long it takes to open on a phone, where people leave, and what a thumb cannot reach. And if the bones are fine, a refresh costs a fraction of a rebuild.",
+    services: ["website-design-build", "website-refresh"],
   },
   {
     id: "how-long",
     question: "How long does it take?",
     answer:
       "Most sites launch in two to four weeks, depending on how quickly we get your content — photos and copy coming back is almost always the long pole, not the build. A single automation is usually one to two weeks. I don't estimate your date as a range: we commit to an exact launch date on the call, once I've seen what I'm working with, and you get an update every week whether or not there is good news.",
-    services: ["website-design-build"],
+    services: ["website-design-build", "online-booking-setup", "quote-price-calculator"],
   },
   {
     id: "who-owns-the-accounts",
     question: "Who owns the accounts?",
     answer:
       "You do. Every account — domain, hosting, Google Business Profile, the AI platform, the ad account, the phone number — is created in your name with you as the owner, and you get the credentials. If you stop working with me tomorrow, everything keeps running and you can hand it to anyone. Nothing is hostage to the relationship.",
-    services: ["get-found-on-google", "google-ads-management"],
+    services: ["get-found-on-google", "google-ads-management", "online-booking-setup"],
   },
   {
     id: "works-with-my-crm",
     question: "Does it work with my CRM?",
     answer:
       "Usually. The common ones in the trades are built to connect to other tools, and most of what we do is read a job and write back a status. Before you pay for anything, I check yours specifically and tell you what will connect cleanly, what needs a workaround, and what is not worth doing. If the honest answer is that your CRM makes this more trouble than it is worth, you get that answer.",
-    services: ["ai-lead-response", "get-more-google-reviews", "custom-ai-automation"],
+    services: [
+      "ai-lead-response",
+      "get-more-google-reviews",
+      "custom-ai-automation",
+      "quote-price-calculator",
+    ],
   },
   {
     id: "what-does-it-cost",

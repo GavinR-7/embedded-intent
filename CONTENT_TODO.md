@@ -85,9 +85,11 @@ These must be resolved before the domain is pointed at the site.
   no icon row.
 
 - [x] ~~Confirm every price before Phase 3.~~ Confirmed by the owner
-  2026-09-21 and set in `content/services.ts`. Now **nine** services — Website
-  Refresh added 2026-09-22 at $800–2,000 build plus $150/mo care — one primary
-  plus eight add-ons, sold modularly, with no bundled tier.
+  2026-09-21 and set in `content/services.ts`. Now **eleven** services: Website
+  Refresh ($800–2,000 + $150/mo) added 2026-09-22, then Online Booking Setup
+  ($600–1,200, no monthly from us) and Quote & Price Calculator ($900–2,000,
+  covered by existing site care) on 2026-09-23. One primary plus ten add-ons,
+  sold modularly, with no bundled tier.
 
 - [x] ~~Confirm the delivery timeline in the FAQ.~~ Confirmed 2026-09-21:
   two to four weeks for a site, one to two for a single automation, with the
@@ -111,6 +113,33 @@ These must be resolved before the domain is pointed at the site.
   directly with the person building it", a real face and a short honest bio is
   probably the highest-value page still missing. Needs a photo and a few
   paragraphs from the owner before it can exist.
+
+- [ ] **Re-add a "Latest work" strip to the homepage once there are 3+ live
+  case studies.** Removed 2026-09-23 along with the compact proof block beside
+  the closing CTA. One live client is not a proof strip, and a strip of one
+  reads as two missing. Case studies live on `/work`, reached through Company.
+
+---
+
+## Logged, not built
+
+Deliberately not built yet, and not stubbed. A placeholder for a feature that
+does not exist is worse than its absence — it promises something on a sales
+site that cannot be delivered when someone taps it.
+
+- [ ] **"Try it live" homepage section.** A missed-call text-back demo number,
+  a chatbot demo, and later an AI phone agent demo — the single most
+  convincing thing this site could carry, since the product demonstrates
+  itself.
+  **Blocked on:** a Twilio number and A2P 10DLC registration, which takes real
+  time to approve. Do not build placeholder demo UI in the meantime.
+
+- [ ] **"Always working" wording.** Replace the published business hours with
+  an always-on claim — but *only once* missed-call text-back or AI answering is
+  actually live on our own line. Claiming to answer around the clock while the
+  contact card says Mon–Fri 9–6 is the exact contradiction this site is
+  positioned against, and a prospect who tests it at 9pm finds out.
+  Depends on the Twilio work above.
 
 ---
 

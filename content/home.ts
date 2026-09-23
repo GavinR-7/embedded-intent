@@ -202,14 +202,6 @@ export const home = {
     ],
   },
 
-  work: {
-    eyebrow: "Our work",
-    heading: "Built, launched, and still running.",
-    // No counts. "One site" goes stale the moment a second one launches.
-    body: "Every site here is live and used by a real business. Results are published once they've been measured, not before.",
-    viewAllLabel: "See the full case study",
-  },
-
   pricing: {
     eyebrow: "Pricing",
     heading: "Published, so you don't have to book a call to find out.",
@@ -275,6 +267,5 @@ export const home = {
     eyebrow: "Next step",
     heading: "Let's find the fastest win in your business.",
     body: "Thirty minutes. We look at how leads reach you, what happens to the ones that arrive after hours, and where your team is losing time — then I tell you what to build first and what it costs.",
-    proofHeading: "Most recent build",
   },
 } as const;

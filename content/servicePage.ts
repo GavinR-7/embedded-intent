@@ -20,6 +20,7 @@ export const servicePage = {
 
   includesEyebrow: "Included",
   includesHeading: "What you actually get",
+  examplesHeading: "For example",
 
   changeEyebrow: "The fix",
   changeHeading: "What changes",

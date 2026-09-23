@@ -937,3 +937,100 @@ line got written.
 `.gitignore` had `.env*`, which swallows `.env.example` too. Added
 `!.env.example` and verified with `git check-ignore`. A template nobody can
 commit is a template nobody knows exists.
+
+---
+
+## Fix + content pass (2026-09-23)
+
+### The mega menu was inheriting a 350px box
+
+The panel was rendered inside the trigger's `<li>` with `absolute inset-x-0`.
+Its nearest positioned ancestor was the nav `<ul>` — which is `relative` so the
+active indicator can be measured against it — and that list is only as wide as
+the links. Three columns then fought over ~350px and every description wrapped
+one word per line.
+
+The trigger and panel are now separate components, and the panel is rendered by
+the Header as a direct child of `<header>`, which is `sticky` and therefore a
+positioned, full-width ancestor. It takes `w-[min(56rem,calc(100vw-2rem))]`,
+centred, so it is clamped inside the viewport at any width.
+
+`fixed` would have worked too, but only by accident: `backdrop-filter` on the
+header creates a containing block for fixed descendants, so a `fixed` panel
+resolves against the viewport or against the header depending on whether the
+header happens to be in its solid state. Absolute against a known positioned
+ancestor has no such ambiguity.
+
+Background is now solid `--color-surface` with a border and `shadow-2xl` at
+`z-50`. It was `bg-void/95` with a blur, which is what let content show through.
+
+### Hover and click were fighting
+
+Hover opened the panel; the click handler then saw `open === true` and toggled
+it shut. Clicking the trigger dismissed the menu you were reaching for.
+
+Open state now records **how** it was opened, and a click only closes a panel
+that a click opened. A hover-open is promoted to click-opened and stays put.
+The open timer also refuses to downgrade a click-opened panel back to
+hover-opened, or moving the pointer inside the panel would silently change what
+the next click does.
+
+Verified with a real dispatched mouse sequence rather than by reasoning:
+
+```
+after hover                 expanded=true   w=896  cols=3  bg=opaque  z=50
+after click (must stay open) expanded=true   w=896  cols=3  bg=opaque  z=50
+after 2nd click              expanded=false  panel removed
+```
+
+896px is 56rem — the old panel was ~350px.
+
+### Homepage work section removed
+
+Both the Work section and the compact proof block beside the closing CTA. One
+live client is not a proof strip, and a strip of one reads as two missing. Case
+studies live on `/work`, reached through Company. Logged in CONTENT_TODO.md to
+return at 3+ live case studies.
+
+A side effect worth noting: best practices went from 96 to **100** across the
+site, because the last console error was a prefetch 404 on `/contact`, which
+now exists.
+
+### Eleven services
+
+Online Booking Setup and Quote & Price Calculator added under Websites.
+Booking has **no monthly from us** — the booking tool bills the client directly
+at its own price, stated through the existing `passThrough` field. The
+calculator is maintained under the site care plan the client already has, which
+is said explicitly in `includes` rather than shown as a second $150/mo in the
+pricing column, because that would read as additive.
+
+Two things were **folded rather than added**, which is the more important half:
+
+- **Follow-up sequences** into AI Lead Response — a symptom (the quote sent
+  nine days ago), a before/after pair, and a deliverable line.
+- **Review response drafting** into Get More Google Reviews — a flow step and
+  a deliverable line.
+
+A separate service for each would have split one decision into three and given
+the buyer more ways to stall.
+
+**Custom AI Automation gained named `examples`.** "Custom automation" means
+nothing until you can point at the jobs it replaces, so the page now names
+four.
+
+Tagging the new services exposed that **Website Refresh had no FAQ subset at
+all** — and "I already have a website" is *the* question for it. Now tagged,
+with a sentence added about a refresh costing a fraction of a rebuild.
+
+### Lighthouse
+
+| Route | perf | a11y | best practices |
+| --- | --- | --- | --- |
+| `/` | 96 (median of 4) | 100 | 100 |
+| `/services/online-booking-setup` | 99 | 100 | 100 |
+| `/contact` | 99 | 100 | 100 |
+
+The homepage single-run figure was 94, which is the bottom of the bimodal LCP
+band documented in the font notes. Four runs give 94 / 96 / 96 / 99 and a
+median LCP of 2.63s — the spread, not a regression.

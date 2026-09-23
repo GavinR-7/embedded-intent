@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { IconTile } from "@/components/ui/icons";
 import { serviceCategories, servicesByCategory } from "@/content/services";
 import { site } from "@/content/site";
 
-import { NavDropdown } from "./NavDropdown";
+import { NavPanel, NavTrigger } from "./NavDropdown";
 
 /**
  * Elements that can receive keyboard focus, for the mobile menu's focus trap.
@@ -22,6 +22,15 @@ const DESKTOP_QUERY = "(min-width: 48rem)";
 /** Width of the active-nav underline, in px. Constant, so the indicator only
  *  ever animates `transform` — never `width`, which would be layout. */
 const INDICATOR_WIDTH = 20;
+
+/**
+ * Opening is delayed so brushing past a trigger on the way somewhere else does
+ * not flash a menu open. Closing is delayed longer, so travelling diagonally
+ * from the trigger down into the panel — which briefly leaves both elements —
+ * does not snatch it away mid-movement.
+ */
+const OPEN_DELAY_MS = 120;
+const CLOSE_DELAY_MS = 200;
 
 function ChipMark({ className }: { className?: string }) {
   return (
@@ -67,16 +76,78 @@ export function Header() {
   const [openMenuState, setOpenMenuState] = useState<{
     label: string;
     path: string;
+    /**
+     * How the panel came to be open.
+     *
+     * Without this, hover-open followed by a click toggled the panel shut:
+     * the pointer opened it, then the click saw `open === true` and closed it,
+     * so clicking the trigger dismissed the menu you were trying to use. A
+     * click now only closes a panel that a click opened.
+     */
+    source: "hover" | "click";
   } | null>(null);
+
   const openLabel =
     openMenuState !== null && openMenuState.path === pathname
       ? openMenuState.label
       : null;
 
-  const setOpenLabel = useCallback(
-    (label: string | null) =>
-      setOpenMenuState(label === null ? null : { label, path: pathname }),
-    [pathname],
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimers = useCallback(() => {
+    if (openTimer.current) clearTimeout(openTimer.current);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    openTimer.current = null;
+    closeTimer.current = null;
+  }, []);
+
+  useEffect(() => clearTimers, [clearTimers]);
+
+  const closeDropdown = useCallback(() => {
+    clearTimers();
+    setOpenMenuState(null);
+  }, [clearTimers]);
+
+  /** Pointer entered a trigger or a panel. */
+  const onDropdownPointerEnter = useCallback(
+    (label: string) => {
+      // Cancels any pending close, which is what makes the diagonal trip from
+      // trigger to panel survivable.
+      clearTimers();
+      openTimer.current = setTimeout(
+        () =>
+          setOpenMenuState((current) => {
+            // Already open for this menu: keep the existing source. Otherwise
+            // moving the pointer around inside a click-opened panel would
+            // quietly downgrade it to hover-opened, and the next click on the
+            // trigger would behave differently than the one before it.
+            if (current?.label === label && current.path === pathname) return current;
+            return { label, path: pathname, source: "hover" };
+          }),
+        OPEN_DELAY_MS,
+      );
+    },
+    [clearTimers, pathname],
+  );
+
+  const onDropdownPointerLeave = useCallback(() => {
+    clearTimers();
+    closeTimer.current = setTimeout(() => setOpenMenuState(null), CLOSE_DELAY_MS);
+  }, [clearTimers]);
+
+  const onTriggerClick = useCallback(
+    (label: string) => {
+      clearTimers();
+      setOpenMenuState((current) => {
+        const showing = current?.label === label && current.path === pathname;
+        // A click closes only what a click opened. After a hover-open, the
+        // click promotes it to click-opened and the panel stays put.
+        if (showing && current?.source === "click") return null;
+        return { label, path: pathname, source: "click" };
+      });
+    },
+    [clearTimers, pathname],
   );
 
   const [openGroupState, setOpenGroupState] = useState<{
@@ -99,6 +170,7 @@ export function Header() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const navListRef = useRef<HTMLUListElement | null>(null);
   const triggerRefs = useRef<(HTMLElement | null)[]>([]);
+  const triggerButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
@@ -246,6 +318,17 @@ export function Header() {
     };
   }, [open, closeMenu]);
 
+  const panelIdBase = useId();
+  const openMenuIndex = site.navMenus.findIndex((menu) => menu.label === openLabel);
+
+  const dropdownHandlers = {
+    openLabel,
+    onPointerEnter: onDropdownPointerEnter,
+    onPointerLeave: onDropdownPointerLeave,
+    onTriggerClick,
+    close: closeDropdown,
+  };
+
   // Solid when scrolled, while the mobile menu is open, or while a dropdown is
   // open — a transparent bar floating over an opaque panel looks broken.
   const solid = scrolled || open || openLabel !== null;
@@ -279,12 +362,16 @@ export function Header() {
             <ul ref={navListRef} className="relative flex items-center gap-8 pb-1">
               {site.navMenus.map((menu, index) => (
                 <li key={menu.label}>
-                  <NavDropdown
+                  <NavTrigger
                     menu={menu}
                     isActive={index === activeIndex}
-                    state={{ openLabel, setOpenLabel }}
+                    panelId={`${panelIdBase}-${index}`}
+                    handlers={dropdownHandlers}
                     triggerRef={(node) => {
                       triggerRefs.current[index] = node;
+                    }}
+                    buttonRef={(node) => {
+                      triggerButtons.current[index] = node;
                     }}
                   />
                 </li>
@@ -345,6 +432,21 @@ export function Header() {
             </svg>
           </button>
         </div>
+
+        {/*
+          The open dropdown panel, rendered here rather than inside the nav
+          list. <header> is `sticky`, so it is a positioned, full-width
+          ancestor — which is what lets the panel take a sensible width. Inside
+          the list it inherited the ~350px nav <ul> and every column collapsed.
+        */}
+        {openMenuIndex >= 0 && (
+          <NavPanel
+            menu={site.navMenus[openMenuIndex]}
+            panelId={`${panelIdBase}-${openMenuIndex}`}
+            handlers={dropdownHandlers}
+            returnFocusTo={() => triggerButtons.current[openMenuIndex] ?? null}
+          />
+        )}
 
         {/*
           Rendered only while open, so the menu's links are never in the tab

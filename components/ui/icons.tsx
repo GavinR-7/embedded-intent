@@ -34,7 +34,8 @@ export type IconName =
   | "document"
   | "bolt"
   | "filter"
-  | "link";
+  | "link"
+  | "calculator";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   browser: <path d="M3 5h18v14H3V5Zm0 4h18M6 7h.01M8.5 7h.01" />,
@@ -65,6 +66,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
   document: <path d="M6 3h8l4 4v14H6V3Zm8 0v4h4M9 12h6m-6 4h6" />,
   bolt: <path d="M13 3 5 14h6l-1 7 8-11h-6l1-7Z" />,
   filter: <path d="M4 5h16l-6 7v7l-4-2v-5L4 5Z" />,
+  calculator: <path d="M5 3h14v18H5V3Zm2 4h10M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h3" />,
   link: <path d="M10 14a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7L11.5 6.9M14 10a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1.3-1.3" />,
 };
 

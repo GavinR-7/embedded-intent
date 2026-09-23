@@ -7,7 +7,6 @@ import { Problem } from "@/components/sections/Problem";
 import { WhatWeBuild } from "@/components/sections/WhatWeBuild";
 import { WhatWeMeasure } from "@/components/sections/WhatWeMeasure";
 import { WhyMe } from "@/components/sections/WhyMe";
-import { Work } from "@/components/sections/Work";
 
 /**
  * Homepage.
@@ -28,7 +27,6 @@ export default function Home() {
       <WhatWeBuild />
       <BeforeAfter />
       <HowItWorks />
-      <Work />
       <WhatWeMeasure />
       <WhyMe />
       <Faq />

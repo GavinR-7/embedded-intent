@@ -169,6 +169,24 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           ))}
         </ul>
 
+        {/* Named examples, for a service whose scope is otherwise abstract.
+            "Custom automation" means nothing until you can point at the jobs
+            it replaces. */}
+        {service.examples && (
+          <div className="mt-12">
+            <h3 className="text-eyebrow font-mono uppercase text-signal">
+              {servicePage.examplesHeading}
+            </h3>
+            <ul className="mt-5 grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2">
+              {service.examples.map((example) => (
+                <li key={example} className="lift bg-void p-6 text-lead text-ink-muted">
+                  {example}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {service.notThis && (
           <div className="mt-12 rounded-card border border-line bg-surface/40 p-7">
             <h3 className="text-eyebrow font-mono uppercase text-alert">
