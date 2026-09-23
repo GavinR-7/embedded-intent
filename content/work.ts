@@ -71,7 +71,7 @@ export const caseStudies: CaseStudy[] = [
     /** ISO 8601. Display formatting happens at render, never in the data. */
     launchedAt: "2026-08-20",
     summary:
-      "A mobile-first rebuild for a Long Island event rental company, built around a quote request that asks for the date and the site first — so a usable enquiry arrives instead of a name and a number.",
+      "A mobile-first rebuild for a Long Island event rental company, built around a quote request that asks for the date and the site first — so a usable inquiry arrives instead of a name and a number.",
     problem:
       "Tent rental is a deadline purchase, researched on a phone, usually at night. By the time someone is looking they already know their date and roughly how many people they need to cover; what they want is to find out quickly whether you are free and what it will cost. Anything that makes them wait until business hours for that answer is the point where most of them stop looking and start calling somebody else.",
     built: [
@@ -79,8 +79,25 @@ export const caseStudies: CaseStudy[] = [
       "Rebuilt from the ground up rather than restyled",
       "Quote request flow that captures event date, location and guest count up front",
     ],
-    // TODO: real screenshots with real alt text — see CONTENT_TODO.md.
-    images: [],
+    /*
+     * Captured from the live site. Alt text describes what is actually in each
+     * frame — it is read by someone who cannot see the screenshot, so "site
+     * screenshot" would tell them nothing.
+     */
+    images: [
+      {
+        src: "/work/above-all-tent-rentals/homepage-desktop.jpg",
+        alt: "The Above All Tent Rental homepage on a laptop: a photograph of a bounce house and a water slide set up on a lawn beside the water, headed \u201cWe\u2019ve Got You Covered!\u201d, with Get a quote and Call buttons side by side.",
+      },
+      {
+        src: "/work/above-all-tent-rentals/homepage-phone.jpg",
+        alt: "The same homepage on a phone, with the navigation collapsed to a menu button and the quote and call buttons stacked within thumb reach.",
+      },
+      {
+        src: "/work/above-all-tent-rentals/quote-request-phone.png",
+        alt: "The quote request page on a phone, headed \u201cLet\u2019s plan your event.\u201d, listing phone, email, address and daily opening hours above a map, with Call and Get a quote buttons pinned to the bottom of the screen.",
+      },
+    ],
     // No `testimonial` field: there is no quote yet. Omitted, not invented.
   },
 ];

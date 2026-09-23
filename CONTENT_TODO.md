@@ -119,6 +119,19 @@ These must be resolved before the domain is pointed at the site.
   the closing CTA. One live client is not a proof strip, and a strip of one
   reads as two missing. Case studies live on `/work`, reached through Company.
 
+- [ ] **Founder photo for the Why section and the contact card.** The site
+  speaks as "we", with two deliberate exceptions that name the person — the Why
+  section and the "Reach us directly" card. Both would carry a real face. For a
+  practice whose whole differentiator is "you work directly with the person
+  building it", a stock photo would be worse than none. Needs a real headshot.
+
+- [ ] **Rate-limit `/api/audit` at the edge before launch.** Add a Vercel
+  Firewall rule on that path. The honeypot and the three-second time trap stop
+  naive bots, but neither stops a determined script from posting a thousand
+  valid-looking submissions — and every one of those is an email and a Resend
+  send. This belongs at the edge, not in the handler, so the requests never
+  reach a function at all.
+
 ---
 
 ## Logged, not built

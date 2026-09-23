@@ -341,13 +341,31 @@ export function Header() {
         className="pointer-events-none absolute top-0 left-0 h-20 w-full"
       />
 
-      <header
-        className={`sticky top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter] duration-[var(--duration-base)] ease-precise ${
-          solid
-            ? "border-line bg-void/85 backdrop-blur-md"
-            : "border-transparent bg-transparent"
-        }`}
-      >
+      {/*
+        The header carries NO backdrop-filter, background or border of its own.
+
+        `backdrop-filter` (like `transform` and `filter`) makes an element the
+        containing block for `position: fixed` descendants. The mobile menu
+        panel below is fixed with `top-20 bottom-0`; with the blur on <header>
+        those offsets resolved against the 81px header instead of the viewport,
+        so the panel rendered 390x1 and mobile visitors could not navigate at
+        all. `position: sticky` alone does not cause this — only the blur did.
+
+        So the chrome lives on an absolutely-positioned sibling layer instead.
+        The fixed panel is not a descendant of that layer, so nothing traps it,
+        while the NavPanel's `absolute` positioning still resolves against
+        <header> as before.
+      */}
+      <header className="sticky top-0 z-50">
+        <div
+          aria-hidden="true"
+          className={`absolute inset-0 -z-10 border-b transition-[background-color,border-color,backdrop-filter] duration-[var(--duration-base)] ease-precise ${
+            solid
+              ? "border-line bg-void/85 backdrop-blur-md"
+              : "border-transparent bg-transparent"
+          }`}
+        />
+
         <div className="mx-auto flex h-20 max-w-content items-center justify-between gap-4 px-gutter">
           <Link
             href="/"

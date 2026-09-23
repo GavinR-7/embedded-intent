@@ -1034,3 +1034,121 @@ with a sentence added about a refresh costing a fraction of a rebuild.
 The homepage single-run figure was 94, which is the bottom of the bimodal LCP
 band documented in the font notes. Four runs give 94 / 96 / 96 / 99 and a
 median LCP of 2.63s — the spread, not a regression.
+
+---
+
+## Fix pass (2026-09-23, from a full review of the built site)
+
+### The mobile menu rendered 390×1, and the cause is worth remembering
+
+`#mobile-menu` is `position: fixed` with `top-20 bottom-0`. Its box measured
+390×1, so mobile visitors could not navigate the site at all.
+
+The cause: **`backdrop-filter` makes an element the containing block for
+`position: fixed` descendants.** The `<header>` gained `backdrop-blur-md`
+whenever it was solid — and it is *always* solid while the mobile menu is open,
+because `solid` includes `open`. So `top-20 bottom-0` resolved against the 81px
+header instead of the viewport, leaving one pixel.
+
+`position: sticky` does **not** cause this. Only `transform`, `filter`,
+`backdrop-filter`, `perspective`, `contain` and `will-change` of those do.
+
+**The fix: the header carries no chrome of its own.** Background, border and
+blur moved to an absolutely-positioned, `aria-hidden`, `-z-10` sibling layer
+inside it. The fixed panel is not a descendant of that layer, so nothing traps
+it, and `NavPanel`'s `absolute` positioning still resolves against `<header>`
+as before.
+
+The alternative was rendering the panel outside the header, via a portal. That
+also works, but it costs a client-only mount, complicates the `aria-controls`
+relationship between the toggle and the panel, and moves the focus trap's DOM
+further from the button that owns it. Moving one decorative layer was the
+smaller change and left the accessibility wiring untouched.
+
+Measured after the fix, at 390×844:
+
+```
+at top of page     panel 390x764, top 80, bottom 844 (viewport 844), 4 tap targets
+scrolled 1200px    panel 390x764, top 80, bottom 844, 4 tap targets
+```
+
+**This bug class will come back.** Any `transform`, `filter` or `backdrop-filter`
+added to an ancestor of a fixed element breaks it silently — no error, no
+warning, just an element positioned against the wrong box. If a fixed overlay
+ever renders at the wrong size again, look up the tree for those properties
+first.
+
+### Voice: "we", with two named exceptions
+
+The site now speaks as "we" throughout. A prospect comparing three quotes is
+not reassured by a business that cannot say "we", and the first-person copy
+read as a hobby.
+
+The exceptions are the Why section and the contact card, which name the person,
+because that *is* the differentiator. Those strings carry a `{owner}` token
+resolved by `fillOwner()` from `site.owner` — so the name is written down once,
+and the two places that name a person are findable by grepping for `{owner}`
+rather than for a first name.
+
+### US English
+
+`prioritized`, `optimization`, `inquiry`. Verified by grep over `content/` and
+`app/` for `-ise/-isation/enquir/behaviour/colour`, excluding comments: zero
+hits. Code comments were left as they were.
+
+### No framework names in customer copy
+
+"Next.js on Vercel: static pages, image optimisation, real speed scores" became
+"Built to load in under two seconds — we measure it before handing it over".
+A contractor does not know what Vercel is, and the sentence was describing our
+tooling rather than his outcome.
+
+### Homepage catalogue is grouped, and much shorter on a phone
+
+Ten flat cards orphaned the last one on its own row and gave no signal about
+which services solve the same problem. Now grouped by the same `category` data
+the mega menu reads.
+
+One markup, two shapes: compact rows on a phone (icon, name, tagline, chevron —
+no internal divider) and full cards from `sm` up. The card treatment on mobile
+was most of the page height.
+
+### Form hardening
+
+`interests` is now a `z.enum` derived from the content module, capped at the
+option count, so an unknown id is rejected rather than silently filtered.
+
+The time trap stamps render time into a hidden field and drops anything
+submitted within three seconds — with the **same silent 200 as the honeypot**,
+because a distinct response tells whoever wrote the bot which check to defeat.
+A missing or unparseable `renderedAt` is *not* treated as a bot, and neither is
+a negative elapsed time, which just means the visitor's clock disagrees with
+the server's.
+
+Verified end to end:
+
+```
+submitted instantly     200  {"ok":true}   nothing sent
+submitted 10s after     reaches the sender
+unknown interest id     400  rejected
+online-booking + quote-calculator  accepted
+renderedAt absent       reaches the sender (real people are not punished)
+honeypot filled         200  {"ok":true}   nothing sent
+```
+
+### Case study images are real
+
+Captured from the live site with the headless Chrome documented above: the
+homepage at 1440 and at 390, and the quote request flow on a phone. The two
+photographic shots are JPEG (209KB, 208KB) rather than PNG — as PNG they were
+1.4MB each, on a site that sells page speed. The text-heavy quote page stays
+PNG at 178KB. Total 608KB, down from 2.9MB.
+
+Alt text describes what is actually in each frame, because it is read by
+someone who cannot see it. The gallery code path had never executed before
+this; it renders three images through `next/image`.
+
+### `npm run typecheck`
+
+`next typegen && tsc --noEmit`. A fresh clone fails a bare `tsc` because
+`PageProps` and `LayoutProps` only exist once a build has generated them.

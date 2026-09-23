@@ -14,11 +14,29 @@ import { audit } from "@/content/audit";
  * Never trust the client for this. Anything can POST to the endpoint.
  */
 
-/* Widened to string[] deliberately. `audit` is `as const`, so these ids are
- * literal types — but the values arriving here came off the wire and are
- * plain strings. Comparing them against a literal union is a type error, and
- * the whole job of this line is to check untrusted input against the list. */
-const INTEREST_IDS: string[] = audit.form.interests.map((interest) => interest.id);
+/**
+ * The known interest ids, as a zod enum.
+ *
+ * `audit` is `as const`, so `interests` is a tuple of literals and this enum
+ * is derived from it — adding an option to the content module extends what the
+ * API accepts, with no second list to update. Anything else is rejected rather
+ * than quietly filtered, so a malformed client is an error rather than a
+ * submission that silently loses a field.
+ */
+const INTEREST_IDS = audit.form.interests.map((interest) => interest.id) as [
+  string,
+  ...string[],
+];
+
+const interestEnum = z.enum(INTEREST_IDS);
+
+/**
+ * How long a human plausibly needs to fill this in.
+ *
+ * Paired with `renderedAt` below. A bot that POSTs the instant the page loads
+ * trips it; a person filling six fields cannot.
+ */
+export const MIN_FILL_MS = 3000;
 
 /** Trim, then treat an empty string as absent. Browsers send "" for untouched
  *  optional inputs, and `""` is not a missing value to zod without this. */
@@ -46,9 +64,11 @@ export const auditRequestSchema = z.object({
   phone: optionalText(40),
 
   interests: z
-    .array(z.string())
-    .default([])
-    .transform((values) => values.filter((value) => INTEREST_IDS.includes(value))),
+    .array(interestEnum)
+    // Capped at the number of options, so a payload cannot carry thousands of
+    // repeated valid ids into the email body.
+    .max(audit.form.interests.length)
+    .default([]),
 
   message: optionalText(4000),
 
@@ -57,9 +77,36 @@ export const auditRequestSchema = z.object({
    * they find. Named to look worth filling in.
    */
   companyUrl: z.string().optional(),
+
+  /**
+   * Time trap. The page writes its render time into a hidden field; a
+   * submission that arrives less than MIN_FILL_MS after it was rendered did
+   * not come from someone typing.
+   *
+   * Coerced and optional rather than required: a missing or unparseable value
+   * must not reject a real person whose browser did something unexpected. The
+   * check below only fires on a value that is present and implausibly recent.
+   */
+  renderedAt: z.coerce.number().int().positive().optional(),
 });
 
 export type AuditRequest = z.infer<typeof auditRequestSchema>;
+
+/**
+ * True when the submission arrived impossibly fast after the form rendered.
+ *
+ * Kept as a separate check rather than a schema refinement, because the
+ * response to it is the honeypot's silent 200 — not a validation error a bot
+ * could learn from.
+ */
+export function isTooFast(data: AuditRequest, now = Date.now()): boolean {
+  if (data.renderedAt === undefined) return false;
+  const elapsed = now - data.renderedAt;
+  // A negative elapsed means a clock skew between the visitor's machine and
+  // the server. That is not evidence of a bot, so it is not treated as one.
+  if (elapsed < 0) return false;
+  return elapsed < MIN_FILL_MS;
+}
 
 /** Field-keyed messages, shaped for the form to render beside each input. */
 export type FieldErrors = Partial<Record<string, string>>;

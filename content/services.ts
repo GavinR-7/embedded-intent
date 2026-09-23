@@ -204,7 +204,7 @@ export const services: readonly Service[] = [
     includes: [
       "Custom design — not a template with your logo dropped in",
       "Built mobile-first, because that is where your customers actually are",
-      "Next.js on Vercel: static pages, image optimisation, real speed scores",
+      "Built to load in under two seconds — we measure it before handing it over",
       "Call and quote buttons reachable by thumb on every screen",
       "Service pages and area pages you can add to as you grow",
       "Google Business Profile connected and verified",
@@ -293,7 +293,7 @@ export const services: readonly Service[] = [
       },
     ],
     notThis:
-      "Not a rebuild wearing a refresh's price tag. If what's underneath is past saving, I'll say so — and a new build costs more than this.",
+      "Not a rebuild wearing a refresh's price tag. If what's underneath is past saving, we'll say so — and a new build costs more than this.",
     flow: [
       { title: "We look at what's worth keeping", detail: "Structure, addresses, anything already working", icon: "search" },
       { title: "Photos get compressed and resized", detail: "Usually the entire speed problem", icon: "bolt" },
@@ -354,7 +354,7 @@ export const services: readonly Service[] = [
     pricing: {
       build: { from: 600, to: 1200 },
       passThrough:
-        "The booking tool's own subscription is billed to you directly by them, at their price, and is never marked up. There is no monthly from me on this one.",
+        "The booking tool's own subscription is billed to you directly by them, at their price, and is never marked up. There is no monthly from us on this one.",
     },
   },
   {
@@ -409,9 +409,9 @@ export const services: readonly Service[] = [
     promise:
       "Answers their questions, qualifies the job and books it — in under a minute, at any hour.",
     outcome:
-      "Every enquiry gets a real answer the moment it lands, and the ones worth having arrive on your calendar already qualified.",
+      "Every inquiry gets a real answer the moment it lands, and the ones worth having arrive on your calendar already qualified.",
     forWhom:
-      "Businesses getting enough enquiries that answering them all, fast, has become the bottleneck.",
+      "Businesses getting enough inquiries that answering them all, fast, has become the bottleneck.",
     timeline: "One to two weeks.",
     includes: [
       "Replies within a minute to web forms, texts and web chat, around the clock",
@@ -685,7 +685,7 @@ export const services: readonly Service[] = [
       },
     ],
     notThis:
-      "Not a retainer that keeps billing while the campaign loses money. If the cost per booked job doesn't work in your market, I'll tell you, and we stop.",
+      "Not a retainer that keeps billing while the campaign loses money. If the cost per booked job doesn't work in your market, we'll tell you, and we stop.",
     flow: [
       { title: "Built around the jobs you want", detail: "Not the ones with the most searches", icon: "target" },
       { title: "Negatives cut the waste", detail: "Where the money is actually saved", icon: "filter" },

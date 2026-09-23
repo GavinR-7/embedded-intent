@@ -118,9 +118,9 @@ export const home = {
     heading: "Start with the website. Add the rest when it's earning.",
     body: "Everything below is bought one piece at a time, in whatever order makes you money soonest. There is no bundle, because a bundle would mean selling you something you don't need yet.",
     /** Prices are deliberately not on these cards — see the pricing section. */
-    pricingNote: "Every price is published further down this page.",
+    pricingNote: "Every service page lists its price.",
     primaryCardCta: "What's included, in full",
-    addOnCardCta: "What it does",
+    addOnCardCta: "See how it works",
   },
 
   beforeAfter: {
@@ -158,7 +158,7 @@ export const home = {
       {
         id: "find",
         name: "Find",
-        body: "Thirty minutes on where the money is leaking — how leads reach you, what happens to the ones that arrive after hours, and where your team loses time. You leave with a prioritised list whether or not you hire me.",
+        body: "We start with your website, your Google listing and your reviews: how leads reach you, what happens to the ones that arrive after hours, and where your team loses time. You get a prioritized list whether or not you hire us.",
         chips: ["Lead path audit", "Review gap check", "Time-drain list", "Tool map"],
       },
       {
@@ -176,7 +176,7 @@ export const home = {
       {
         id: "measure",
         name: "Measure",
-        body: "Qualified leads, speed to first response, hours returned, cost per booked job. Not impressions, not reach. If a piece isn't earning its keep, I'll tell you to switch it off.",
+        body: "Qualified leads, speed to first response, hours returned, cost per booked job. Not impressions, not reach. If a piece isn't earning its keep, we'll tell you to switch it off.",
         chips: ["Monthly review", "Source-level tracking", "Cut what doesn't work"],
       },
     ] satisfies Step[],
@@ -194,7 +194,7 @@ export const home = {
      */
     outcomes: [
       { name: "Qualified leads per month", detail: "People who want the job you actually do" },
-      { name: "Speed to first response", detail: "Minutes from enquiry to a real reply" },
+      { name: "Speed to first response", detail: "Minutes from inquiry to a real reply" },
       { name: "New reviews per month", detail: "And how many came from the automated ask" },
       { name: "Hours returned to your team", detail: "Work nobody has to do by hand any more" },
       { name: "Cost per new customer", detail: "Across every channel, not just the ads" },
@@ -221,9 +221,9 @@ export const home = {
   whyMe: {
     eyebrow: "Why me",
     /** The primary differentiator. It leads — it is not a table row. */
-    heading:
-      "You work directly with the person building it — not an account manager, not a sales rep, not an outsourced team.",
-    body: "Everything below follows from that one fact. A solo practice can't hide behind a process, so it doesn't have one to hide behind.",
+    heading: "You work directly with the person building it.",
+    // The one place the site drops "we" for a name. See site.owner.
+    body: "When you call, you get {owner} — not an account manager, not a sales rep, not an outsourced team. Everything below follows from that one fact.",
     columns: {
       aspect: "",
       typical: "Typical agency",
@@ -233,7 +233,7 @@ export const home = {
       {
         aspect: "Who does the work",
         typical: "A junior, or a contractor you never meet",
-        ours: "Me. The person you talked to on the call",
+        ours: "{owner}. The person you spoke to",
       },
       {
         aspect: "Who owns the accounts",
@@ -253,7 +253,7 @@ export const home = {
       {
         aspect: "Who you talk to",
         typical: "An account manager who relays your questions",
-        ours: "Me, directly",
+        ours: "{owner}, directly",
       },
     ] satisfies ComparisonRow[],
   },
@@ -266,6 +266,6 @@ export const home = {
   close: {
     eyebrow: "Next step",
     heading: "Let's find the fastest win in your business.",
-    body: "Thirty minutes. We look at how leads reach you, what happens to the ones that arrive after hours, and where your team is losing time — then I tell you what to build first and what it costs.",
+    body: "Tell us about your business. We'll look at how leads reach you and what happens to the ones that arrive after hours, then email you what to fix first and what it costs.",
   },
 } as const;

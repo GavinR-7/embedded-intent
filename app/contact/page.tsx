@@ -4,7 +4,7 @@ import { AuditForm } from "@/components/contact/AuditForm";
 import { Section } from "@/components/ui/Section";
 import { TraceGrid } from "@/components/ui/TraceGrid";
 import { audit } from "@/content/audit";
-import { site } from "@/content/site";
+import { fillOwner, site } from "@/content/site";
 
 export const metadata: Metadata = {
   title: audit.form.heading,
@@ -44,6 +44,11 @@ export default function ContactPage() {
             <h2 className="text-eyebrow font-mono uppercase text-signal">
               {audit.contactHeading}
             </h2>
+
+            {/* The site speaks as "we"; this card and the Why section are the
+                two places it names the person, because that is the actual
+                differentiator. */}
+            <p className="mt-4 text-label text-ink">{fillOwner(audit.contactSub)}</p>
 
             <dl className="mt-5 flex flex-col gap-4">
               {/* Nullable in content/site.ts, so each channel renders only

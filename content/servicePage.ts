@@ -43,5 +43,5 @@ export const servicePage = {
   closeEyebrow: "Next step",
   closeHeading: "Not sure this is the piece you need first?",
   closeBody:
-    "That's what the audit is for. Thirty minutes on where your leads are actually leaking, then an honest answer about what to build first — which is sometimes not this.",
+    "That's what the free audit is for. Tell us about your business. We'll look at how leads reach you and what happens to the ones that arrive after hours, then email you what to fix first and what it costs. Sometimes the answer is that this is not the piece you need first.",
 } as const;

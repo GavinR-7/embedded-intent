@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { audit } from "@/content/audit";
 import { site } from "@/content/site";
@@ -61,6 +61,27 @@ export function AuditForm() {
   const [message, setMessage] = useState<string | null>(null);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
 
+  /*
+   * The hidden field holding when this form was rendered, for the server's
+   * time trap.
+   *
+   * Stamped from an effect rather than during render. `Date.now()` is impure,
+   * so calling it while rendering is a React rules violation (and
+   * `react-hooks/purity` catches it); reading `ref.current` during render to
+   * put it in the markup is a second violation. Writing the value to the DOM
+   * node after mount avoids both, and the field is still a real hidden input
+   * that goes out with the form.
+   *
+   * A client that never runs the effect — no JavaScript — submits an empty
+   * value, which the server treats as absent rather than as a bot. Real people
+   * are never punished by this check.
+   */
+  const stampRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (stampRef.current) stampRef.current.value = String(Date.now());
+  }, []);
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("submitting");
@@ -76,6 +97,7 @@ export function AuditForm() {
       phone: String(formData.get("phone") ?? ""),
       message: String(formData.get("message") ?? ""),
       companyUrl: String(formData.get("companyUrl") ?? ""),
+      renderedAt: String(formData.get("renderedAt") ?? ""),
       interests: formData.getAll("interests").map(String),
     };
 
@@ -246,6 +268,11 @@ export function AuditForm() {
         <label htmlFor="companyUrl">Company URL</label>
         <input id="companyUrl" name="companyUrl" type="text" tabIndex={-1} autoComplete="off" />
       </div>
+
+      {/* Time trap. The server drops anything submitted less than three
+          seconds after this was stamped, which a person filling six fields
+          cannot do and a script posting on page load always does. */}
+      <input type="hidden" name="renderedAt" ref={stampRef} defaultValue="" />
 
       <div>
         <button

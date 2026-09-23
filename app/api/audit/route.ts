@@ -4,6 +4,7 @@ import {
   auditRequestSchema,
   collectFieldErrors,
   formatAuditEmail,
+  isTooFast,
 } from "@/lib/auditRequest";
 
 /**
@@ -43,6 +44,14 @@ export async function POST(request: Request) {
    * Nothing is sent.
    */
   if (data.companyUrl && data.companyUrl.trim() !== "") {
+    return Response.json({ ok: true });
+  }
+
+  /*
+   * Time trap, with the same silent 200 and for the same reason: a distinct
+   * response would tell whoever wrote the bot exactly which check to defeat.
+   */
+  if (isTooFast(data)) {
     return Response.json({ ok: true });
   }
 

@@ -1,5 +1,6 @@
 import { Eyebrow, Section } from "@/components/ui/Section";
 import { home } from "@/content/home";
+import { fillOwner } from "@/content/site";
 
 const { whyMe } = home;
 
@@ -13,7 +14,9 @@ export function WhyMe() {
       <div className="max-w-3xl">
         <Eyebrow>{whyMe.eyebrow}</Eyebrow>
         <h2 className="mt-5 text-h2 text-ink">{whyMe.heading}</h2>
-        <p className="mt-6 max-w-prose-tight text-lead text-ink-muted">{whyMe.body}</p>
+        <p className="mt-6 max-w-prose-tight text-lead text-ink-muted">
+          {fillOwner(whyMe.body)}
+        </p>
       </div>
 
       {/* Same responsive technique as the pricing table: a real table at md
@@ -69,7 +72,7 @@ export function WhyMe() {
                 <span className="mb-1 block text-eyebrow font-mono uppercase text-signal md:hidden">
                   {whyMe.columns.ours}
                 </span>
-                <span className="text-label text-ink">{row.ours}</span>
+                <span className="text-label text-ink">{fillOwner(row.ours)}</span>
               </td>
             </tr>
           ))}

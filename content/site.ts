@@ -94,6 +94,16 @@ export type SiteConfig = {
   hours: string;
   /** What we promise about replies. Stated where the form is. */
   responseCommitment: string;
+  /**
+   * The person behind the practice.
+   *
+   * The site speaks as "we" — it is a business, and a prospect comparing
+   * three quotes is not reassured by a company that cannot say "we". But the
+   * whole differentiator is that there is one named human behind it, so the
+   * Why section and the contact card name him. Those two places are the
+   * exception, not the default.
+   */
+  owner: { name: string; role: string };
 };
 
 export const site: SiteConfig = {
@@ -150,7 +160,7 @@ export const site: SiteConfig = {
   },
 
   primaryCta: { label: "Get a free audit", href: "/contact" },
-  ctaMicrocopy: "Free · You leave with a prioritised list either way",
+  ctaMicrocopy: "Free · A prioritized list, whether or not you hire us",
 
   // The Services column is generated from content/services.ts in the Footer —
   // only its heading lives here. Listing the services again would create a
@@ -173,6 +183,8 @@ export const site: SiteConfig = {
   // which is correct — an icon row linking to dead profiles is worse than none.
   social: [],
 
+  owner: { name: "Gavin", role: "Founder" },
+
   hours: "Mon–Fri, 9am–6pm ET",
   responseCommitment: "Forms answered within one business day",
 
@@ -182,3 +194,14 @@ export const site: SiteConfig = {
     "You work directly with the person building it",
   ],
 };
+
+/**
+ * Replaces `{owner}` in a copy string with the owner's name.
+ *
+ * The copy keeps the token rather than the name so `site.owner` stays the one
+ * place it is written down — and so the two spots that name a person are
+ * findable with a grep for `{owner}` rather than a grep for "Gavin".
+ */
+export function fillOwner(text: string): string {
+  return text.replaceAll("{owner}", site.owner.name);
+}

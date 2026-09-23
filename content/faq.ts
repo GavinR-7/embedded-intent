@@ -45,21 +45,21 @@ export const faqs: readonly FaqItem[] = [
     id: "how-long",
     question: "How long does it take?",
     answer:
-      "Most sites launch in two to four weeks, depending on how quickly we get your content — photos and copy coming back is almost always the long pole, not the build. A single automation is usually one to two weeks. I don't estimate your date as a range: we commit to an exact launch date on the call, once I've seen what I'm working with, and you get an update every week whether or not there is good news.",
+      "Most sites launch in two to four weeks, depending on how quickly we get your content — photos and copy coming back is almost always the long pole, not the build. A single automation is usually one to two weeks. We don't estimate your date as a range: we commit to an exact launch date once we've seen what we're working with, and you get an update every week whether or not there is good news.",
     services: ["website-design-build", "online-booking-setup", "quote-price-calculator"],
   },
   {
     id: "who-owns-the-accounts",
     question: "Who owns the accounts?",
     answer:
-      "You do. Every account — domain, hosting, Google Business Profile, the AI platform, the ad account, the phone number — is created in your name with you as the owner, and you get the credentials. If you stop working with me tomorrow, everything keeps running and you can hand it to anyone. Nothing is hostage to the relationship.",
+      "You do. Every account — domain, hosting, Google Business Profile, the AI platform, the ad account, the phone number — is created in your name with you as the owner, and you get the credentials. If you stop working with us tomorrow, everything keeps running and you can hand it to anyone. Nothing is hostage to the relationship.",
     services: ["get-found-on-google", "google-ads-management", "online-booking-setup"],
   },
   {
     id: "works-with-my-crm",
     question: "Does it work with my CRM?",
     answer:
-      "Usually. The common ones in the trades are built to connect to other tools, and most of what we do is read a job and write back a status. Before you pay for anything, I check yours specifically and tell you what will connect cleanly, what needs a workaround, and what is not worth doing. If the honest answer is that your CRM makes this more trouble than it is worth, you get that answer.",
+      "Usually. The common ones in the trades are built to connect to other tools, and most of what we do is read a job and write back a status. Before you pay for anything, we check yours specifically and tell you what will connect cleanly, what needs a workaround, and what is not worth doing. If the honest answer is that your CRM makes this more trouble than it is worth, you get that answer.",
     services: [
       "ai-lead-response",
       "get-more-google-reviews",
@@ -78,7 +78,7 @@ export const faqs: readonly FaqItem[] = [
     id: "will-ai-replace-my-people",
     question: "Will AI replace my people?",
     answer:
-      "For most of my clients there is nobody to replace — it is the owner answering texts after dinner, and that is the part that goes. If you do have a team, the honest version is that it removes the repetitive slice of their day, not the job: the twentieth person asking your hours, the review request nobody remembered. What it buys you is more volume without hiring for it. If you are hoping to cut staff, I am the wrong person to call.",
+      "For most of our clients there is nobody to replace — it is the owner answering texts after dinner, and that is the part that goes. If you do have a team, the honest version is that it removes the repetitive slice of their day, not the job: the twentieth person asking your hours, the review request nobody remembered. What it buys you is more volume without hiring for it. If you are hoping to cut staff, we are the wrong people to call.",
     services: ["ai-lead-response", "custom-ai-automation", "social-content-engine"],
   },
   {

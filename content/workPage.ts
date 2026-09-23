@@ -39,5 +39,5 @@ export const workPage = {
   closeEyebrow: "Next step",
   closeHeading: "Want to know what yours would take?",
   closeBody:
-    "Thirty minutes on where your leads are actually leaking, and an honest answer about what to build first.",
+    "Tell us about your business. We'll look at how leads reach you and what happens to the ones that arrive after hours, then email you what to fix first and what it costs.",
 } as const;

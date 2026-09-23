@@ -27,9 +27,9 @@ export const audit = {
    * claim would, and it stops anyone arriving braced for a pitch.
    */
   isNot: [
+    "Not a sales call.",
     "Not a demo of software you've never heard of.",
-    "Not a 45-minute discovery script.",
-    "Not a proposal you have to sign in the room.",
+    "Not a proposal you have to sign.",
   ],
 
   /* -----------------------------------------------------------------------
@@ -46,20 +46,20 @@ export const audit = {
      answer the audit exists to resolve.
      ----------------------------------------------------------------------- */
   form: {
-    heading: "Book your free audit",
+    heading: "Get your free audit",
     intro:
-      "Tell me what's going on and I'll look at your setup before we speak. No demo, no script — just the fastest thing you could fix.",
+      "Tell us what's going on. We'll look at your website, your Google listing and your reviews, and email you what we'd fix first — usually within one business day.",
     interestLegend: "What are you after?",
     interestHint: "Pick as many as apply.",
     submitLabel: "Send it",
     submittingLabel: "Sending…",
     successHeading: "Got it.",
     successBody:
-      "I'll look at your site, your Google profile and how leads reach you, then reply by email with what I'd fix first.",
+      "We'll look at your website, your Google listing and your reviews, then email you what we'd fix first — usually within one business day.",
     errorHeading: "That didn't send.",
     /** Shown when the server is reachable but something went wrong our end. */
     errorBody:
-      "Something broke on my end, not yours. Email me directly and I'll pick it up from there.",
+      "Something broke on our end, not yours. Email us directly and we'll pick it up from there.",
     requiredNote: "Required",
     optionalNote: "Optional",
     interests: [
@@ -67,6 +67,8 @@ export const audit = {
       { id: "found-on-google", label: "Getting found on Google", slug: "get-found-on-google" },
       { id: "google-ads", label: "Google Ads", slug: "google-ads-management" },
       { id: "reviews", label: "More Google reviews", slug: "get-more-google-reviews" },
+      { id: "online-booking", label: "Online booking", slug: "online-booking-setup" },
+      { id: "quote-calculator", label: "Instant quote calculator", slug: "quote-price-calculator" },
       { id: "more-leads", label: "More leads", slug: null },
       { id: "ai-automation", label: "AI / automation", slug: "ai-lead-response" },
       { id: "not-sure", label: "Not sure yet", slug: null },
@@ -74,4 +76,5 @@ export const audit = {
   },
 
   contactHeading: "Reach us directly",
+  contactSub: "You'll reach {owner} directly.",
 } as const;
