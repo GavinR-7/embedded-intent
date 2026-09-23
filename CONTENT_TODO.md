@@ -58,6 +58,12 @@ These must be resolved before the domain is pointed at the site.
   from `content/work.ts` because it has not launched. The moment it does, add
   it back as `status: "launched"` with the real date.
 
+- [ ] **The case study image gallery has never rendered.** `/work/[slug]`
+  renders a `next/image` grid when `images` is non-empty, and `images` is
+  empty, so that code path has never executed. Check it the moment the first
+  screenshot lands — it uses `fill` inside an aspect-ratio box, which needs the
+  container to stay positioned.
+
 - [ ] **🚨 Above All Tent Rentals screenshots.** `content/work.ts` has
   `images: []`. With one case study carrying the whole work page, this is now
   the difference between a case study and a paragraph. Needs real screenshots

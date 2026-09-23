@@ -698,3 +698,70 @@ tones, so a single definition works on cards sitting on either.
 
 The global reduced-motion backstop collapses the duration, so the hover still
 works for those users and simply arrives instantly.
+
+---
+
+## Phase 5 — Work pages
+
+`app/work/page.tsx` and `app/work/[slug]/page.tsx`. Lighthouse mobile:
+`/work` performance **98**, `/work/above-all-tent-rentals` **97**, both
+accessibility **100** and best practices **100**.
+
+### The branch, and why the component gets no credit for it
+
+```tsx
+{study.status === "measured" && ( ... results table ... )}
+```
+
+For a `launched` case study this renders nothing: no placeholder metric, no
+sample number, no greyed-out example row, no "results coming soon" panel.
+
+That is not restraint on the part of whoever wrote the component. The
+`launched` variant of `CaseStudy` has no `results` field at all, so there is no
+number in scope to render — `study.results` only compiles inside that branch
+because the check narrowed the union. A component written carelessly still
+cannot put a fabricated number on the page.
+
+Both branches were exercised rather than assumed. Above All was temporarily
+flipped to `measured` with obviously-fake values, the page rebuilt and read:
+
+```
+MEASURED   results table rendered, both metrics, every source shown,
+           "results tracking in progress" absent
+LAUNCHED   status line present, results section absent, metric labels absent,
+           no stray numbers
+```
+
+Then reverted, and the revert verified in the source before re-testing.
+
+### Route-aware types caught a stale typegen
+
+`tsc --noEmit` failed on the new route before the first build:
+
+```
+Type '"/work/[slug]"' does not satisfy the constraint 'AppRoutes'.
+```
+
+Not a bug — the generated types had not been regenerated yet, and `AppRoutes`
+is literally a union of the routes that exist:
+
+```ts
+AppRoutes = "/" | "/services/[slug]" | "/work" | "/work/[slug]"
+```
+
+Worth knowing: after adding a route, run `next build` (or `next typegen`)
+before trusting a standalone type check.
+
+### One card is a list, not a grid
+
+The index renders a column, not a three-up grid. A grid holding one item reads
+as two things missing, and there is no honest way to fill those slots — the
+other two builds are logged in CONTENT_TODO.md precisely because they are not
+live client work.
+
+### `/contact` is now the only 404
+
+`/work` and `/work/[slug]` are real, so the nav and the homepage work cards
+resolve. The CTA still points at `/contact`, which arrives in Phase 6 — that
+remains the single console error in the Lighthouse best-practices audit on
+pages that prefetch it.

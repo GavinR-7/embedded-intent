@@ -23,6 +23,8 @@ app/                    Routes. Every file here is a URL or a route convention.
   layout.tsx            Root layout: fonts, <html>/<body>, Header, Footer, skip link.
   page.tsx              / — the homepage, composed from components/sections/.
   services/[slug]/      One page per service, prerendered from content/services.ts.
+  work/                 Case study index.
+  work/[slug]/          Case study detail. Branches on the CaseStudy union.
   globals.css           The design system. Tokens, base layer, project utilities.
   robots.ts             Generates /robots.txt. Currently blocks everything.
 components/
@@ -39,7 +41,8 @@ content/                Typed content modules. The single source of truth.
   work.type-test.ts     Compile-time guard for that union. Imported by nothing.
   faq.ts                Objections, tagged by service for per-page subsets.
   home.ts               Homepage section copy.
-  servicePage.ts        Static labels shared by all eight service pages.
+  servicePage.ts        Static labels shared by all nine service pages.
+  workPage.ts           Static labels for /work and /work/[slug].
   audit.ts              The audit offer. Shared by the homepage close, the
                         service pages and the Phase 6 contact page.
 public/                 Static assets served at the root.
