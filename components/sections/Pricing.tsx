@@ -62,7 +62,7 @@ export function Pricing() {
             {services.map((service) => (
               <tr
                 key={service.slug}
-                className="mb-4 block rounded-card border border-line p-6 last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:border-b md:border-line md:p-0"
+                className="lift mb-4 block rounded-card border border-line p-6 last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:border-b md:border-line md:p-0"
               >
                 <th
                   scope="row"

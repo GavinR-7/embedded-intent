@@ -9,8 +9,12 @@ const { beforeAfter } = home;
  * retyped here — so a pair on the homepage and the same pair on a service page
  * cannot drift apart.
  *
- * Both halves are scenes about the reader's own business, not claims about a
- * client. Nothing here is a measured result, so nothing here needs a source.
+ * Each service carries three or four pairs; the homepage shows the first of
+ * each, so four services give the four pairs this section wants. The full set
+ * lives on the service page, which is where someone reading closely goes.
+ *
+ * Both halves are about the reader's own business, not claims about a client.
+ * Nothing here is a measured result, so nothing here needs a source.
  */
 export function BeforeAfter() {
   const pairs = beforeAfter.services
@@ -34,12 +38,14 @@ export function BeforeAfter() {
             <div className="mt-5 grid gap-px bg-line md:grid-cols-2">
               <div className="bg-void p-7">
                 <p className="text-eyebrow font-mono uppercase text-ink-subtle">Before</p>
-                <p className="mt-4 text-lead text-ink-muted">{service.beforeAfter.before}</p>
+                <p className="mt-4 text-lead text-ink-muted">
+                  {service.beforeAfter[0].before}
+                </p>
               </div>
 
               <div className="bg-void p-7">
                 <p className="text-eyebrow font-mono uppercase text-signal">After</p>
-                <p className="mt-4 text-lead text-ink">{service.beforeAfter.after}</p>
+                <p className="mt-4 text-lead text-ink">{service.beforeAfter[0].after}</p>
               </div>
             </div>
           </article>

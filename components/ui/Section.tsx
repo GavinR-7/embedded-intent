@@ -67,6 +67,7 @@ export function Section({
   divider = true,
   bleedTop = false,
   className = "",
+  contentClassName = "",
   children,
 }: {
   id?: string;
@@ -82,6 +83,12 @@ export function Section({
    */
   bleedTop?: boolean;
   className?: string;
+  /**
+   * Applied to the inner max-width wrapper. Only needed when a section has to
+   * distribute its children vertically — the hero stretching to fill the
+   * viewport — since the wrapper has to grow for that to be possible.
+   */
+  contentClassName?: string;
   children: React.ReactNode;
 }) {
   const paddingTop = bleedTop ? PADDING_TOP_BLEED[size] : PADDING_TOP[size];
@@ -111,7 +118,11 @@ export function Section({
         <div aria-hidden="true" className="trace-grid pointer-events-none absolute inset-0" />
       )}
 
-      <div className="relative mx-auto max-w-content px-gutter">{children}</div>
+      <div
+        className={`relative mx-auto w-full max-w-content px-gutter ${contentClassName}`.trim()}
+      >
+        {children}
+      </div>
     </section>
   );
 }

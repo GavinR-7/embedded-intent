@@ -615,3 +615,86 @@ Generated from `content/services.ts` in the Footer; only its heading lives in
 `content/site.ts`. Listing the eight services again in config would have been a
 second list to forget to update — the comment in `site.ts` that promised this
 for Phase 4 is now fulfilled rather than left as a lie.
+
+---
+
+## Copy and hero pass (2026-09-22)
+
+### The type now enforces "enough copy"
+
+Each service carried one problem sentence and one before/after pair, which is
+not enough to sell anything. `symptoms` and `beforeAfter` are now required and
+typed `AtLeastThree<T> = readonly [T, T, T, ...T[]]`, so a thin service is a
+build error rather than something noticed on the live page:
+
+```
+content/services.ts(343,5): error TS2322:
+  Type '[string, string]' is not assignable to type 'AtLeastThree<string>'.
+  Source has 2 element(s) but target requires 3.
+```
+
+Changing `beforeAfter` from one object to a list broke both consumers at
+compile time, which is the point of putting it in the type rather than in a
+convention.
+
+### The writing rules live in the file
+
+`content/services.ts` opens with the rules the copy has to meet — contractor in
+a truck cab, scenes from his day rather than properties of his website, real
+numbers and times, second person, and a banned-words list. They are in the
+module because that is where someone editing the copy will be, not in a doc
+they would have to know exists.
+
+### The swap test caught two real problems
+
+The brief's test: read any two services' symptoms back to back, and if they
+could be swapped without anyone noticing, rewrite. Running it found two things
+that would have shipped:
+
+- **"Four hundred" was doing duty on two services** — four hundred finished
+  jobs (Reviews) and four hundred photos (Social). A reader who visits both
+  notices the echo, and a repeated number starts to read as invented. Social is
+  now two thousand photos.
+- **Website Refresh's slowness symptom duplicated Website Design & Build's.**
+  Both said the site is slow on a phone. Refresh now names the cause —
+  four-megabyte photos straight off a camera — which is the thing that makes it
+  a refresh rather than a rebuild.
+
+Worth keeping as a habit: the test only works if you actually run it on the
+finished copy, and it found problems that reading each page alone did not.
+
+### Nine services
+
+Website Refresh added ($800–2,000 build, $150/mo care, one to two weeks). The
+AI chatbot was folded into AI Lead Response rather than listed separately —
+two similar AI products side by side makes a buyer freeze, so that service now
+covers answering questions as well as qualifying and booking. Seasonal content
+refresh became an included benefit of the $150/mo site care rather than a line
+item.
+
+### The hero fills the viewport
+
+`min-h-svh`, not `min-h-screen`. `svh` is the *small* viewport height, which
+excludes mobile browser chrome — `100vh` on a phone is taller than what you can
+see, so a "full height" hero built on it is always slightly cut off.
+
+Content is distributed rather than stacked: the main grid takes the slack with
+`flex-1`, and the trust line is pushed to the bottom edge with `mt-auto`.
+Measured at 1440×900 the hero is exactly 900px with the trust line ending at
+773px, so the only space below it is the band's own bottom padding. That
+required a `contentClassName` prop on `Section`, since the inner wrapper has to
+grow for anything inside it to be distributed.
+
+### One hover treatment, not ten
+
+`@utility lift` in globals.css: border to `--color-line-interactive`,
+background to `--color-surface-raised`, 150ms. Applied to service cards, work
+cards, pricing rows, comparison rows and the hero panel's rows.
+
+It is one utility for the same reason band tones live in `Section` — a hover
+written out per component drifts, and half the page ends up feeling inert while
+the other half responds. `--surface-raised` reads as one step up from both band
+tones, so a single definition works on cards sitting on either.
+
+The global reduced-motion backstop collapses the duration, so the hover still
+works for those users and simply arrives instantly.

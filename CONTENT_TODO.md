@@ -16,16 +16,17 @@ These must be resolved before the domain is pointed at the site.
     tag blocks *indexing*. Removing only one leaves the site half-hidden.
 
 - [x] ~~Real contact email.~~ `hello@embeddedintent.com` — set 2026-09-21.
-- [x] ~~Real business phone number.~~ `(631) 942-1211` — set 2026-09-21.
+- [x] ~~Real business phone number.~~ `(631) 240-3073` (Google Voice) — set 2026-09-21.
 
 - [ ] **Verify `hello@embeddedintent.com` actually receives mail.** It is on
   domain forwarding that was still being set up when it was added, so it
   depends on DNS. Send a real test message before launch — a contact address
   printed in the footer that silently drops mail is worse than none.
 
-- [ ] **Decide whether (631) 942-1211 is the missed-call text-back line.**
-  If that service is being sold, the number in the footer should be the one
-  wired into it, or the demo contradicts the pitch.
+- [ ] **Decide whether (631) 240-3073 is the missed-call text-back line.**
+  It is a Google Voice number. If Missed-Call Text-Back is being sold, the
+  number in the footer should be the one wired into it, or the demo
+  contradicts the pitch — and Google Voice may not support the integration.
 
 - [ ] **Favicon and app icons.** `app/favicon.ico` is still the Next.js default.
 
@@ -78,23 +79,46 @@ These must be resolved before the domain is pointed at the site.
   no icon row.
 
 - [x] ~~Confirm every price before Phase 3.~~ Confirmed by the owner
-  2026-09-21 and set in `content/services.ts`. Eight services, one primary plus
-  seven add-ons, sold modularly — there is deliberately no bundled tier.
+  2026-09-21 and set in `content/services.ts`. Now **nine** services — Website
+  Refresh added 2026-09-22 at $800–2,000 build plus $150/mo care — one primary
+  plus eight add-ons, sold modularly, with no bundled tier.
 
 - [x] ~~Confirm the delivery timeline in the FAQ.~~ Confirmed 2026-09-21:
   two to four weeks for a site, one to two for a single automation, with the
   exact date committed on the call rather than estimated as a range.
 
 - [x] ~~The audit price.~~ The audit is **free**. There is no paid entry point
-  anywhere on the site; every CTA is "Get a free 30-minute audit".
+  anywhere on the site; every CTA is "Get a free audit".
 
 - [x] ~~Header CTA may be too wide on desktop.~~ Resolved 2026-09-21: the CTA
-  is now "Get a free audit" everywhere, with "Free · 30 minutes · …" carried by
-  `ctaMicrocopy` underneath. Shorter button, same offer.
+  is "Get a free audit" everywhere. Microcopy is now
+  "Free · You leave with a prioritised list either way" — the duration was
+  dropped 2026-09-22, since the audit page states it.
 
 - [x] ~~Source the "0.4s" on the hero panel, or cut it.~~ Cut 2026-09-21. It
   now reads `AUTO` like the other three rows. No unsourced numbers anywhere on
   the site.
+
+---
+
+## Decided — for Phase 7
+
+- **Interactive hero background, Tier 1 only.** Pointer position written to CSS
+  custom properties on the hero element, consumed by a `radial-gradient` that
+  lights the circuit-trace grid near the cursor.
+
+  Hard constraints, so this does not quietly become a WebGL background:
+  - No canvas. No WebGL.
+  - No JavaScript animation loop. The only handler is a **throttled
+    `pointermove`** that writes two custom properties; the paint is entirely
+    CSS.
+  - **Inert under `prefers-reduced-motion: reduce`** — do not attach the
+    listener at all. `lib/usePrefersReducedMotion.ts` already reads that.
+  - **Inert on touch devices**, where there is no cursor to follow and the
+    listener is pure cost. Gate on a coarse-pointer media query.
+
+  Tier 2/3 backgrounds stay out of scope unless Lighthouse mobile is ≥ 95
+  after everything else, per the Phase 7 rules in BUILD_PROMPT.md.
 
 ---
 

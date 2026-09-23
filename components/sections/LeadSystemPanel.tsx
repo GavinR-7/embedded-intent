@@ -102,7 +102,7 @@ export function LeadSystemPanel() {
           const isLast = index === rows.length - 1;
 
           return (
-            <li key={row.id} className="flex gap-4">
+            <li key={row.id} className="lift -mx-2 flex gap-4 rounded-field px-2">
               {/* Left rail: icon tile, then the connector filling the gap down
                   to the next row. The rail stretches to the row's height, so
                   the connector's flex-1 covers exactly the space between. */}

@@ -1,19 +1,40 @@
 /**
  * The service catalogue. Single source of truth for what is sold.
  *
- * Consumed by the homepage "What we build" section and the pricing table
- * (Phase 3), the /services/[slug] pages (Phase 4), and the footer.
+ * Consumed by the homepage "What we build" section and the pricing table,
+ * the /services/[slug] pages, and the footer.
  *
  * The offering is modular on purpose: one primary service (the website) plus
- * seven add-ons bought when they start earning. There is deliberately no
- * bundled "full package" tier — a fixed bundle would misrepresent how this is
- * actually sold.
+ * add-ons bought when they start earning. There is deliberately no bundled
+ * "full package" tier — a fixed bundle would misrepresent how this is sold.
  *
- * Prices below are the owner's confirmed numbers as of 2026-09-21.
+ * ---------------------------------------------------------------------------
+ * WRITING RULES for `symptoms` and `beforeAfter`. Read before editing.
+ *
+ * The reader is a contractor holding a phone in a truck cab. He is not
+ * browsing; he is deciding whether you understand his business.
+ *
+ *   - Short sentences. He is reading one-handed.
+ *   - Every symptom is a THING THAT HAPPENS IN HIS DAY, not a property of his
+ *     website. "Someone searched for you and the site took six seconds" —
+ *     never "slow load times hurt conversion".
+ *   - Numbers and times, always: six seconds, 8:40pm, thirty-one reviews,
+ *     12th on the map. Specificity is itself the trust signal.
+ *   - Second person. Your site, your phone, your customer.
+ *   - Banned words: leverage, optimize, streamline, solution, seamless,
+ *     robust, empower, unlock, transform.
+ *
+ * The test: read any two services' symptoms back to back. If they could be
+ * swapped without anyone noticing, they are not specific enough — rewrite
+ * rather than ship them.
+ * ---------------------------------------------------------------------------
+ *
+ * Prices are the owner's confirmed numbers as of 2026-09-21.
  */
 
 export type ServiceSlug =
   | "website-design-build"
+  | "website-refresh"
   | "ai-lead-response"
   | "missed-call-text-back"
   | "get-more-google-reviews"
@@ -21,6 +42,16 @@ export type ServiceSlug =
   | "google-ads-management"
   | "social-content-engine"
   | "custom-ai-automation";
+
+/**
+ * At least three, checked at compile time.
+ *
+ * A plain `string[]` would let a service ship with one thin symptom, which is
+ * exactly the state this type was introduced to fix. The tuple-with-rest makes
+ * "fewer than three" a build error rather than something you notice on the
+ * live page.
+ */
+export type AtLeastThree<T> = readonly [T, T, T, ...T[]];
 
 /**
  * A price band in whole US dollars. `to: null` means "from $X" with no stated
@@ -66,9 +97,9 @@ export type ServicePricing = {
 };
 
 /**
- * A before/after pair, written as a scene rather than a claim. Both halves
- * describe the reader's own business — neither is a statement about a client,
- * so nothing here needs measuring.
+ * One before/after pair. Short phrases, not scenes — the scenes live in
+ * `symptoms`. These read as a two-column comparison, so each side should be a
+ * fragment a reader takes in at a glance.
  */
 export type BeforeAfter = {
   before: string;
@@ -86,8 +117,14 @@ export type Service = {
   outcome: string;
   /** Who should buy it — and, by implication, who shouldn't. */
   forWhom: string;
+  /** How long it takes, stated plainly. */
+  timeline: string;
   /** Concrete deliverables. No adjectives. */
   includes: readonly string[];
+  /** What is going wrong in his week right now. Minimum three. */
+  symptoms: AtLeastThree<string>;
+  /** The same business with the gaps closed. Minimum three. */
+  beforeAfter: AtLeastThree<BeforeAfter>;
   /**
    * What this explicitly is *not*. The anti-sell — it buys more credibility
    * than another claim would, and it heads off the wrong expectation before
@@ -95,7 +132,6 @@ export type Service = {
    */
   notThis?: string;
   pricing: ServicePricing;
-  beforeAfter: BeforeAfter;
 };
 
 export const services: readonly Service[] = [
@@ -106,9 +142,10 @@ export const services: readonly Service[] = [
     promise:
       "A fast, custom site that turns the people already searching for you into booked jobs.",
     outcome:
-      "A site that loads in under two seconds on a phone, where every page has one obvious next step and the phone number is always within reach of a thumb.",
+      "A site that opens in under two seconds on a phone, where the call button is always within reach of a thumb.",
     forWhom:
       "Service businesses with no website, or with one that looks fine and books nothing.",
+    timeline: "Two to four weeks, depending on how fast your content comes back.",
     includes: [
       "Custom design — not a template with your logo dropped in",
       "Built mobile-first, because that is where your customers actually are",
@@ -117,19 +154,81 @@ export const services: readonly Service[] = [
       "Service pages and area pages you can add to as you grow",
       "Google Business Profile connected and verified",
       "Analytics, so you can see what people actually do",
+      "Seasonal content refresh included in site care — prices, offers and photos updated as your year changes",
       "Every account created in your name, credentials handed over, and a walkthrough of how to run it",
-      "Site care from launch: hosting, updates, backups, and fixes when something breaks",
+    ],
+    symptoms: [
+      "Someone searches for what you do, finds you, and the site takes six seconds to open. They're back on Google before it finishes.",
+      "Your phone number is text inside an image. On a phone, tapping it does nothing.",
+      "It looks fine on your laptop. On a phone the menu covers the screen and the buttons are too small to hit.",
+      "You paid someone in 2019 and haven't been able to change a word since.",
+    ],
+    beforeAfter: [
+      { before: "Six seconds to open on a phone", after: "Under two seconds, every page" },
+      {
+        before: "Your number is an image nobody can tap",
+        after: "A call button that follows them down the page",
+      },
+      {
+        before: "The form goes to an inbox nobody checks",
+        after: "The quote lands on your phone before they've closed the tab",
+      },
+      {
+        before: "You call the old developer to change a price",
+        after: "You text me, or change it yourself",
+      },
     ],
     pricing: {
       build: { from: 1500, to: 5000 },
       buildTypical: { from: 2500, to: 4000 },
       monthly: { kind: "flat", amount: 150 },
     },
-    beforeAfter: {
-      before:
-        "Your site was built in 2019 on a template, takes six seconds to open on a phone, and your number is an image in the footer that nobody can tap.",
-      after:
-        "It opens in under two seconds, the call button follows the customer down the page, and the quote form lands on your phone before they have closed the tab.",
+  },
+  {
+    slug: "website-refresh",
+    name: "Website Refresh",
+    tier: "add-on",
+    promise: "Keep the site you have. Fix the parts that are costing you.",
+    outcome:
+      "A site that looks current and opens fast, without starting over or changing your address.",
+    forWhom:
+      "Businesses whose site basically works. It's just dated, slow, or falls apart on a phone.",
+    timeline: "One to two weeks.",
+    includes: [
+      "An honest look at what's worth keeping before anything is touched",
+      "Layout and design rebuilt on the pages you already have",
+      "Reworked mobile-first, since that's where it's failing",
+      "Photos compressed and resized — usually the whole speed problem",
+      "Prices, services and copy brought up to what you actually do now",
+      "Your web address stays the same",
+      "Seasonal content refresh included in site care",
+    ],
+    symptoms: [
+      "The site works. It just looks like it was built in 2016, because it was.",
+      "The prices on it are two years old, so you've quietly stopped sending people there.",
+      "Every photo on it came straight off a camera at four megabytes. That is the whole reason it is slow.",
+      "The photos are from your first van. You've had three since.",
+    ],
+    beforeAfter: [
+      {
+        before: "A template every company in your trade uses",
+        after: "Your work, your prices, your photos",
+      },
+      { before: "Four seconds to open on a phone", after: "Under two seconds, same pages" },
+      {
+        before: "A page that still says 'coming soon'",
+        after: "Every page says what you do today",
+      },
+      {
+        before: "Starting over would cost you a month",
+        after: "One to two weeks, and the address stays the same",
+      },
+    ],
+    notThis:
+      "Not a rebuild wearing a refresh's price tag. If what's underneath is past saving, I'll say so — and a new build costs more than this.",
+    pricing: {
+      build: { from: 800, to: 2000 },
+      monthly: { kind: "flat", amount: 150 },
     },
   },
   {
@@ -137,27 +236,47 @@ export const services: readonly Service[] = [
     name: "AI Lead Response",
     tier: "add-on",
     promise:
-      "Answers, qualifies and books every lead in under a minute — including at 9pm on a Sunday.",
-    outcome: "No lead sits overnight waiting for someone to notice it.",
+      "Answers their questions, qualifies the job and books it — in under a minute, at any hour.",
+    outcome:
+      "Every enquiry gets a real answer the moment it lands, and the ones worth having arrive on your calendar already qualified.",
     forWhom:
-      "Businesses already getting enough enquiries that answering them all, fast, has become the bottleneck.",
+      "Businesses getting enough enquiries that answering them all, fast, has become the bottleneck.",
+    timeline: "One to two weeks.",
     includes: [
-      "Replies within a minute to web forms, texts and chat, around the clock",
-      "Asks the qualifying questions you choose — job type, address, timeline, budget",
+      "Replies within a minute to web forms, texts and web chat, around the clock",
+      "Answers the questions you get every week — do you cover my town, roughly what does this cost, how soon can you come — from your own pricing and service area",
+      "Asks the qualifying questions you choose: job type, address, timeline, budget",
       "Offers real slots from your actual calendar and books them",
-      "Hands off to a person the moment the customer asks, or when it is unsure",
+      "Hands off to you the moment someone asks for a person, or when it isn't sure",
       "Every conversation logged in full, so you can read exactly what was said",
-      "Approval rules for anything that commits you to a price or a date",
+      "Approval rules on anything that commits you to a price or a date",
     ],
+    symptoms: [
+      "A form comes in at 8:40pm. You see it at 7am. They booked someone else at 9.",
+      "Half your calls are the same four questions: do you cover my town, what does it cost roughly, how soon, do you even do this kind of job.",
+      "You're up a ladder. The phone rings. You call back at six and they've moved on.",
+      "Saturday and Sunday leads sit there until Monday morning.",
+    ],
+    beforeAfter: [
+      {
+        before: "A lead at 8:40pm waits until morning",
+        after: "Answered in under a minute, every night",
+      },
+      {
+        before: "You answer the same four questions all week",
+        after: "It answers them from your own pricing and service area",
+      },
+      { before: "You call back and play voicemail tag", after: "Three real slots offered, one booked" },
+      {
+        before: "You find out what the job is on the call",
+        after: "Job type, address and timeline are written down before you speak",
+      },
+    ],
+    notThis:
+      "Not a chatbot that makes things up. It answers from what you gave it, says it doesn't know otherwise, and anything that commits you to a price or a date waits for you.",
     pricing: {
       build: { from: 1500, to: 2500 },
       monthly: { kind: "flat", amount: 250 },
-    },
-    beforeAfter: {
-      before:
-        "A lead comes in at 8:40pm. Someone sees it at 9:15 the next morning and calls back. They booked your competitor before breakfast.",
-      after:
-        "It replies in under a minute, asks what the job is and where, offers three real appointment slots, and puts a briefed lead on the right person's calendar.",
     },
   },
   {
@@ -169,23 +288,38 @@ export const services: readonly Service[] = [
     forWhom:
       "Anyone whose phone rings while their hands are full — which is most trades.",
     includes: [
-      "Automatic text the moment a call goes unanswered",
-      "The conversation continues by text, so the customer never has to call twice",
+      "Automatic text the second a call goes unanswered",
+      "The conversation carries on by text, so they never have to call twice",
       "Routes to your calendar or to a person once the job is clear",
       "Works with the business line you already have — no new number to publish",
-      "After-hours messaging you can set separately",
+      "A separate after-hours message you set yourself",
+    ],
+    timeline: "One week.",
+    symptoms: [
+      "Your hands are inside a panel. The phone rings twice and stops.",
+      "You call back at 5:40. It goes to their voicemail. That's the end of it.",
+      "You have no idea how many calls you missed last week.",
+      "The ones who do leave a voicemail leave a first name and nothing else.",
+    ],
+    beforeAfter: [
+      {
+        before: "A missed call is a lost job",
+        after: "A text goes out in seconds asking what they need",
+      },
+      {
+        before: "You call back hours later",
+        after: "They've already texted you the job and the address",
+      },
+      { before: "No record of who called", after: "Every missed call and reply in one thread" },
+      {
+        before: "After six it goes to voicemail",
+        after: "After six they get an answer and a time you'll call",
+      },
     ],
     pricing: {
       build: { from: 800, to: 1200 },
       monthly: { kind: "flat", amount: 100 },
-      passThrough:
-        "Twilio messaging usage is billed to you at cost, with no markup.",
-    },
-    beforeAfter: {
-      before:
-        "Your phone rings while you are on a roof. It goes to voicemail. They call the next company on the list.",
-      after:
-        "Seconds later they get a text asking what they need and where. The conversation is already moving by the time you are back down the ladder.",
+      passThrough: "Twilio messaging usage is billed to you at cost, with no markup.",
     },
   },
   {
@@ -193,57 +327,91 @@ export const services: readonly Service[] = [
     name: "Get More Google Reviews",
     tier: "add-on",
     promise:
-      "The review request fires automatically when a job completes, without anyone remembering to send it.",
+      "The review request fires when the job closes, without anyone remembering to send it.",
     outcome:
-      "Your review count starts to reflect the number of jobs you have actually done.",
+      "Your review count starts to match the number of jobs you've actually done.",
     forWhom:
-      "Businesses with far more finished jobs than reviews — and a competitor outranking them on both.",
+      "Businesses with far more finished jobs than reviews, and a competitor outranking them on both.",
+    timeline: "One to two weeks.",
     includes: [
       "Triggered by job completion, not by someone's memory",
       "Sent by text or email, with a direct link to your Google profile",
       "One polite follow-up, then it stops",
-      "Unhappy customers are routed privately to you first, before they post",
+      "Unhappy customers routed privately to you first, before they post",
       "A simple view of what went out and what came back",
+    ],
+    symptoms: [
+      "Four hundred finished jobs. Thirty-one reviews.",
+      "The guy two towns over has 340, and he's above you on the map.",
+      "You mean to ask every time. Then the next job starts.",
+      "The only person who asks is whoever remembers — about one customer in fifteen.",
+    ],
+    beforeAfter: [
+      {
+        before: "Asking depends on who remembers",
+        after: "The ask fires when the job is marked complete",
+      },
+      {
+        before: "The unhappy one posts before you hear about it",
+        after: "They route to you privately first, so you can fix it",
+      },
+      {
+        before: "You're 12th in the map pack for your own town",
+        after: "Recent reviews lift you where people actually look",
+      },
+      {
+        before: "Someone has to log in and find the link",
+        after: "One tap from the text to your review box",
+      },
     ],
     pricing: {
       build: { from: 1200, to: 2000 },
       monthly: { kind: "flat", amount: 100 },
-    },
-    beforeAfter: {
-      before:
-        "Four hundred finished jobs and thirty-one Google reviews. You mean to ask every time, and then the next job starts.",
-      after:
-        "The ask goes out when the job closes, every time, and the ones who were going to complain reach you instead of your profile.",
     },
   },
   {
     slug: "get-found-on-google",
     name: "Get Found on Google",
     tier: "add-on",
-    promise:
-      "Show up in the map pack when someone nearby searches for what you do.",
+    promise: "Show up in the map pack when someone nearby searches for what you do.",
     outcome:
       "You appear in the three results Google puts above everything else, for the towns you actually drive to.",
     forWhom:
-      "Businesses that are invisible on Google unless someone searches their name.",
+      "Businesses that only come up on Google when someone already knows their name.",
+    timeline: "Two weeks to set up. Movement in the map takes two to three months.",
     includes: [
       "Google Business Profile claimed, verified and filled out properly",
-      "Correct categories, service areas and hours",
+      "The right categories, service areas and hours",
       "Photos and posts kept current, because a dead profile ranks like one",
-      "Name, address and phone made consistent everywhere they appear",
+      "Your name, address and phone made identical everywhere they appear",
       "Service and area pages written for the towns you serve",
       "Rank tracking by town, so you can see movement rather than take my word for it",
-      "A monthly report of calls, direction requests and what moved",
+      "A monthly count of calls and direction requests, and what moved",
+    ],
+    symptoms: [
+      "Someone in the next town searches your trade. Three companies show on the map. You're not one of them.",
+      "You come up when people search your business name. That's it.",
+      "Your profile still lists the hours from before you changed them, and has one photo.",
+      "A directory you never signed up for outranks your own site.",
+    ],
+    beforeAfter: [
+      {
+        before: "You show up for your name and nothing else",
+        after: "You show up for the job, in the towns you drive to",
+      },
+      { before: "One photo from 2021", after: "Current photos, hours and services, kept up" },
+      {
+        before: "Your address reads differently on four websites",
+        after: "One address everywhere Google checks",
+      },
+      {
+        before: "No idea whether any of it worked",
+        after: "Calls and direction requests, by town, every month",
+      },
     ],
     pricing: {
       build: { from: 800, to: 1500 },
       monthly: { kind: "flat", amount: 300 },
-    },
-    beforeAfter: {
-      before:
-        "Someone two towns over searches for your trade. Three competitors fill the map. You are on page two, below a directory listing you never created.",
-      after:
-        "You are in the map pack for the towns you actually serve, with photos, hours and a call button, and you can see which town produced which call.",
     },
   },
   {
@@ -252,20 +420,39 @@ export const services: readonly Service[] = [
     tier: "add-on",
     promise: "Paid search that gets switched off when it stops earning.",
     outcome:
-      "A predictable flow of people searching for your service right now, with a real cost per booked job attached to it.",
+      "A steady flow of people searching for your job right now, with a real cost per booked job attached.",
     forWhom:
       "Businesses that need leads sooner than local SEO can produce them, and have the capacity to take them.",
+    timeline: "One to two weeks to build. First real read on the numbers at 30 days.",
     includes: [
-      "Campaign built around the jobs you actually want, not the ones with the most searches",
+      "Built around the jobs you want, not the ones with the most searches",
       "Keyword and negative keyword management — the negatives are where the money is saved",
-      "Geo targeting to the areas you will actually drive to",
-      "Call tracking, so a lead is attributed to the ad that produced it",
-      "A landing page that matches the ad, instead of dropping people on the homepage",
-      "A monthly review of cost per lead and cost per booked job",
-      "An honest recommendation to stop, if the numbers do not work",
+      "Targeted to the areas you'll actually drive to",
+      "Call tracking, so a lead is tied to the ad that produced it",
+      "A landing page that matches the ad instead of dropping people on your homepage",
+      "A monthly read on cost per lead and cost per booked job",
+      "An honest recommendation to stop, if the numbers don't work",
+    ],
+    symptoms: [
+      "You boosted a post once. Nothing came of it. That's your whole experience of paid.",
+      "You're paying for clicks from three counties away.",
+      "Someone set the account up a year ago and it's been running ever since.",
+      "You know what you spent last month. You don't know what a booked job cost you.",
+    ],
+    beforeAfter: [
+      {
+        before: "Paying for clicks from outside your area",
+        after: "Only the towns you'll actually drive to",
+      },
+      { before: "Ads point at your homepage", after: "Ads point at the page for that exact job" },
+      { before: "You know what you spent", after: "You know what a booked job cost" },
+      {
+        before: "It runs whether or not it works",
+        after: "It gets switched off when it stops earning",
+      },
     ],
     notThis:
-      "Not a retainer that keeps billing while the campaign loses money. If the cost per booked job does not work in your market, I will tell you, and we stop.",
+      "Not a retainer that keeps billing while the campaign loses money. If the cost per booked job doesn't work in your market, I'll tell you, and we stop.",
     pricing: {
       monthly: {
         kind: "greater-of",
@@ -276,29 +463,41 @@ export const services: readonly Service[] = [
       passThrough:
         "Ad spend is paid directly to Google and is never marked up. You pay Google what Google charges, and you see the account.",
     },
-    beforeAfter: {
-      before:
-        "You boosted a post once, it brought nothing, and you decided ads do not work for your trade.",
-      after:
-        "You know what a booked job costs you from search, which towns produce the cheap ones, and exactly when to turn the spend up or off.",
-    },
   },
   {
     slug: "social-content-engine",
     name: "Social Content Engine",
     tier: "add-on",
-    promise:
-      "Posts drafted from your own jobs and your own pricing. You approve them in minutes.",
+    promise: "Posts drafted from your own jobs and your own prices. You approve them in minutes.",
     outcome:
-      "A steady feed that sounds like you and shows your actual work, without you writing anything.",
+      "A steady feed that shows your actual work and sounds like you, without you writing anything.",
     forWhom:
-      "Owners who know they should be posting, have the photos on their phone, and are never going to sit down and write the captions.",
+      "Owners who know they should post, have the photos on their phone, and are never going to sit down and write the captions.",
+    timeline: "One to two weeks.",
     includes: [
-      "Drafts built from your real jobs, photos and prices — not generic industry filler",
-      "Written in your voice, from how you already describe the work",
-      "You approve, edit or reject in a few minutes on your phone",
+      "Drafts built from your real jobs, photos and prices — not industry filler",
+      "Written from how you already describe the work",
+      "You approve, edit or bin each one in a couple of minutes on your phone",
       "Scheduled automatically once approved",
       "Nothing is ever posted without your approval",
+    ],
+    symptoms: [
+      "Two thousand photos of finished work on your phone. Last post: fourteen months ago.",
+      "You open the app to write a caption and close it again.",
+      "The one competitor who posts every week is the one customers mention to you.",
+      "You've thought about paying someone, then read what they wrote and hated it.",
+    ],
+    beforeAfter: [
+      { before: "You write the caption, or nobody does", after: "Drafts arrive with the photo attached" },
+      { before: "Fourteen months since the last post", after: "A post a week that you approved" },
+      {
+        before: "An agency writes it and it sounds like an agency",
+        after: "It's written from how you already talk about the work",
+      },
+      {
+        before: "You'd have to hand someone your account",
+        after: "Nothing goes out until you tap approve",
+      },
     ],
     notThis:
       "This is not 'we run your social media'. Nobody here is pretending to be you in your comments. It drafts, you approve, it posts — you stay the author.",
@@ -306,41 +505,53 @@ export const services: readonly Service[] = [
       build: { from: 600, to: 1000 },
       monthly: { kind: "flat", amount: 200 },
     },
-    beforeAfter: {
-      before:
-        "Your last post is from fourteen months ago. Your phone has four hundred photos of finished work on it.",
-      after:
-        "Drafts land with the photos already attached. You read three, tap approve, and the feed stays alive.",
-    },
   },
   {
     slug: "custom-ai-automation",
     name: "Custom AI Automation",
     tier: "add-on",
-    promise:
-      "The repetitive thing eating your week, automated. Scoped on the call.",
+    promise: "The repetitive thing eating your week, automated. Scoped on the call.",
     outcome:
       "The task that used to need someone to remember it now happens whether or not anyone does.",
     forWhom:
-      "Businesses with a specific, repetitive process that none of the packaged services covers — quoting, scheduling, follow-up, paperwork, internal lookups.",
+      "Businesses with one specific, repetitive process none of the packaged services covers — quoting, scheduling, follow-up, paperwork, internal lookups.",
+    timeline: "Scoped on the call. Most builds run two to four weeks.",
     includes: [
-      "We map the process as it actually runs today, not as the manual describes it",
+      "We map the process as it actually runs, not as the manual describes it",
       "A written scope with a fixed price before any work starts",
       "Built against the tools you already use",
-      "Guardrails and human approval on anything that commits you to money or a date",
+      "Guardrails and your approval on anything that commits money or a date",
       "Full logging, so you can audit what it did",
       "Handover documentation, in an account you own",
     ],
+    symptoms: [
+      "Every Friday you copy the same job details out of one system and into another.",
+      "The quote sits in your drafts for three days because you need one number from the office.",
+      "The same address gets retyped four times before a job is on the calendar.",
+      "There's one task in your week everyone agrees is stupid, and nobody has time to fix it.",
+    ],
+    beforeAfter: [
+      {
+        before: "Two hours of copy-and-paste every Friday",
+        after: "It runs on its own and logs what it did",
+      },
+      {
+        before: "Nobody can say exactly where the process breaks",
+        after: "The whole process is written down before anything is built",
+      },
+      {
+        before: "Fixing it would cost you a week you don't have",
+        after: "A fixed scope and a fixed price before work starts",
+      },
+      {
+        before: "Automation nobody can check",
+        after: "Every action logged, and anything irreversible asks you first",
+      },
+    ],
     notThis:
-      "If the honest answer is that a process should not be automated — too rare, too high-stakes, or just broken and needing fixing first — that is the answer you get.",
+      "If the honest answer is that a process shouldn't be automated — too rare, too high-stakes, or just broken and needing fixing first — that's the answer you get.",
     pricing: {
       build: { from: 1500, to: null },
-    },
-    beforeAfter: {
-      before:
-        "Every Friday you spend two hours doing the same copy-and-paste between two systems that do not talk.",
-      after:
-        "It runs on its own, logs what it did, and asks you before anything irreversible.",
     },
   },
 ];
@@ -350,12 +561,12 @@ export function getService(slug: string): Service | undefined {
   return services.find((service) => service.slug === slug);
 }
 
-/** The entry product. Phase 3 renders this as the primary card. */
+/** The entry product. The homepage renders this as the primary card. */
 export const primaryService: Service = services.find(
   (service) => service.tier === "primary",
 )!;
 
-/** The seven add-ons, in catalogue order. */
+/** The add-ons, in catalogue order. */
 export const addOnServices: readonly Service[] = services.filter(
   (service) => service.tier === "add-on",
 );

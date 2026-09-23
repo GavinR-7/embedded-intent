@@ -38,7 +38,7 @@ export function WhatWeBuild() {
           hierarchy is the argument: start here, add the rest later. */}
       <Link
         href={serviceHref(primaryService)}
-        className="group mt-14 block rounded-card border border-line bg-surface p-7 transition-colors duration-[var(--duration-base)] ease-precise hover:border-signal sm:p-9"
+        className="lift group mt-14 block rounded-card border border-line bg-surface p-7 sm:p-9"
       >
         <p className="text-eyebrow font-mono uppercase text-signal">Start here</p>
 
@@ -67,7 +67,7 @@ export function WhatWeBuild() {
           <li key={service.slug}>
             <Link
               href={serviceHref(service)}
-              className="group flex h-full flex-col rounded-card border border-line bg-surface/50 p-6 transition-colors duration-[var(--duration-base)] ease-precise hover:border-signal"
+              className="lift group flex h-full flex-col rounded-card border border-line bg-surface/50 p-6"
             >
               <h3 className="text-h3 text-ink">{service.name}</h3>
 

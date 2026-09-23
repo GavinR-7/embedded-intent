@@ -93,7 +93,7 @@ export const site: SiteConfig = {
   ],
 
   primaryCta: { label: "Get a free audit", href: "/contact" },
-  ctaMicrocopy: "Free · 30 minutes · You leave with a prioritised list either way",
+  ctaMicrocopy: "Free · You leave with a prioritised list either way",
 
   // The Services column is generated from content/services.ts in the Footer —
   // only its heading lives here. Listing the services again would create a

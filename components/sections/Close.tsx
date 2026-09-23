@@ -59,7 +59,7 @@ export function Close() {
           {mostRecent && (
             <Link
               href={`/work/${mostRecent.slug}`}
-              className="group rounded-card border border-line bg-void/40 p-7 transition-colors duration-[var(--duration-base)] ease-precise hover:border-signal"
+              className="lift group rounded-card border border-line bg-void/40 p-7"
             >
               <h3 className="text-eyebrow font-mono uppercase text-signal">
                 {close.proofHeading}

@@ -11,15 +11,17 @@ export const servicePage = {
   backLabel: "All services",
 
   forWhomHeading: "Who it's for",
+  timelineHeading: "How long",
+  outcomeHeading: "What you end up with",
 
-  problemEyebrow: "The problem",
-  problemHeading: "What this fixes",
+  symptomsEyebrow: "The problem",
+  symptomsHeading: "What's happening now",
 
   includesEyebrow: "Included",
   includesHeading: "What you actually get",
 
-  changeEyebrow: "What changes",
-  changeHeading: "Before, and after.",
+  changeEyebrow: "The fix",
+  changeHeading: "What changes",
   beforeLabel: "Before",
   afterLabel: "After",
 

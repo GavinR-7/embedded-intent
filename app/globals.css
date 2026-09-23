@@ -186,7 +186,9 @@
    transitions, not by utilities, so they do not need to generate classes.
    --------------------------------------------------------------------------- */
 :root {
-  --duration-fast: 120ms;
+  /* 150ms is the hover timing: fast enough to feel attached to the cursor,
+     slow enough to read as a transition rather than a flicker. */
+  --duration-fast: 150ms;
   --duration-base: 200ms;
   --duration-slow: 400ms;
 }
@@ -291,6 +293,31 @@
   background-size: 4rem 4rem;
   background-position: center;
   mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, #000 20%, transparent 75%);
+}
+
+/*
+ * The hover treatment for anything card-shaped: cards, table rows, panel rows.
+ *
+ * One utility rather than a hover pair repeated across ten components, for the
+ * same reason the band tones live in Section — a hover that is written out
+ * per-component drifts, and half the page ends up feeling inert while the
+ * other half responds.
+ *
+ * Always lifts to --color-surface-raised, which reads as one step up from both
+ * band tones: from `bg-surface` on a void band, and from the darker inset
+ * cards used on surface bands.
+ *
+ * The global prefers-reduced-motion backstop collapses the duration, so the
+ * hover still works for those users — it simply arrives instantly.
+ */
+@utility lift {
+  transition-property: background-color, border-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-precise);
+  &:hover {
+    border-color: var(--color-line-interactive);
+    background-color: var(--color-surface-raised);
+  }
 }
 
 /* Skip link — offscreen until focused, then pinned to the top-left. */

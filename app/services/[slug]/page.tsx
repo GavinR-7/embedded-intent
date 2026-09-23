@@ -103,7 +103,12 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
               <p className="mt-4 text-label text-ink-muted">{service.forWhom}</p>
 
               <h2 className="mt-7 border-t border-line pt-6 text-eyebrow font-mono uppercase text-signal">
-                {servicePage.includesEyebrow}
+                {servicePage.timelineHeading}
+              </h2>
+              <p className="mt-4 text-label text-ink-muted">{service.timeline}</p>
+
+              <h2 className="mt-7 border-t border-line pt-6 text-eyebrow font-mono uppercase text-signal">
+                {servicePage.outcomeHeading}
               </h2>
               <p className="mt-4 text-label text-ink">{service.outcome}</p>
             </div>
@@ -111,14 +116,22 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
         </div>
       </Section>
 
-      {/* The problem, in the owner's words — the same scene used on the
-          homepage before/after, so the two cannot drift apart. */}
+      {/* What's happening now. Scenes from the reader's week, not properties
+          of his website — the writing rules are at the top of
+          content/services.ts and the type enforces at least three. */}
       <Section tone="surface">
         <SectionHeading
-          eyebrow={servicePage.problemEyebrow}
-          heading={servicePage.problemHeading}
-          body={service.beforeAfter.before}
+          eyebrow={servicePage.symptomsEyebrow}
+          heading={servicePage.symptomsHeading}
         />
+
+        <ul className="mt-12 grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2">
+          {service.symptoms.map((symptom) => (
+            <li key={symptom} className="lift bg-void p-7 text-lead text-ink-muted">
+              {symptom}
+            </li>
+          ))}
+        </ul>
       </Section>
 
       <Section tone="void">
@@ -154,19 +167,35 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           heading={servicePage.changeHeading}
         />
 
-        <div className="mt-12 grid gap-px overflow-hidden rounded-card bg-line md:grid-cols-2">
-          <div className="bg-void p-7 sm:p-9">
-            <p className="text-eyebrow font-mono uppercase text-ink-subtle">
-              {servicePage.beforeLabel}
-            </p>
-            <p className="mt-5 text-lead text-ink-muted">{service.beforeAfter.before}</p>
-          </div>
-          <div className="bg-void p-7 sm:p-9">
-            <p className="text-eyebrow font-mono uppercase text-signal">
-              {servicePage.afterLabel}
-            </p>
-            <p className="mt-5 text-lead text-ink">{service.beforeAfter.after}</p>
-          </div>
+        {/* Column labels once at the top rather than repeated on every row —
+            on mobile the rows stack, so each half carries its own label there
+            and the header row is hidden. */}
+        <div className="mt-12 hidden gap-px md:grid md:grid-cols-2">
+          <p className="text-eyebrow font-mono uppercase text-ink-subtle">
+            {servicePage.beforeLabel}
+          </p>
+          <p className="text-eyebrow font-mono uppercase text-signal">
+            {servicePage.afterLabel}
+          </p>
+        </div>
+
+        <div className="mt-4 grid gap-px overflow-hidden rounded-card bg-line">
+          {service.beforeAfter.map((pair) => (
+            <div key={pair.before} className="grid gap-px bg-line md:grid-cols-2">
+              <div className="lift bg-void p-6 sm:p-7">
+                <p className="text-eyebrow font-mono uppercase text-ink-subtle md:hidden">
+                  {servicePage.beforeLabel}
+                </p>
+                <p className="mt-3 text-lead text-ink-muted md:mt-0">{pair.before}</p>
+              </div>
+              <div className="lift bg-void p-6 sm:p-7">
+                <p className="text-eyebrow font-mono uppercase text-signal md:hidden">
+                  {servicePage.afterLabel}
+                </p>
+                <p className="mt-3 text-lead text-ink md:mt-0">{pair.after}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </Section>
 

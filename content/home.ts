@@ -40,7 +40,7 @@ export type ComparisonRow = {
 export const home = {
   hero: {
     eyebrow: "AI automation & websites for service businesses",
-    heading: "AI that answers your phone at 9pm.",
+    heading: "AI that picks up when you can't.",
     subheading:
       "Most of your leads arrive when nobody's there to catch them. We build the website that brings them in — and the AI that answers, qualifies and books them in under a minute. Every time, including Sunday.",
     /** Secondary CTA. The primary one is site.primaryCta. */
