@@ -2,9 +2,11 @@ import Link from "next/link";
 
 import { IconTile } from "@/components/ui/icons";
 import { Section, SectionHeading } from "@/components/ui/Section";
+import { categories, categoryHref } from "@/content/categories";
 import { home } from "@/content/home";
-import { primaryService, serviceCategories, servicesByCategory } from "@/content/services";
+import { primaryService, servicesByCategory } from "@/content/services";
 import type { Service } from "@/content/services";
+import { gridShape } from "@/lib/grid";
 
 const { whatWeBuild } = home;
 
@@ -29,12 +31,14 @@ function Chevron() {
 }
 
 /**
- * The catalogue, grouped by the same `category` field the nav mega menu reads.
+ * The catalogue, grouped by the same categories the nav tabs read.
  *
- * A flat grid of ten add-ons left the last card alone on its own row and gave
- * a reader no way to tell which ones solve the same problem. Grouping is not
+ * A flat grid of ten add-ons left the last card alone on its own row and gave a
+ * reader no way to tell which ones solve the same problem. Grouping is not
  * decoration here — "I need to be found" and "I need to answer faster" are
- * different problems, and the labels are how someone finds their own.
+ * different problems, and the labels are how someone finds their own. Each
+ * label is now a link to that category's page, which is the same destination
+ * the nav tab points at.
  *
  * One markup, two shapes: compact rows on mobile (icon, name, tagline,
  * chevron) and cards from `sm` up. The card treatment on a phone is what made
@@ -44,7 +48,7 @@ function ServiceItem({ service }: { service: Service }) {
   return (
     <Link
       href={serviceHref(service)}
-      className="lift group flex items-center gap-4 rounded-card border border-line bg-surface/50 p-4 sm:h-full sm:flex-col sm:items-stretch sm:p-6"
+      className="lift spotlight group flex h-full items-center gap-4 rounded-card border border-line bg-surface/50 p-4 sm:flex-col sm:items-stretch sm:p-6"
     >
       <IconTile name={service.icon} />
 
@@ -77,13 +81,16 @@ export function WhatWeBuild() {
         body={whatWeBuild.body}
       />
 
-      <p className="mt-6 text-label text-ink-subtle">{whatWeBuild.pricingNote}</p>
+      <p data-reveal="" className="mt-6 text-label text-ink-subtle">
+        {whatWeBuild.pricingNote}
+      </p>
 
       {/* The entry product keeps the width and the deliverable list. The
           hierarchy is the argument: start here, add the rest later. */}
       <Link
         href={serviceHref(primaryService)}
-        className="lift group mt-12 block rounded-card border border-line bg-surface p-7 sm:p-9"
+        data-reveal=""
+        className="lift spotlight group mt-12 block rounded-card border border-line bg-surface p-7 sm:p-9"
       >
         <p className="text-eyebrow font-mono uppercase text-signal">Start here</p>
 
@@ -108,22 +115,36 @@ export function WhatWeBuild() {
       </Link>
 
       <div className="mt-12 flex flex-col gap-10">
-        {serviceCategories.map((category) => {
+        {categories.map((category) => {
           // The primary service already has its own card above; listing it
           // again in its own category would read as two different products.
-          const items = servicesByCategory(category.id).filter(
+          const items = servicesByCategory(category.slug).filter(
             (service) => service.slug !== primaryService.slug,
           );
           if (items.length === 0) return null;
 
+          // Columns from the count, so the last card is never alone on its own
+          // row. The catalogue has changed length four times in this build.
+          const shape = gridShape(items.length);
+
           return (
-            <div key={category.id}>
-              <h3 className="text-eyebrow font-mono uppercase text-signal">
-                {category.label}
+            <div key={category.slug}>
+              <h3 data-reveal="">
+                <Link
+                  href={categoryHref(category.slug)}
+                  className="rounded-sm text-eyebrow font-mono uppercase text-signal transition-colors duration-[var(--duration-fast)] hover:text-signal-dim"
+                >
+                  {category.label} →
+                </Link>
               </h3>
-              <ul className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                {items.map((service) => (
-                  <li key={service.slug}>
+
+              <ul className={`mt-4 grid gap-3 sm:gap-5 ${shape.columns}`}>
+                {items.map((service, index) => (
+                  <li
+                    key={service.slug}
+                    data-reveal=""
+                    className={index === items.length - 1 ? shape.lastItem : ""}
+                  >
                     <ServiceItem service={service} />
                   </li>
                 ))}

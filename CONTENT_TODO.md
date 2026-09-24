@@ -156,24 +156,25 @@ site that cannot be delivered when someone taps it.
 
 ---
 
-## Decided — for Phase 7
+## Done — Phase 7
 
-- **Interactive hero background, Tier 1 only.** Pointer position written to CSS
-  custom properties on the hero element, consumed by a `radial-gradient` that
-  lights the circuit-trace grid near the cursor.
+- [x] ~~**Interactive hero background, Tier 1 only.**~~ Built 2026-09-23 as
+  `components/motion/GridSpotlight.tsx` + the `trace-grid-lit` utility. Every
+  constraint recorded here held: no canvas, no WebGL, no animation loop, one
+  rAF-throttled `pointermove` writing two custom properties, and the listener is
+  never attached under reduced motion or on a coarse pointer. Verified with
+  emulated media, not assumed — see the bottom of MOTION.md.
 
-  Hard constraints, so this does not quietly become a WebGL background:
-  - No canvas. No WebGL.
-  - No JavaScript animation loop. The only handler is a **throttled
-    `pointermove`** that writes two custom properties; the paint is entirely
-    CSS.
-  - **Inert under `prefers-reduced-motion: reduce`** — do not attach the
-    listener at all. `lib/usePrefersReducedMotion.ts` already reads that.
-  - **Inert on touch devices**, where there is no cursor to follow and the
-    listener is pure cost. Gate on a coarse-pointer media query.
+  Tier 2/3 backgrounds remain out of scope. Lighthouse mobile on `/` is 97, so
+  the door BUILD_PROMPT.md left open (≥ 95) is technically open — but the
+  measured cost of the work already done says the budget is better spent
+  elsewhere, and a WebGL hero on a site that sells page speed is the wrong
+  advertisement.
 
-  Tier 2/3 backgrounds stay out of scope unless Lighthouse mobile is ≥ 95
-  after everything else, per the Phase 7 rules in BUILD_PROMPT.md.
+- [x] ~~React Bits, hard cap of three.~~ **Zero used.** Reasoning in MOTION.md:
+  the H1 text reveal is forbidden by the LCP rule, `CountUp` has no number on
+  this site to count, and the Tier 1 background is 60 lines of CSS. No
+  `components/reactbits/` directory was created and no dependency was added.
 
 ---
 
@@ -213,6 +214,23 @@ site that cannot be delivered when someone taps it.
   work as getting `hello@embeddedintent.com` receiving.
 
 ---
+
+## Logged in Phase 7, not built
+
+- [ ] **README.md is still the `create-next-app` boilerplate.** It tells a
+  reader to look at `app/page.tsx` and says nothing about the content rule, the
+  phases, or the four docs that matter. Worth fifteen minutes before anyone
+  else ever sees this repo, but it is documentation, not the site.
+
+- [ ] **The homepage is still long** — nine sections. The pinned stepper made
+  "How it works" *taller* on desktop by design (it is 70vh per step now), which
+  is the right trade for a set piece but is worth knowing. If the page needs to
+  be shorter, the lever is fewer sections, not tighter cards.
+
+- [ ] **Category page copy is first-draft.** The symptoms and before/after pairs
+  in `content/categories.ts` follow the writing rules and are pitched one level
+  above the service pages, but they have not been read back against the service
+  pages line by line. Worth one editing pass when the pages are reviewed.
 
 ## Decisions still open
 

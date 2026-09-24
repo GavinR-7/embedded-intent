@@ -10,6 +10,7 @@ import { audit } from "@/content/audit";
 import { site } from "@/content/site";
 import { caseStudies, getCaseStudy, launchedStatusLine } from "@/content/work";
 import { workPage } from "@/content/workPage";
+import { gridShape } from "@/lib/grid";
 
 export const dynamicParams = false;
 
@@ -66,14 +67,14 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
 
       <Section tone="surface">
         <div className="grid gap-12 lg:grid-cols-5 lg:gap-16">
-          <div className="lg:col-span-3">
+          <div data-reveal="" className="lg:col-span-3">
             <h2 className="text-eyebrow font-mono uppercase text-signal">
               {workPage.problemHeading}
             </h2>
             <p className="mt-6 text-lead text-ink-muted">{study.problem}</p>
           </div>
 
-          <div className="lg:col-span-2">
+          <div data-reveal="" className="lg:col-span-2">
             <h2 className="text-eyebrow font-mono uppercase text-signal">
               {workPage.builtHeading}
             </h2>
@@ -150,6 +151,7 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
               {study.results.map((result) => (
                 <tr
                   key={result.metric}
+                  data-reveal=""
                   className="lift mb-4 block rounded-card border border-line p-6 last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:border-b md:border-line md:p-0"
                 >
                   <th
@@ -195,17 +197,21 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
           data, never generated here. */}
       {study.images.length > 0 && (
         <Section tone="void">
-          <ul className="grid gap-6 sm:grid-cols-2">
+          {/* Columns from the count. Three screenshots in a fixed two-column
+              grid left the third alone on its own row — and `sizes` has to
+              follow the shape, or the browser downloads the wrong file. */}
+          <ul className={`grid gap-6 ${gridShape(study.images.length).columns}`}>
             {study.images.map((image) => (
               <li
                 key={image.src}
+                data-reveal=""
                 className="relative aspect-[4/3] overflow-hidden rounded-card border border-line"
               >
                 <Image
                   src={image.src}
                   alt={image.alt}
                   fill
-                  sizes="(min-width: 640px) 50vw, 100vw"
+                  sizes="(min-width: 1024px) 33vw, 100vw"
                   className="object-cover"
                 />
               </li>

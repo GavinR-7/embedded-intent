@@ -44,6 +44,19 @@ export const home = {
   hero: {
     eyebrow: "AI automation & websites for service businesses",
     heading: "AI that picks up when you can't.",
+    /**
+     * The tail of `heading` that carries the accent color.
+     *
+     * The headline stays one string, so there is still one place it is written
+     * and a screen reader still reads one heading; the Hero finds this inside
+     * it and wraps it. If the two ever stop matching, the Hero renders the
+     * plain headline rather than a broken one.
+     *
+     * Color, not animation. A gradient sweeping across the words would have to
+     * animate `background-position`, and the Phase 7 rule is transform and
+     * opacity only — see MOTION.md.
+     */
+    headingAccent: "when you can't.",
     subheading:
       "Most of your leads arrive when nobody's there to catch them. We build the website that brings them in — and the AI that answers, qualifies and books them in under a minute. Every time, including Sunday.",
     /** Secondary CTA. The primary one is site.primaryCta. */
@@ -97,6 +110,46 @@ export const home = {
     ] satisfies SystemRow[],
     footerLabel: "Manual steps required",
     footerValue: "0",
+    /**
+     * Example events, cycled one at a time in the panel footer.
+     *
+     * Illustrations, not activity. No client names, no counts, no timestamps,
+     * nothing that could be read as a live feed of real work — for the same
+     * reason the "0.4s" came off the first row. If this ever needs to show
+     * real events it needs a real data source and a stated one.
+     */
+    ticker: [
+      "Missed call → text sent",
+      "Quote request → replied",
+      "Job complete → review ask",
+      "After-hours lead → booked",
+    ],
+  },
+
+  /**
+   * The industries strip under the hero.
+   *
+   * Every one of these is a business type the offering genuinely fits — a
+   * trade or a local practice where the phone is the lead process. It is not a
+   * client list and must never be read as one, which is why the label says
+   * "Built for" rather than "Trusted by".
+   */
+  industries: {
+    label: "Built for",
+    items: [
+      "HVAC",
+      "Roofing",
+      "Plumbing",
+      "Electrical",
+      "Landscaping",
+      "Med spas",
+      "Dental",
+      "Chiropractors",
+      "Law firms",
+      "Realtors",
+      "Event rentals",
+      "Contractors",
+    ],
   },
 
   problem: {

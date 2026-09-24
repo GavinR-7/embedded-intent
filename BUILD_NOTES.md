@@ -12,9 +12,9 @@ that looks odd.
 Two reasons, both practical rather than aesthetic.
 
 1. **Amber bright enough to pass AA on near-black drifts yellow and reads as a
-   warning.** That collides with the meaning we need a warm colour to carry on
+   warning.** That collides with the meaning we need a warm color to carry on
    form validation in Phase 6. Reserving amber/red for genuine error states
-   keeps the colour language honest.
+   keeps the color language honest.
 2. **Cyan holds saturation at high lightness.** `oklch(0.85 0.13 195)` is
    13.14:1 on the page background, which means the *same* token works as link
    text, as a focus ring, and as a button fill. An amber would have needed a
@@ -27,8 +27,8 @@ brightness, which is what makes the neutral ramp read as evenly spaced.
 
 The catch: OKLCH can express colours sRGB cannot. Two of the first-draft accent
 values (`signal-dim` at chroma 0.12, `signal-wash` at 0.06) were **outside the
-sRGB gamut**. A browser silently clips those, so the colour reasoned about is
-not the colour on screen — and any contrast ratio calculated from the spec is
+sRGB gamut**. A browser silently clips those, so the color reasoned about is
+not the color on screen — and any contrast ratio calculated from the spec is
 fiction. Both were pulled in to 0.10 and 0.045 respectively.
 
 Contrast was then computed properly: OKLCH → linear sRGB → 8-bit → WCAG
@@ -54,7 +54,7 @@ was a real choice:
 - `next/font` self-hosts them and generates a metric-matched fallback, so there
   is no request to Google at runtime and no layout shift.
 
-The honest caveat: Geist is Vercel's own family and a developer will recognise
+The honest caveat: Geist is Vercel's own family and a developer will recognize
 it as the Next.js default. The audience here is service-business owners, who
 will not. If it ever reads too generic, swapping it is a change to two lines in
 `globals.css` and one import in `layout.tsx` — **no component names a typeface**,
@@ -73,7 +73,7 @@ size**, which is the one that was designed first.
 ### `--color-*: initial`
 
 This wipes Tailwind's default palette. After it, `bg-zinc-800` is not a class.
-It is a deliberate constraint: the tokens become the only way to put colour on
+It is a deliberate constraint: the tokens become the only way to put color on
 the page, so the system cannot erode one hurried commit at a time. Cost: no
 escape hatch. Undo by deleting that single line.
 
@@ -259,7 +259,7 @@ one table of all eight with build and monthly columns, not three named tiers.
 - `passThrough` exists so "ad spend is paid directly to Google and never marked
   up" and "Twilio usage is billed at cost" are *data*, not something a component
   might forget to render. These are trust signals; burying them is the exact
-  behaviour the positioning is defined against.
+  behavior the positioning is defined against.
 - `notThis` carries the anti-sell — Social Content Engine is explicitly not
   "we run your social media".
 
@@ -295,7 +295,7 @@ waiting on hydration.
 is an extra beat where all four are lit before the loop restarts. That pause is
 what makes it read as a completed journey rather than a spinner.
 
-Only `transform` and `opacity`/colour animate. The connector fills with
+Only `transform` and `opacity`/color animate. The connector fills with
 `scaleX`/`scaleY` from a `transform-origin`, never by animating width or
 height — a width animation would run layout on every frame of every cycle, for
 the entire time the page is open.
@@ -373,7 +373,7 @@ title, detail line, status chip) and a footer counting manual steps, it reads
 as a screenshot of working software, which is the actual claim.
 
 Everything from the old implementation carried over: one client island, one
-`setInterval`, transform-and-colour only, the extra beat where all four are lit
+`setInterval`, transform-and-color only, the extra beat where all four are lit
 before the loop restarts, all labels in the server HTML, and reduced motion
 rendering every row lit and static. Re-verified after the rebuild:
 
@@ -850,7 +850,7 @@ my business at all — is not one any single service answers.
 
 `LeadSystemPanel` became `components/ui/SystemPanel`, taking rows as props. The
 homepage feeds it the lead journey; every service page feeds it that service's
-`flow`. Same sequencing, same reduced-motion behaviour, same
+`flow`. Same sequencing, same reduced-motion behavior, same
 "every label in the server HTML" guarantee.
 
 Service flows are data (`AtLeastThree<FlowStep>`), so a service cannot ship
@@ -953,7 +953,7 @@ one word per line.
 The trigger and panel are now separate components, and the panel is rendered by
 the Header as a direct child of `<header>`, which is `sticky` and therefore a
 positioned, full-width ancestor. It takes `w-[min(56rem,calc(100vw-2rem))]`,
-centred, so it is clamped inside the viewport at any width.
+centered, so it is clamped inside the viewport at any width.
 
 `fixed` would have worked too, but only by accident: `backdrop-filter` on the
 header creates a containing block for fixed descendants, so a `fixed` panel
@@ -1093,7 +1093,7 @@ rather than for a first name.
 ### US English
 
 `prioritized`, `optimization`, `inquiry`. Verified by grep over `content/` and
-`app/` for `-ise/-isation/enquir/behaviour/colour`, excluding comments: zero
+`app/` for `-ise/-isation/enquir/behavior/color`, excluding comments: zero
 hits. Code comments were left as they were.
 
 ### No framework names in customer copy

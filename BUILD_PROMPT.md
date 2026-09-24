@@ -60,14 +60,14 @@ built into how a business already runs, not bolted on beside it.
 **Goal:** design system, layout shell, and the docs scaffold. No page content yet.
 
 1. `app/globals.css` — set up Tailwind v4's CSS-first config with an `@theme` block.
-   Define tokens for colour, typography scale, and spacing rhythm. **Explain the
+   Define tokens for color, typography scale, and spacing rhythm. **Explain the
    `@theme` block in your summary** — this replaces `tailwind.config.js` from v3 and
    the owner hasn't used it before.
 
    Direction: dark, technical, precise. Near-black base, one electric accent (cyan or
    amber — pick one and justify it), a restrained neutral ramp. A monospace face for
    eyebrows, labels, and numbers; a clean sans for headings and body. Circuit-trace /
-   embedded-systems feel without being literal about it. Every colour must clear
+   embedded-systems feel without being literal about it. Every color must clear
    WCAG AA against its background — state the contrast ratios you chose.
 
 2. `content/site.ts` — typed brand config: name, tagline, contact email, phone, nav
@@ -311,6 +311,12 @@ and easing on a client-facing site read as a template.
 
 **STOP.** Report Lighthouse mobile before and after this phase.
 
+> **Built 2026-09-23.** Structure first (three category routes, a five-tab nav,
+> count-aware grids), then motion. **Zero React Bits components used**, against
+> the cap of three — the reasoning is in `MOTION.md`, along with every effect,
+> its tokens, and the rule that keeps reveals away from the LCP element.
+> The Tier 1 background is built; Tier 2/3 remain out of scope.
+
 ---
 
 ## PHASE 8 — SEO, analytics, launch prep
@@ -336,7 +342,7 @@ and easing on a client-facing site read as a template.
 
 - Invent a statistic, a result, a percentage, or a testimonial. If a number isn't
   measured and sourced, it does not go on the site.
-- Use lorem ipsum. Where real copy is missing, write a clearly-labelled
+- Use lorem ipsum. Where real copy is missing, write a clearly-labeled
   `TODO:` placeholder and log it in `CONTENT_TODO.md`.
 - Commit a `.env` file or put a key in source.
 - Add a dependency without saying in the summary what it's for and what it weighs.

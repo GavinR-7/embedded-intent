@@ -1,45 +1,20 @@
+import { ScrollStepper } from "@/components/motion/ScrollStepper";
 import { Section, SectionHeading } from "@/components/ui/Section";
 import { home } from "@/content/home";
 
 const { howItWorks } = home;
 
+/**
+ * Server component. The four steps are passed to the client stepper as props
+ * rather than imported by it, so the copy ships in the HTML and the RSC payload
+ * but never in the JavaScript bundle — importing `content/home` from a client
+ * component would put every word of it there.
+ */
 export function HowItWorks() {
   return (
     <Section id="how-it-works" tone="void">
       <SectionHeading eyebrow={howItWorks.eyebrow} heading={howItWorks.heading} />
-
-      <ol className="mt-14 grid gap-px overflow-hidden rounded-card bg-line md:grid-cols-2 lg:grid-cols-4">
-        {howItWorks.steps.map((step, index) => (
-          <li key={step.id} className="flex flex-col bg-void p-7">
-            {/* The number is decorative — the ordered list already conveys
-                sequence to assistive tech, so repeating it as text would just
-                make a screen reader say "one" twice. */}
-            <span
-              aria-hidden="true"
-              className="font-mono text-eyebrow tabular-nums text-signal"
-            >
-              {String(index + 1).padStart(2, "0")}
-            </span>
-
-            <h3 className="mt-4 text-h3 text-ink">{step.name}</h3>
-
-            <p className="mt-3 flex-1 text-label text-ink-muted">{step.body}</p>
-
-            {/* Deliverables, as chips. What the step actually hands you —
-                the data lives in content/home.ts. */}
-            <ul className="mt-6 flex flex-wrap gap-2">
-              {step.chips.map((chip) => (
-                <li
-                  key={chip}
-                  className="rounded-field border border-line px-2.5 py-1 font-mono text-eyebrow uppercase text-ink-subtle"
-                >
-                  {chip}
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ol>
+      <ScrollStepper steps={howItWorks.steps} />
     </Section>
   );
 }

@@ -26,7 +26,19 @@ export type FaqItem = {
   services: readonly ServiceSlug[];
 };
 
-export const faqs: readonly FaqItem[] = [
+/*
+ * `as const satisfies` rather than a `: readonly FaqItem[]` annotation.
+ *
+ * The annotation would widen every `id` to `string`, and `FaqId` below —
+ * the union of the real ids, which `content/categories.ts` uses to pick the
+ * questions for a category page — would collapse to `string`. A typo would
+ * then compile and render an empty FAQ section.
+ *
+ * `satisfies` keeps the shape checked against `FaqItem` (a missing `answer`
+ * is still an error) while `as const` keeps the literal types. The two
+ * together are the only way to get both.
+ */
+export const faqs = [
   {
     id: "buy-everything-at-once",
     question: "Do I have to buy everything at once?",
@@ -93,9 +105,48 @@ export const faqs: readonly FaqItem[] = [
       "social-content-engine",
     ],
   },
-];
+] as const satisfies readonly FaqItem[];
 
-/** The questions worth answering on a given service page. */
+/**
+ * The questions worth answering on a given service page.
+ *
+ * `.some()` rather than `.includes()`. Now that `faqs` is `as const`, each
+ * entry's `services` is a readonly tuple of literal types — and `includes` on
+ * one of those only accepts a value assignable to its element type. For the two
+ * general questions, whose `services` is `readonly []`, that element type is
+ * `never`, so `includes(slug)` does not compile. Comparing each element is the
+ * same check without the narrowing.
+ */
 export function faqsForService(slug: ServiceSlug): readonly FaqItem[] {
-  return faqs.filter((faq) => faq.services.includes(slug));
+  return faqs.filter((faq) => faq.services.some((tagged) => tagged === slug));
+}
+
+/**
+ * The id of a real FAQ entry.
+ *
+ * Derived from the data, so it cannot drift from it. `content/categories.ts`
+ * uses this to name the questions that belong on a category page: delete or
+ * rename a question here and every page that referenced it fails to compile,
+ * which is the whole reason the ids are stable and are never renumbered.
+ */
+export type FaqId = (typeof faqs)[number]["id"];
+
+/**
+ * The named questions, in the order they were named.
+ *
+ * Not `faqs.filter(...)` — that would return them in catalogue order and
+ * silently drop an id that matched nothing. A category page states which
+ * questions it wants and in which order, so that order is what it gets.
+ */
+export function faqsByIds(ids: readonly FaqId[]): readonly FaqItem[] {
+  return ids.map((id) => {
+    const item = faqs.find((faq) => faq.id === id);
+
+    // Unreachable while `ids` is typed `FaqId[]`. It is here so that if
+    // someone widens that type later, the failure is loud at build time
+    // rather than a section that renders one fewer question than intended.
+    if (!item) throw new Error(`No FAQ with id "${id}"`);
+
+    return item;
+  });
 }

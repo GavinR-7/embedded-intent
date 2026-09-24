@@ -42,20 +42,23 @@ export type PhoneNumber = {
 };
 
 /**
- * A dropdown in the primary nav.
+ * The one hand-written dropdown in the primary nav.
  *
- * `kind: "services"` is filled from content/services.ts at render time rather
- * than listed here — a second list of services in config is a second list to
- * forget. `kind: "links"` carries its own items.
+ * The other three tabs are the service categories, and they are generated in
+ * `content/nav.ts` from `content/categories.ts` + `content/services.ts` — a
+ * second list of services in config would be a second list to forget. Company
+ * has no data behind it, so it is written out here.
  */
-export type NavMenu =
-  | { kind: "services"; label: string; /** Route prefix the underline tracks. */ match: string }
-  | {
-      kind: "links";
-      label: string;
-      match: string;
-      items: readonly { label: string; href: string; description: string; icon: IconName }[];
-    };
+export type CompanyMenu = {
+  label: string;
+  /** Where the tab label itself goes. */
+  href: string;
+  /** Label for the panel's footer link back to `href`. */
+  allLabel: string;
+  /** Route prefixes the active underline tracks. */
+  owns: readonly string[];
+  items: readonly { label: string; href: string; description: string; icon: IconName }[];
+};
 
 export type SiteConfig = {
   name: string;
@@ -71,12 +74,10 @@ export type SiteConfig = {
   phone: PhoneNumber | null;
   /** Mirrors --color-void in app/globals.css, for <meta name="theme-color">. */
   themeColor: string;
-  /** Primary nav: two dropdowns plus one direct link. */
-  navMenus: readonly NavMenu[];
+  /** The Company dropdown. The three category tabs are generated — see nav.ts. */
+  companyMenu: CompanyMenu;
   /** Direct links sitting beside the dropdowns. */
   navLinks: readonly NavItem[];
-  /** Footer row under the services mega menu. */
-  servicesMenuFooter: { prompt: string; label: string; href: string };
   /**
    * The one CTA used everywhere on the site. There is no second offer and no
    * paid entry point — the audit is free, full stop.
@@ -85,8 +86,6 @@ export type SiteConfig = {
   /** Sits directly under the CTA wherever it appears. */
   ctaMicrocopy: string;
   footerColumns: readonly FooterColumn[];
-  /** Heading for the footer column generated from content/services.ts. */
-  footerServicesHeading: string;
   social: readonly SocialLink[];
   /** The three-part trust line used under the hero and in the footer. */
   trustPoints: readonly string[];
@@ -120,52 +119,39 @@ export const site: SiteConfig = {
 
   themeColor: "#060b0f",
 
-  navMenus: [
-    { kind: "services", label: "Services", match: "/services" },
-    {
-      kind: "links",
-      label: "Company",
-      match: "/work",
-      // Deliberately no About, Blog or Guides. An empty page in the nav is
-      // worse than an absent one — see CONTENT_TODO.md for About.
-      items: [
-        {
-          label: "How it works",
-          href: "/#how-it-works",
-          description: "Find, build, automate, measure — and what each step produces",
-          icon: "gears",
-        },
-        {
-          label: "Our work",
-          href: "/work",
-          description: "Live client sites, with results published once measured",
-          icon: "browser",
-        },
-        {
-          label: "FAQ",
-          href: "/#faq",
-          description: "Ownership, timelines, CRMs, and what happens when AI gets it wrong",
-          icon: "chat",
-        },
-      ],
-    },
-  ],
+  companyMenu: {
+    label: "Company",
+    href: "/work",
+    allLabel: "All our work",
+    owns: ["/work"],
+    // Deliberately no About, Blog or Guides. An empty page in the nav is
+    // worse than an absent one — see CONTENT_TODO.md for About.
+    items: [
+      {
+        label: "How it works",
+        href: "/#how-it-works",
+        description: "Find, build, automate, measure — and what each step produces",
+        icon: "gears",
+      },
+      {
+        label: "Our work",
+        href: "/work",
+        description: "Live client sites, with results published once measured",
+        icon: "browser",
+      },
+      {
+        label: "FAQ",
+        href: "/#faq",
+        description: "Ownership, timelines, CRMs, and what happens when AI gets it wrong",
+        icon: "chat",
+      },
+    ],
+  },
 
   navLinks: [{ label: "Contact", href: "/contact" }],
 
-  servicesMenuFooter: {
-    prompt: "Not sure which one you need?",
-    label: "Start with a free audit",
-    href: "/contact",
-  },
-
   primaryCta: { label: "Get a free audit", href: "/contact" },
   ctaMicrocopy: "Free · A prioritized list, whether or not you hire us",
-
-  // The Services column is generated from content/services.ts in the Footer —
-  // only its heading lives here. Listing the services again would create a
-  // second list to keep in sync with the first.
-  footerServicesHeading: "Services",
 
   footerColumns: [
     {

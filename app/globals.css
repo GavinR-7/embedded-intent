@@ -31,7 +31,7 @@
 
 @theme {
   /* -------------------------------------------------------------------------
-     Colour.
+     Color.
 
      `--color-*: initial` wipes Tailwind's stock palette. After this line
      `bg-zinc-800`, `text-blue-500` and friends do not exist. That is on
@@ -40,9 +40,9 @@
 
      Colours are authored in OKLCH: perceptually uniform, so equal steps in the
      L channel look like equal steps of brightness. Every value below was
-     checked to sit inside the sRGB gamut — an out-of-gamut OKLCH colour gets
-     silently clipped by the browser, and then the colour you reasoned about is
-     not the colour on screen.
+     checked to sit inside the sRGB gamut — an out-of-gamut OKLCH color gets
+     silently clipped by the browser, and then the color you reasoned about is
+     not the color on screen.
 
      Measured WCAG contrast (sRGB, 8-bit), against --color-void / surface /
      surface-raised respectively:
@@ -191,6 +191,30 @@
   --duration-fast: 150ms;
   --duration-base: 200ms;
   --duration-slow: 400ms;
+
+  /* -------------------------------------------------------------------------
+     Motion tokens (Phase 7).
+
+     Every effect on the site reads from these four numbers, so the whole page
+     can be slowed down or sped up by editing one block rather than by finding
+     thirty transition declarations. They are deliberately *not* in `@theme`:
+     nothing needs a `duration-reveal-fade` utility class, and generating one
+     would imply these are per-element choices when the point is that they are
+     not.
+
+     The reveal numbers are measured from cantandodigital.com, which is the
+     reference for how this should feel: opacity over 0.7s, movement over
+     0.8s — the slightly longer travel is what stops it reading as a flicker —
+     on an expo-out curve, 18px of travel, 70ms apart down a section.
+     ------------------------------------------------------------------------- */
+  --dur-reveal-fade: 700ms;
+  --dur-reveal-move: 800ms;
+  --reveal-stagger: 70ms;
+  --reveal-distance: 18px;
+
+  /* Menus and popovers: enter and exit. Short, because it is in the way of
+     what you asked for. */
+  --duration-menu: 180ms;
 }
 
 @layer base {
@@ -333,5 +357,549 @@
   font-weight: 600;
   &:focus-visible {
     top: 0.75rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   THE REVEAL SYSTEM
+   ---------------------------------------------------------------------------
+   Elements opt in with `data-reveal`. One IntersectionObserver in
+   components/motion/MotionRuntime.tsx adds `data-revealed` when they arrive,
+   once, and then stops watching them.
+
+   Three things about the selectors below are load-bearing.
+
+   1. `html[data-reveal-ready]`.
+      The hidden starting state applies ONLY when a tiny inline script in
+      <head> has set that attribute before first paint. No JavaScript, a
+      crawler, a Content-Security-Policy that blocks the script, or a
+      hydration that never finishes all mean the attribute is absent, the
+      rules below never match, and every word on the page is visible. The
+      failure mode of the whole system is "no animation", never "no content".
+
+   2. These rules are UNLAYERED.
+      Tailwind's utilities live in `@layer utilities`, and an unlayered rule
+      beats any layered one regardless of specificity. If `opacity: 0` sat in
+      `@layer base` instead, any `opacity-*` utility on a revealing element
+      would silently win and the element would never be hidden in the first
+      place. The corollary is a rule for anyone adding markup: do not put an
+      `opacity-*` utility on a `data-reveal` element — dim things with color.
+      (`translate-*`, `rotate-*` and `scale-*` are safe: Tailwind v4 compiles
+      those to the separate `translate`/`rotate`/`scale` properties, which
+      compose with the `transform` below rather than overwriting it.)
+
+   3. `transform` makes an element a containing block for `position: fixed`
+      descendants — the bug that rendered the mobile menu 390x1 in Phase 6.
+      It is only set while an element is un-revealed, but that is still long
+      enough to break a fixed child. Never put `data-reveal` on an ancestor of
+      anything fixed.
+   --------------------------------------------------------------------------- */
+
+html[data-reveal-ready] [data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--reveal-distance));
+
+  /*
+     Two durations, one delay. Movement is 100ms slower than the fade so the
+     element is fully opaque slightly before it stops moving, which is what
+     makes it read as settling into place rather than sliding on.
+
+     The delay is the element's index within its section (`--reveal-i`, written
+     by the runtime) times the stagger. Unset means 0, so an element outside
+     any section still reveals — it just does not wait its turn.
+  */
+  transition:
+    opacity var(--dur-reveal-fade) var(--ease-out-expo)
+      calc(var(--reveal-i, 0) * var(--reveal-stagger)),
+    transform var(--dur-reveal-move) var(--ease-out-expo)
+      calc(var(--reveal-i, 0) * var(--reveal-stagger));
+}
+
+html[data-reveal-ready] [data-reveal][data-revealed] {
+  opacity: 1;
+  transform: none;
+}
+
+/*
+   Reduced motion: nothing is ever hidden in the first place.
+
+   The alternative — hide, then reveal instantly — would leave someone who
+   asked for less motion depending on an IntersectionObserver to see the page
+   at all. This way the reveal system simply does not exist for them, and no
+   JavaScript failure can cost them content.
+*/
+@media (prefers-reduced-motion: reduce) {
+  html[data-reveal-ready] [data-reveal],
+  html[data-reveal-ready] [data-reveal][data-revealed] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Keyframes, part two (Phase 7). Transform and opacity only.
+   --------------------------------------------------------------------------- */
+
+/* The industry strip. The track holds the list twice, so -50% lands exactly
+   on the start of the second copy and the loop has no seam. */
+@keyframes marquee-track {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* The ambient blobs arriving, after the page is up. See `glow-blob`. */
+@keyframes glow-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Ambient glow behind the hero. Two blobs on different curves and periods, so
+   they drift apart instead of moving as one shape. `alternate` means no jump
+   back to the start. */
+@keyframes glow-drift-a {
+  from {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(7%, 5%, 0) scale(1.12);
+  }
+}
+
+@keyframes glow-drift-b {
+  from {
+    transform: translate3d(5%, 4%, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(-6%, -5%, 0) scale(0.94);
+  }
+}
+
+/* A ticker line arriving. Replayed by remounting the element, so it runs once
+   per line rather than looping. */
+@keyframes ticker-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* One pass of light across the primary CTA, on hover. */
+@keyframes cta-sweep {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(130%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Project utilities, part two (Phase 7).
+   --------------------------------------------------------------------------- */
+
+/*
+ * Menus, dropdown panels and the mobile sheet: enter AND exit.
+ *
+ * The exit is the reason this is CSS rather than a mount/unmount. A panel that
+ * React removes from the tree has nothing left to animate, so it vanishes. The
+ * panel therefore stays mounted and `display` does the hiding — which also
+ * keeps its links out of the tab order, the one thing a hidden menu has to get
+ * right.
+ *
+ * Two modern pieces make an animated `display` possible:
+ *
+ *   `transition-behavior: allow-discrete` lets `display` participate, flipping
+ *   to `none` at the END of the transition instead of the start.
+ *
+ *   `@starting-style` supplies the style to animate FROM on the first frame an
+ *   element is displayed. Without it the entrance is instant, because an
+ *   element that was `display: none` has no previous computed style.
+ *
+ * Neither is required. A browser without them ignores both, and the panel
+ * appears and disappears instantly — which is a fine menu.
+ */
+@utility menu-pop {
+  display: none;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition-property: opacity, transform, display;
+  transition-duration: var(--duration-menu);
+  transition-timing-function: var(--ease-precise);
+  transition-behavior: allow-discrete;
+
+  &[data-open] {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+}
+
+/*
+ * Cursor-tracked glow on a card or a row.
+ *
+ * `--spot-x` / `--spot-y` are written by the one delegated pointermove handler
+ * in components/motion/MotionRuntime.tsx, only on fine pointers. With no
+ * handler the custom properties fall back to the element's center, so the card
+ * still lights up on hover on a touch device or with JavaScript off — just
+ * without following anything.
+ *
+ * Sits on `::before` at `z-index: -1` inside an isolated stacking context, so
+ * it paints over the card's own background and under its text without needing
+ * `overflow: hidden` (which would clip). `isolation` creates a stacking
+ * context but — unlike `transform` — not a containing block, so this is safe
+ * to put on anything.
+ */
+@utility spotlight {
+  position: relative;
+  isolation: isolate;
+
+  /*
+   * Hover-capable pointers only. On a touch screen `:hover` sticks after a tap,
+   * which would leave a glow sitting on the last card you touched.
+   *
+   * `content` is declared INSIDE `:hover`, which is the whole performance story
+   * of this utility. `content` is what brings a pseudo-element into existence,
+   * so the 44 cards you are not pointing at have no extra box to style, lay out
+   * or paint. The obvious version — declare the layer once at `opacity: 0` and
+   * fade it in — costs a real box per card: 45 of them on the homepage, roughly
+   * 50ms of style and layout on every load, for something nobody is looking at.
+   *
+   * `@starting-style` buys back the fade-in that the missing transition would
+   * otherwise cost. A pseudo-element that has only just come into existence has
+   * no previous computed style, so without it the glow would snap on. There is
+   * no fade-out, because the element stops existing — that is the trade, and on
+   * a cursor glow it is not a trade anyone notices.
+   */
+  @media (hover: hover) and (pointer: fine) {
+    &:hover::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity var(--duration-base) var(--ease-precise);
+      background: radial-gradient(
+        14rem circle at var(--spot-x, 50%) var(--spot-y, 50%),
+        color-mix(in oklch, var(--color-signal) 14%, transparent),
+        transparent 72%
+      );
+
+      @starting-style {
+        opacity: 0;
+      }
+    }
+  }
+}
+
+/*
+ * One pass of light across the primary CTA on hover, plus the arrow nudge
+ * (which is a `group-hover:` utility on the arrow itself).
+ *
+ * An animation rather than a transition: a transition would sweep back the
+ * other way when the pointer leaves, which reads as a toggle. This plays once
+ * per hover and stops.
+ */
+@utility cta-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    transform: translateX(-130%);
+    background: linear-gradient(
+      100deg,
+      transparent 38%,
+      rgb(255 255 255 / 0.4) 50%,
+      transparent 62%
+    );
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover::after {
+      animation: cta-sweep 700ms var(--ease-precise) 1;
+    }
+  }
+}
+
+/*
+ * The circuit grid, lit near the cursor.
+ *
+ * A second copy of the `trace-grid` lines in the accent color, masked to a
+ * circle that follows the pointer. Same `background-size` and
+ * `background-position` as `trace-grid`, and painted over the same box, so the
+ * bright lines land exactly on the dim ones rather than beside them.
+ *
+ * `mask-image` creates a stacking context but not a containing block, so this
+ * is safe over a hero. Only `opacity` transitions; the mask position changes
+ * are paints, and they only happen while a fine pointer is inside the hero.
+ */
+@utility trace-grid-lit {
+  background-image:
+    linear-gradient(to right, var(--color-signal) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-signal) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  background-position: center;
+  mask-image: radial-gradient(
+    16rem circle at var(--spot-x, 50%) var(--spot-y, -30%),
+    #000 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-precise);
+
+  &[data-lit] {
+    opacity: 0.3;
+  }
+}
+
+/*
+ * A <details> that opens and closes instead of snapping.
+ *
+ * `::details-content` is the browser's own wrapper around everything after the
+ * <summary> — there is no way to get at it from markup. `interpolate-size:
+ * allow-keywords` is what makes `block-size: auto` an animatable value; it is
+ * inherited, so setting it on the <details> covers the pseudo-element.
+ *
+ * This animates `block-size`, which is layout, and is the one place on the
+ * site that animates something other than transform and opacity. It is bounded
+ * and worth it: it runs once per click, for 400ms, on one element, and the
+ * alternative (a hand-rolled accordion with a measured pixel height) would
+ * ship JavaScript to do the same layout work less reliably.
+ *
+ * Wrapped in @supports, so a browser without `::details-content` gets the
+ * native instant toggle and nothing looks broken.
+ */
+@utility faq-item {
+  @supports selector(::details-content) {
+    interpolate-size: allow-keywords;
+
+    &::details-content {
+      block-size: 0;
+      overflow: hidden;
+      transition:
+        block-size var(--duration-slow) var(--ease-precise),
+        content-visibility var(--duration-slow) allow-discrete;
+    }
+
+    &[open]::details-content {
+      block-size: auto;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Offscreen pause.
+   ---------------------------------------------------------------------------
+   Put `data-paused` on a wrapper and every looping animation inside it stops.
+   One rule rather than a per-component `animation-play-state` toggle, so the
+   rule "no animation runs while it is offscreen" is enforced in one place and a
+   new looping thing gets it by being inside a wrapper that already has it.
+
+   `!important` because it has to beat the `animation` shorthand that Tailwind's
+   `animate-[...]` utilities emit, and unlayered so it beats the utilities layer
+   as well. This is the only `!important` in the file that is not part of the
+   reduced-motion backstop, and it is here for the same reason: it is a
+   guarantee, not a style.
+   --------------------------------------------------------------------------- */
+[data-paused],
+[data-paused] * {
+  animation-play-state: paused !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Project utilities, part three (Phase 7).
+   --------------------------------------------------------------------------- */
+
+/*
+ * A soft ambient blob for the hero background.
+ *
+ * A radial-gradient, NOT `filter: blur()` on a solid shape. Both look the same;
+ * a blur is a per-frame GPU pass over a large area and is by far the most
+ * expensive way to get a soft edge on a phone, while a gradient is one paint
+ * that the compositor then just moves around.
+ *
+ * ---------------------------------------------------------------------------
+ * `opacity: 0` until 700ms, and that is the whole point.
+ *
+ * These are the largest painted areas on the page — two squares of gradient
+ * over the hero. Painting them during the first paint cost **0.63s of simulated
+ * LCP on mobile** (2.01s to 2.64s, measured by removing them and putting them
+ * back). Nothing else added in Phase 7 moved the number at all: the reveal
+ * system, the cursor-lit grid and the industry strip were each measured on
+ * their own and came in at 2.01–2.02s.
+ *
+ * At `opacity: 0` the browser does not paint them, so they cannot be in the
+ * first paint. The `glow-in` animation brings them in well after the hero text
+ * is up, which also reads better than having them there from the start.
+ * ---------------------------------------------------------------------------
+ *
+ * Size and position are set at the call site; which of the two drift tracks a
+ * blob rides is set by the `-a` / `-b` variants below, because an animation
+ * list with two entries does not survive a Tailwind arbitrary value.
+ */
+@utility glow-blob {
+  border-radius: 9999px;
+  opacity: 0;
+  background: radial-gradient(
+    circle at center,
+    color-mix(in oklch, var(--color-signal) 10%, transparent) 0%,
+    transparent 68%
+  );
+
+  /* No entrance and no drift — just there, faintly. The paint cost is real for
+     these visitors, and it is the right trade: the alternative is showing them
+     nothing at all, because the fade-in is the only thing that reveals it. */
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 1;
+  }
+}
+
+/*
+ * The two drift tracks.
+ *
+ * `animation: none` under reduced motion belongs in each variant rather than in
+ * `glow-blob` above: both are single class selectors in the same cascade layer,
+ * so the one written later wins, and that is these. Putting the override in the
+ * shared utility left the right result happening for the wrong reason — the
+ * global reduced-motion backstop collapsing the duration to 0.01ms — which is a
+ * backstop, not an intent.
+ */
+@utility glow-blob-a {
+  animation:
+    glow-in 1.2s var(--ease-precise) 700ms both,
+    glow-drift-a 26s var(--ease-precise) 700ms infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility glow-blob-b {
+  animation:
+    glow-in 1.4s var(--ease-precise) 900ms both,
+    glow-drift-b 34s var(--ease-precise) 900ms infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/*
+ * The industry strip.
+ *
+ * All of it — the loop, the soft edges, pause-on-hover and the reduced-motion
+ * alternative — so the component can be a Server Component with no JavaScript
+ * of its own. It was a client component first, purely to branch on
+ * `prefers-reduced-motion` in JS; doing the branch in CSS removed a client
+ * island, and with it twenty-four list items from the hydration pass and every
+ * industry name from the JavaScript bundle.
+ *
+ * Descendants are addressed by data attribute rather than by class, so this
+ * block does not depend on which other utility names happen to be in the markup.
+ *
+ * Without the mask, names appear and vanish at a hard vertical line, which reads
+ * as clipping rather than as motion continuing past the edge.
+ */
+@utility marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 6%,
+    #000 94%,
+    transparent 100%
+  );
+
+  & [data-marquee-track] {
+    width: max-content;
+    animation: marquee-track 40s linear infinite;
+  }
+
+  /* You are trying to read it. Hover-capable pointers only — on a touch screen
+     `:hover` sticks after a tap and would leave the strip stopped. */
+  @media (hover: hover) and (pointer: fine) {
+    &:hover [data-marquee-track] {
+      animation-play-state: paused;
+    }
+  }
+
+  /*
+   * The static alternative, in full.
+   *
+   * The second copy of the list exists only to make the loop seamless, so
+   * standing it still would show every name twice — it is hidden instead, the
+   * remaining row wraps, and the edge mask comes off because nothing is passing
+   * under it any more.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    overflow: visible;
+    mask-image: none;
+
+    & [data-marquee-track] {
+      width: auto;
+      flex-wrap: wrap;
+      animation: none;
+    }
+
+    & [data-marquee-duplicate] {
+      display: none;
+    }
+  }
+}
+
+/*
+ * The pinned "How it works" stepper, at lg and up only.
+ *
+ * `--steps` is set at the call site from the number of steps, so the outer
+ * block is 70vh of scroll per step and adding a fifth step does not silently
+ * make each one activate for a shorter distance.
+ *
+ * Both halves are gated on `data-pinned`, which the client component sets in an
+ * effect. With no JavaScript, or under reduced motion, the attribute is never
+ * added and the section is a normal stacked block — rather than a tall pinned
+ * panel that scrolls for three screens without anything changing, which is what
+ * a CSS-only `lg:sticky` would give.
+ */
+@utility pin-track {
+  @media (width >= 64rem) {
+    &[data-pinned] {
+      height: calc(var(--steps, 4) * 70vh);
+    }
+  }
+}
+
+@utility pin-viewport {
+  @media (width >= 64rem) {
+    [data-pinned] > & {
+      position: sticky;
+      /* The sticky header is 5rem tall. */
+      top: 5rem;
+      max-height: calc(100svh - 5rem);
+    }
   }
 }

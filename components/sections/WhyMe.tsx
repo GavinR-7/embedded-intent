@@ -12,9 +12,11 @@ export function WhyMe() {
   return (
     <Section id="why-me" tone="surface">
       <div className="max-w-3xl">
-        <Eyebrow>{whyMe.eyebrow}</Eyebrow>
-        <h2 className="mt-5 text-h2 text-ink">{whyMe.heading}</h2>
-        <p className="mt-6 max-w-prose-tight text-lead text-ink-muted">
+        <Eyebrow reveal>{whyMe.eyebrow}</Eyebrow>
+        <h2 data-reveal="" className="mt-5 text-h2 text-ink">
+          {whyMe.heading}
+        </h2>
+        <p data-reveal="" className="mt-6 max-w-prose-tight text-lead text-ink-muted">
           {fillOwner(whyMe.body)}
         </p>
       </div>
@@ -52,6 +54,7 @@ export function WhyMe() {
           {whyMe.rows.map((row) => (
             <tr
               key={row.aspect}
+              data-reveal=""
               className="lift mb-4 block rounded-card border border-line p-6 last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:border-b md:border-line md:p-0"
             >
               <th

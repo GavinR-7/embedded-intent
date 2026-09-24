@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { MotionRuntime } from "@/components/motion/MotionRuntime";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -58,6 +59,23 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/*
+ * Arms the reveal system, before the browser paints anything.
+ *
+ * The CSS that hides a `data-reveal` element is gated on this attribute (see
+ * app/globals.css), so the order matters: the attribute has to be set during
+ * HTML parsing, or there is a flash of laid-out content that then hides itself
+ * and animates back in. An inline `<script>` in <head> runs synchronously at
+ * exactly that moment — `useEffect` runs after the first paint and
+ * `useLayoutEffect` after hydration, and both are too late.
+ *
+ * Everything about this fails in the safe direction. The attribute is never
+ * set for a crawler, for a visitor with JavaScript off, or under a
+ * Content-Security-Policy that blocks inline scripts — and in all three cases
+ * the hiding rules simply never match and the whole page is visible.
+ */
+const ARM_REVEALS = `(function(){try{document.documentElement.setAttribute("data-reveal-ready","")}catch(e){}})()`;
+
 export const viewport: Viewport = {
   themeColor: site.themeColor,
   // Tells the browser to render form controls, scrollbars and the like dark.
@@ -69,7 +87,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // The inline script below adds an attribute to this element before React
+      // hydrates. Without this, React treats the extra attribute as a mismatch.
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ARM_REVEALS }} />
+      </head>
       <body className="flex min-h-full flex-col bg-void font-sans text-body text-ink">
         {/* First thing in the tab order: lets keyboard and screen-reader users
             jump the nav instead of tabbing through it on every page. */}
@@ -81,6 +105,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <Footer />
+
+        {/* One client island for every scroll reveal and cursor effect on the
+            site. Renders nothing; see components/motion/MotionRuntime.tsx. */}
+        <MotionRuntime />
       </body>
     </html>
   );

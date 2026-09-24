@@ -5,7 +5,7 @@
  * `content/services.ts` name an icon without importing React, and what makes a
  * typo in the data a build error instead of an empty square on the page.
  *
- * All icons are 24×24, stroked with `currentColor`, and carry no colour of
+ * All icons are 24×24, stroked with `currentColor`, and carry no color of
  * their own — they take it from whatever they sit in. They are decorative
  * everywhere they are used: a label always sits beside them, so `<Icon>` is
  * `aria-hidden` and never the only way to tell two things apart.

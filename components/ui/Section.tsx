@@ -109,6 +109,16 @@ export function Section({
   return (
     <section
       id={id}
+      /*
+        Marks this band as a stagger group.
+
+        The runtime numbers every `data-reveal` element inside it in document
+        order and writes `--reveal-i`, so the eyebrow, the heading and then each
+        card arrive 70ms apart. Nothing in a section has to know its own index,
+        which is what stops the numbers going wrong the moment someone reorders
+        two blocks. See components/motion/MotionRuntime.tsx.
+      */
+      data-reveal-group=""
       className={[
         "relative",
         // Clears the sticky 80px header when an anchor is followed, so the
@@ -134,9 +144,30 @@ export function Section({
   );
 }
 
-/** Mono, uppercase, letterspaced. The label layer of the type system. */
-export function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="text-eyebrow font-mono uppercase text-signal">{children}</p>;
+/**
+ * Mono, uppercase, letterspaced. The label layer of the type system.
+ *
+ * `reveal` is opt-in rather than on by default because this component is used
+ * inside page heroes, and nothing in a hero reveals: the H1 and the subheading
+ * are the largest-contentful-paint candidates, and an eyebrow fading in above
+ * a headline that was there from the first frame looks like a mistake rather
+ * than an effect.
+ */
+export function Eyebrow({
+  children,
+  reveal = false,
+}: {
+  children: React.ReactNode;
+  reveal?: boolean;
+}) {
+  return (
+    <p
+      data-reveal={reveal ? "" : undefined}
+      className="text-eyebrow font-mono uppercase text-signal"
+    >
+      {children}
+    </p>
+  );
 }
 
 /**
@@ -154,10 +185,25 @@ export function SectionHeading({
   body?: string;
 }) {
   return (
+    /*
+      All three parts reveal, as three separate targets rather than one wrapper,
+      so the eyebrow, the heading and the lead arrive one after another instead
+      of as a single block. That is the whole difference between a page that
+      breathes and a page that slides.
+
+      Safe to do unconditionally: SectionHeading renders an <h2>, so it is never
+      the H1 a hero is built around, and no page hero uses it.
+    */
     <div className="max-w-prose-tight">
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="mt-5 text-h2 text-ink">{heading}</h2>
-      {body && <p className="mt-6 text-lead text-ink-muted">{body}</p>}
+      <Eyebrow reveal>{eyebrow}</Eyebrow>
+      <h2 data-reveal="" className="mt-5 text-h2 text-ink">
+        {heading}
+      </h2>
+      {body && (
+        <p data-reveal="" className="mt-6 text-lead text-ink-muted">
+          {body}
+        </p>
+      )}
     </div>
   );
 }

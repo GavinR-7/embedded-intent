@@ -19,13 +19,17 @@ export function Close() {
     <Section id="close" tone="surface" size="lg">
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
-          <Eyebrow>{close.eyebrow}</Eyebrow>
+          <Eyebrow reveal>{close.eyebrow}</Eyebrow>
 
-          <h2 className="mt-5 text-h2 text-ink">{close.heading}</h2>
+          <h2 data-reveal="" className="mt-5 text-h2 text-ink">
+            {close.heading}
+          </h2>
 
-          <p className="mt-6 max-w-prose-tight text-lead text-ink-muted">{close.body}</p>
+          <p data-reveal="" className="mt-6 max-w-prose-tight text-lead text-ink-muted">
+            {close.body}
+          </p>
 
-          <div className="mt-9">
+          <div data-reveal="" className="mt-9">
             <ButtonLink href={site.primaryCta.href}>{site.primaryCta.label}</ButtonLink>
             <p className="mt-4 text-label text-ink-subtle">{site.ctaMicrocopy}</p>
           </div>
@@ -34,7 +38,10 @@ export function Close() {
         <div className="flex flex-col gap-5">
           {/* The anti-sell. Shared with the contact page in Phase 6 via
               content/audit.ts, so the promise cannot drift between them. */}
-          <div className="rounded-card border border-line bg-void/40 p-7">
+          <div
+            data-reveal=""
+            className="lift spotlight rounded-card border border-line bg-void/40 p-7"
+          >
             <h3 className="text-eyebrow font-mono uppercase text-ink-subtle">
               {audit.isNotHeading}
             </h3>

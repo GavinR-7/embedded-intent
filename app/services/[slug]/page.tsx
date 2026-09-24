@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BeforeAfterTable } from "@/components/ui/BeforeAfterTable";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { FaqList } from "@/components/ui/FaqList";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
 import { SystemPanel } from "@/components/ui/SystemPanel";
 import { TraceGrid } from "@/components/ui/TraceGrid";
 import { audit } from "@/content/audit";
+import { categoryHref, getCategory } from "@/content/categories";
 import { faqsForService } from "@/content/faq";
 import {
   formatMonthly,
@@ -16,6 +19,7 @@ import {
 } from "@/content/services";
 import { servicePage } from "@/content/servicePage";
 import { site } from "@/content/site";
+import { gridShape, spanLastIfOdd } from "@/lib/grid";
 
 /**
  * One page per service, generated at build time from `content/services.ts`.
@@ -68,15 +72,21 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
   if (!service) notFound();
 
   const faqs = faqsForService(service.slug);
+  const category = getCategory(service.category);
+  const symptomGrid = gridShape(service.symptoms.length);
 
   return (
     <>
       <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
+        {/* Up one level, to the category this service belongs to — not to the
+            homepage catalogue. A reader who came in on a service page and wants
+            the alternatives wants the other three things in the same category,
+            which is exactly what /websites is. */}
         <Link
-          href="/#what-we-build"
+          href={categoryHref(service.category)}
           className="rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
         >
-          ← {servicePage.backLabel}
+          ← {category.label}
         </Link>
 
         <div className="mt-8 grid gap-12 lg:grid-cols-5 lg:gap-16">
@@ -101,6 +111,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
               this service's own steps. What actually happens, in order. */}
           <div className="lg:col-span-2">
             <SystemPanel
+              reveal
               title={service.name}
               statusLabel={servicePage.panelStatusLabel}
               rows={service.flow.map((step, index) => ({
@@ -112,7 +123,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
               footerChain={service.outcomeChain}
             />
 
-            <dl className="mt-5 grid gap-px overflow-hidden rounded-card bg-line">
+            <dl data-reveal="" className="mt-5 grid gap-px overflow-hidden rounded-card bg-line">
               <div className="bg-void p-6">
                 <dt className="text-eyebrow font-mono uppercase text-signal">
                   {servicePage.forWhomHeading}
@@ -145,9 +156,17 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           heading={servicePage.symptomsHeading}
         />
 
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2">
-          {service.symptoms.map((symptom) => (
-            <li key={symptom} className="lift bg-void p-7 text-lead text-ink-muted">
+        <ul
+          className={`mt-12 grid gap-px overflow-hidden rounded-card bg-line ${symptomGrid.columns}`}
+        >
+          {service.symptoms.map((symptom, index) => (
+            <li
+              key={symptom}
+              data-reveal=""
+              className={`lift spotlight bg-void p-7 text-lead text-ink-muted ${
+                index === service.symptoms.length - 1 ? symptomGrid.lastItem : ""
+              }`}
+            >
               {symptom}
             </li>
           ))}
@@ -160,9 +179,20 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           heading={servicePage.includesHeading}
         />
 
+        {/* Two columns, fixed — nine one-line deliverables read well in two and
+            badly in three. An odd count stretches the last line across both, so
+            it does not sit alone beside an empty cell. */}
         <ul className="mt-12 grid gap-x-10 gap-y-4 sm:grid-cols-2">
-          {service.includes.map((item) => (
-            <li key={item} className="flex gap-3 text-lead text-ink-muted">
+          {service.includes.map((item, index) => (
+            <li
+              key={item}
+              data-reveal=""
+              className={`flex gap-3 text-lead text-ink-muted ${
+                index === service.includes.length - 1
+                  ? spanLastIfOdd(service.includes.length)
+                  : ""
+              }`}
+            >
               <span aria-hidden="true" className="mt-3.5 h-px w-4 shrink-0 bg-signal" />
               {item}
             </li>
@@ -174,12 +204,24 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             it replaces. */}
         {service.examples && (
           <div className="mt-12">
-            <h3 className="text-eyebrow font-mono uppercase text-signal">
+            <h3 data-reveal="" className="text-eyebrow font-mono uppercase text-signal">
               {servicePage.examplesHeading}
             </h3>
-            <ul className="mt-5 grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2">
-              {service.examples.map((example) => (
-                <li key={example} className="lift bg-void p-6 text-lead text-ink-muted">
+            <ul
+              className={`mt-5 grid gap-px overflow-hidden rounded-card bg-line ${
+                gridShape(service.examples.length).columns
+              }`}
+            >
+              {service.examples.map((example, index) => (
+                <li
+                  key={example}
+                  data-reveal=""
+                  className={`lift spotlight bg-void p-6 text-lead text-ink-muted ${
+                    index === (service.examples?.length ?? 0) - 1
+                      ? gridShape(service.examples?.length ?? 0).lastItem
+                      : ""
+                  }`}
+                >
                   {example}
                 </li>
               ))}
@@ -188,7 +230,10 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
         )}
 
         {service.notThis && (
-          <div className="mt-12 rounded-card border border-line bg-surface/40 p-7">
+          <div
+            data-reveal=""
+            className="mt-12 rounded-card border border-line bg-surface/40 p-7"
+          >
             <h3 className="text-eyebrow font-mono uppercase text-alert">
               {servicePage.notThisEyebrow}
             </h3>
@@ -205,36 +250,11 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           heading={servicePage.changeHeading}
         />
 
-        {/* Column labels once at the top rather than repeated on every row —
-            on mobile the rows stack, so each half carries its own label there
-            and the header row is hidden. */}
-        <div className="mt-12 hidden gap-px md:grid md:grid-cols-2">
-          <p className="text-eyebrow font-mono uppercase text-ink-subtle">
-            {servicePage.beforeLabel}
-          </p>
-          <p className="text-eyebrow font-mono uppercase text-signal">
-            {servicePage.afterLabel}
-          </p>
-        </div>
-
-        <div className="mt-4 grid gap-px overflow-hidden rounded-card bg-line">
-          {service.beforeAfter.map((pair) => (
-            <div key={pair.before} className="grid gap-px bg-line md:grid-cols-2">
-              <div className="lift bg-void p-6 sm:p-7">
-                <p className="text-eyebrow font-mono uppercase text-ink-subtle md:hidden">
-                  {servicePage.beforeLabel}
-                </p>
-                <p className="mt-3 text-lead text-ink-muted md:mt-0">{pair.before}</p>
-              </div>
-              <div className="lift bg-void p-6 sm:p-7">
-                <p className="text-eyebrow font-mono uppercase text-signal md:hidden">
-                  {servicePage.afterLabel}
-                </p>
-                <p className="mt-3 text-lead text-ink md:mt-0">{pair.after}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <BeforeAfterTable
+          pairs={service.beforeAfter}
+          beforeLabel={servicePage.beforeLabel}
+          afterLabel={servicePage.afterLabel}
+        />
       </Section>
 
       <Section tone="void">
@@ -244,7 +264,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
         />
 
         <div className="mt-12 grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2">
-          <div className="bg-void p-7 sm:p-9">
+          <div data-reveal="" className="spotlight bg-void p-7 sm:p-9">
             <p className="text-eyebrow font-mono uppercase text-ink-subtle">
               {servicePage.buildLabel}
             </p>
@@ -261,7 +281,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             )}
           </div>
 
-          <div className="bg-void p-7 sm:p-9">
+          <div data-reveal="" className="spotlight bg-void p-7 sm:p-9">
             <p className="text-eyebrow font-mono uppercase text-ink-subtle">
               {servicePage.monthlyLabel}
             </p>
@@ -277,7 +297,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             might forget to render. Stating them next to the price is the
             whole point of having them. */}
         {service.pricing.passThrough && (
-          <p className="mt-6 max-w-prose-tight text-label text-ink-subtle">
+          <p data-reveal="" className="mt-6 max-w-prose-tight text-label text-ink-subtle">
             {service.pricing.passThrough}
           </p>
         )}
@@ -290,34 +310,21 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             heading={servicePage.faqHeading}
           />
 
-          <div className="mt-12 border-t border-line">
-            {faqs.map((item) => (
-              <details key={item.id} className="group border-b border-line">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-lead text-ink transition-colors duration-[var(--duration-fast)] hover:text-signal [&::-webkit-details-marker]:hidden">
-                  {item.question}
-                  <span aria-hidden="true" className="relative h-4 w-4 shrink-0 text-signal">
-                    <span className="absolute top-1/2 left-0 h-px w-4 -translate-y-1/2 bg-current" />
-                    <span className="absolute top-1/2 left-0 h-px w-4 -translate-y-1/2 rotate-90 bg-current transition-transform duration-[var(--duration-base)] ease-precise group-open:rotate-0" />
-                  </span>
-                </summary>
-                <p className="max-w-prose-tight pb-7 text-body text-ink-muted">
-                  {item.answer}
-                </p>
-              </details>
-            ))}
-          </div>
+          <FaqList items={faqs} />
         </Section>
       )}
 
       <Section tone={faqs.length > 0 ? "void" : "surface"} size="lg">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
-            <Eyebrow>{servicePage.closeEyebrow}</Eyebrow>
-            <h2 className="mt-5 text-h2 text-ink">{servicePage.closeHeading}</h2>
-            <p className="mt-6 max-w-prose-tight text-lead text-ink-muted">
+            <Eyebrow reveal>{servicePage.closeEyebrow}</Eyebrow>
+            <h2 data-reveal="" className="mt-5 text-h2 text-ink">
+              {servicePage.closeHeading}
+            </h2>
+            <p data-reveal="" className="mt-6 max-w-prose-tight text-lead text-ink-muted">
               {servicePage.closeBody}
             </p>
-            <div className="mt-9">
+            <div data-reveal="" className="mt-9">
               <ButtonLink href={site.primaryCta.href}>
                 {site.primaryCta.label}
               </ButtonLink>
@@ -325,7 +332,10 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             </div>
           </div>
 
-          <div className="rounded-card border border-line bg-surface/40 p-7 lg:self-start">
+          <div
+            data-reveal=""
+            className="lift spotlight rounded-card border border-line bg-surface/40 p-7 lg:self-start"
+          >
             <h3 className="text-eyebrow font-mono uppercase text-ink-subtle">
               {audit.isNotHeading}
             </h3>

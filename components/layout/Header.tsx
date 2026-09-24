@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { IconTile } from "@/components/ui/icons";
-import { serviceCategories, servicesByCategory } from "@/content/services";
+import { activeMenuIndex, navMenus } from "@/content/nav";
 import { site } from "@/content/site";
 
-import { NavPanel, NavTrigger } from "./NavDropdown";
+import { NavTab } from "./NavDropdown";
 
 /**
  * Elements that can receive keyboard focus, for the mobile menu's focus trap.
@@ -16,18 +16,26 @@ import { NavPanel, NavTrigger } from "./NavDropdown";
  */
 const FOCUSABLE_SELECTOR = "a[href], button:not([disabled])";
 
-/** Matches Tailwind's `md` breakpoint (--breakpoint-md: 48rem). */
-const DESKTOP_QUERY = "(min-width: 48rem)";
+/**
+ * Matches Tailwind's `lg` breakpoint (--breakpoint-lg: 64rem).
+ *
+ * `md` until Phase 7. Five tabs plus a CTA do not fit in 768px — they either
+ * wrap onto a second line or push the CTA off the end, and both look broken.
+ * The number is here and in the `lg:` prefixes on the nav, the CTA and the
+ * toggle; all four have to agree, or the menu button disappears while the nav
+ * is still hidden.
+ */
+const DESKTOP_QUERY = "(min-width: 64rem)";
 
 /** Width of the active-nav underline, in px. Constant, so the indicator only
  *  ever animates `transform` — never `width`, which would be layout. */
 const INDICATOR_WIDTH = 20;
 
 /**
- * Opening is delayed so brushing past a trigger on the way somewhere else does
- * not flash a menu open. Closing is delayed longer, so travelling diagonally
- * from the trigger down into the panel — which briefly leaves both elements —
- * does not snatch it away mid-movement.
+ * Opening is delayed so brushing past a tab on the way somewhere else does not
+ * flash a menu open. Closing is delayed longer, so crossing the 12px gap from
+ * the tab down into the panel — which briefly leaves both — does not snatch it
+ * away mid-movement.
  */
 const OPEN_DELAY_MS = 120;
 const CLOSE_DELAY_MS = 200;
@@ -73,6 +81,21 @@ export function Header() {
    * render pass on every navigation. Storing the path makes a route change
    * close them for free.
    */
+  /*
+   * Whether the dropdown panels and the mobile sheet exist in the document yet.
+   *
+   * They are mounted on the first pointer or focus anywhere in the header, and
+   * never unmounted after that. Four panels plus the sheet is roughly a hundred
+   * DOM nodes — links, descriptions, icon SVGs — that are invisible until
+   * someone opens a menu, and hydrating them on every page load cost 0.6s of
+   * simulated LCP on mobile. Priming on `pointerenter`/`focusin` rather than on
+   * a click means they are always there before anyone can operate a control:
+   * a pointer has to arrive before it can click, and a keyboard has to focus
+   * before it can press Enter.
+   */
+  const [navPrimed, setNavPrimed] = useState(false);
+  const prime = useCallback(() => setNavPrimed(true), []);
+
   const [openMenuState, setOpenMenuState] = useState<{
     label: string;
     path: string;
@@ -81,7 +104,7 @@ export function Header() {
      *
      * Without this, hover-open followed by a click toggled the panel shut:
      * the pointer opened it, then the click saw `open === true` and closed it,
-     * so clicking the trigger dismissed the menu you were trying to use. A
+     * so clicking the chevron dismissed the menu you were trying to use. A
      * click now only closes a panel that a click opened.
      */
     source: "hover" | "click";
@@ -109,11 +132,12 @@ export function Header() {
     setOpenMenuState(null);
   }, [clearTimers]);
 
-  /** Pointer entered a trigger or a panel. */
+  /** Pointer entered a tab or its panel. */
   const onDropdownPointerEnter = useCallback(
     (label: string) => {
-      // Cancels any pending close, which is what makes the diagonal trip from
-      // trigger to panel survivable.
+      prime();
+      // Cancels any pending close, which is what makes the trip from tab to
+      // panel across the gap survivable.
       clearTimers();
       openTimer.current = setTimeout(
         () =>
@@ -121,14 +145,14 @@ export function Header() {
             // Already open for this menu: keep the existing source. Otherwise
             // moving the pointer around inside a click-opened panel would
             // quietly downgrade it to hover-opened, and the next click on the
-            // trigger would behave differently than the one before it.
+            // chevron would behave differently than the one before it.
             if (current?.label === label && current.path === pathname) return current;
             return { label, path: pathname, source: "hover" };
           }),
         OPEN_DELAY_MS,
       );
     },
-    [clearTimers, pathname],
+    [clearTimers, pathname, prime],
   );
 
   const onDropdownPointerLeave = useCallback(() => {
@@ -138,6 +162,7 @@ export function Header() {
 
   const onTriggerClick = useCallback(
     (label: string) => {
+      prime();
       clearTimers();
       setOpenMenuState((current) => {
         const showing = current?.label === label && current.path === pathname;
@@ -147,7 +172,7 @@ export function Header() {
         return { label, path: pathname, source: "click" };
       });
     },
-    [clearTimers, pathname],
+    [clearTimers, pathname, prime],
   );
 
   const [openGroupState, setOpenGroupState] = useState<{
@@ -166,11 +191,12 @@ export function Header() {
   );
 
   const toggleRef = useRef<HTMLButtonElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const navListRef = useRef<HTMLUListElement | null>(null);
-  const triggerRefs = useRef<(HTMLElement | null)[]>([]);
-  const triggerButtons = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabRefs = useRef<(HTMLElement | null)[]>([]);
+  const chevronRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
@@ -209,7 +235,7 @@ export function Header() {
     return () => observer.disconnect();
   }, []);
 
-  // The mobile menu is hidden at md and up. If the viewport widens while it is
+  // The mobile menu is hidden at lg and up. If the viewport widens while it is
   // open, close it — otherwise the body scroll lock survives with no menu.
   useEffect(() => {
     const mql = window.matchMedia(DESKTOP_QUERY);
@@ -223,13 +249,11 @@ export function Header() {
   /*
    * The active indicator tracks the ROUTE, not scroll position.
    *
-   * It used to follow whichever homepage section sat under the header, via an
-   * IntersectionObserver over the anchor targets. That observer is gone. With
-   * the nav rebuilt around Services and Company, the honest signal is where
-   * you are: Services on any /services/* page, Company on /work*, and nothing
-   * on the homepage, which belongs to neither.
+   * Which tab owns which route is a content question — a category owns its own
+   * page and every service page inside it — so it is answered in
+   * content/nav.ts and read here.
    */
-  const activeIndex = site.navMenus.findIndex((menu) => pathname.startsWith(menu.match));
+  const activeIndex = activeMenuIndex(pathname);
 
   /*
    * Move the underline. Written imperatively against a ref rather than through
@@ -241,17 +265,17 @@ export function Header() {
     const indicator = indicatorRef.current;
     if (!indicator) return;
 
-    const trigger = activeIndex >= 0 ? triggerRefs.current[activeIndex] : null;
+    const tab = activeIndex >= 0 ? tabRefs.current[activeIndex] : null;
 
-    if (!trigger) {
+    if (!tab) {
       indicator.style.opacity = "0";
       return;
     }
 
     const place = () => {
-      const centre = trigger.offsetLeft + trigger.offsetWidth / 2;
+      const center = tab.offsetLeft + tab.offsetWidth / 2;
       indicator.style.opacity = "1";
-      indicator.style.transform = `translateX(${centre - INDICATOR_WIDTH / 2}px)`;
+      indicator.style.transform = `translateX(${center - INDICATOR_WIDTH / 2}px)`;
     };
 
     place();
@@ -263,18 +287,67 @@ export function Header() {
     return () => observer.disconnect();
   }, [activeIndex]);
 
+  const openMenuIndex = navMenus.findIndex((menu) => menu.label === openLabel);
+
+  /*
+   * Escape, click-outside and focus-out for the open dropdown.
+   *
+   * One effect in the Header rather than one per panel: every panel is now
+   * mounted all the time (so it can animate out), and four panels each adding
+   * three document listeners would mean twelve listeners for one open menu.
+   */
+  useEffect(() => {
+    if (openMenuIndex < 0) return;
+
+    const panel = panelRefs.current[openMenuIndex];
+    const chevron = chevronRefs.current[openMenuIndex];
+
+    const isInside = (target: Node) =>
+      Boolean(panel?.contains(target)) || Boolean(chevron?.contains(target));
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closeDropdown();
+      chevron?.focus();
+    };
+
+    // A click outside closes. The chevron is outside the panel, so its own
+    // click handler runs too — `onTriggerClick` is what stops those two
+    // fighting each other.
+    const onPointerDown = (event: PointerEvent) => {
+      if (isInside(event.target as Node)) return;
+      closeDropdown();
+    };
+
+    // Tabbing out of the panel closes it.
+    const onFocusIn = (event: FocusEvent) => {
+      if (isInside(event.target as Node)) return;
+      closeDropdown();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("focusin", onFocusIn);
+    };
+  }, [openMenuIndex, closeDropdown]);
+
   // Focus trap, Escape-to-close, and body scroll lock — mobile menu only.
   useEffect(() => {
     if (!open) return;
 
-    const panel = panelRef.current;
-    if (!panel) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
 
     const toggle = toggleRef.current;
 
     const getFocusable = (): HTMLElement[] => {
-      const inPanel = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-      return toggle ? [toggle, ...inPanel] : inPanel;
+      const inSheet = Array.from(sheet.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      return toggle ? [toggle, ...inSheet] : inSheet;
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -319,7 +392,6 @@ export function Header() {
   }, [open, closeMenu]);
 
   const panelIdBase = useId();
-  const openMenuIndex = site.navMenus.findIndex((menu) => menu.label === openLabel);
 
   const dropdownHandlers = {
     openLabel,
@@ -345,18 +417,27 @@ export function Header() {
         The header carries NO backdrop-filter, background or border of its own.
 
         `backdrop-filter` (like `transform` and `filter`) makes an element the
-        containing block for `position: fixed` descendants. The mobile menu
-        panel below is fixed with `top-20 bottom-0`; with the blur on <header>
-        those offsets resolved against the 81px header instead of the viewport,
-        so the panel rendered 390x1 and mobile visitors could not navigate at
-        all. `position: sticky` alone does not cause this — only the blur did.
+        containing block for `position: fixed` descendants. The mobile sheet
+        below is fixed with `top-20 bottom-0`; with the blur on <header> those
+        offsets resolved against the 81px header instead of the viewport, so
+        the sheet rendered 390x1 and mobile visitors could not navigate at all.
+        `position: sticky` alone does not cause this — only the blur did.
 
         So the chrome lives on an absolutely-positioned sibling layer instead.
-        The fixed panel is not a descendant of that layer, so nothing traps it,
-        while the NavPanel's `absolute` positioning still resolves against
-        <header> as before.
+        The fixed sheet is not a descendant of that layer, so nothing traps it,
+        while each dropdown panel's `absolute` positioning still resolves
+        against its own tab as before.
       */}
-      <header className="sticky top-0 z-50">
+      <header
+        /*
+          One pair of handlers for the whole bar, rather than per control. Any
+          pointer entering the header, or any focus landing in it, is enough
+          warning that a menu might be wanted.
+        */
+        onPointerEnter={prime}
+        onFocus={prime}
+        className="sticky top-0 z-50"
+      >
         <div
           aria-hidden="true"
           className={`absolute inset-0 -z-10 border-b transition-[background-color,border-color,backdrop-filter] duration-[var(--duration-base)] ease-precise ${
@@ -376,20 +457,24 @@ export function Header() {
             <span className="text-xl font-semibold tracking-tight">{site.name}</span>
           </Link>
 
-          <nav aria-label="Primary" className="hidden md:block">
-            <ul ref={navListRef} className="relative flex items-center gap-8 pb-1">
-              {site.navMenus.map((menu, index) => (
+          <nav aria-label="Primary" className="hidden lg:block">
+            <ul ref={navListRef} className="relative flex items-center gap-5 pb-1 xl:gap-8">
+              {navMenus.map((menu, index) => (
                 <li key={menu.label}>
-                  <NavTrigger
+                  <NavTab
                     menu={menu}
                     isActive={index === activeIndex}
                     panelId={`${panelIdBase}-${index}`}
+                    primed={navPrimed}
                     handlers={dropdownHandlers}
-                    triggerRef={(node) => {
-                      triggerRefs.current[index] = node;
+                    tabRef={(node) => {
+                      tabRefs.current[index] = node;
                     }}
                     buttonRef={(node) => {
-                      triggerButtons.current[index] = node;
+                      chevronRefs.current[index] = node;
+                    }}
+                    panelRef={(node) => {
+                      panelRefs.current[index] = node;
                     }}
                   />
                 </li>
@@ -399,7 +484,7 @@ export function Header() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className={`rounded-sm text-[0.9375rem] font-medium transition-colors duration-[var(--duration-fast)] ${
+                    className={`rounded-sm text-[0.9375rem] font-medium whitespace-nowrap transition-colors duration-[var(--duration-fast)] ${
                       pathname === link.href ? "text-ink" : "text-ink-muted hover:text-ink"
                     }`}
                   >
@@ -419,19 +504,23 @@ export function Header() {
 
           <Link
             href={site.primaryCta.href}
-            className="hidden rounded-field bg-signal px-4 py-2 text-label font-semibold text-void transition-colors duration-[var(--duration-fast)] hover:bg-signal-dim md:inline-block"
+            className="cta-sheen group hidden items-center gap-2 rounded-field bg-signal px-4 py-2 text-label font-semibold whitespace-nowrap text-void transition-colors duration-[var(--duration-fast)] hover:bg-signal-dim lg:inline-flex"
           >
             {site.primaryCta.label}
+            <span aria-hidden="true" className="cta-arrow">
+              →
+            </span>
           </Link>
 
           <button
             ref={toggleRef}
             type="button"
             aria-expanded={open}
-            aria-controls="mobile-menu"
+            aria-controls={navPrimed ? "mobile-menu" : undefined}
             aria-label={open ? "Close menu" : "Open menu"}
+            onPointerDown={prime}
             onClick={() => (open ? closeMenu(true) : openMenu())}
-            className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-field text-ink transition-colors duration-[var(--duration-fast)] hover:bg-surface-raised md:hidden"
+            className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-field text-ink transition-colors duration-[var(--duration-fast)] hover:bg-surface-raised lg:hidden"
           >
             <svg
               viewBox="0 0 24 24"
@@ -452,29 +541,21 @@ export function Header() {
         </div>
 
         {/*
-          The open dropdown panel, rendered here rather than inside the nav
-          list. <header> is `sticky`, so it is a positioned, full-width
-          ancestor — which is what lets the panel take a sensible width. Inside
-          the list it inherited the ~350px nav <ul> and every column collapsed.
-        */}
-        {openMenuIndex >= 0 && (
-          <NavPanel
-            menu={site.navMenus[openMenuIndex]}
-            panelId={`${panelIdBase}-${openMenuIndex}`}
-            handlers={dropdownHandlers}
-            returnFocusTo={() => triggerButtons.current[openMenuIndex] ?? null}
-          />
-        )}
+          The `lg:hidden` lives on this wrapper, not on the sheet.
 
-        {/*
-          Rendered only while open, so the menu's links are never in the tab
-          order while hidden — the most common keyboard bug in a mobile nav.
+          `menu-pop` sets `display: block` from an attribute selector, which is
+          more specific than `.lg\:hidden` and would win at desktop widths no
+          matter what order the rules are in. Hiding an ancestor sidesteps the
+          specificity fight entirely, and a plain <div> between the header and
+          a `fixed` child changes nothing about how the child is positioned.
         */}
-        {open && (
+        <div className="lg:hidden">
+          {navPrimed && (
           <div
             id="mobile-menu"
-            ref={panelRef}
-            className="fixed inset-x-0 top-20 bottom-0 z-40 overflow-y-auto border-t border-line bg-void md:hidden motion-safe:animate-[menu-in_var(--duration-base)_var(--ease-out-expo)]"
+            ref={sheetRef}
+            data-open={open ? "" : undefined}
+            className="menu-pop fixed inset-x-0 top-20 bottom-0 z-40 overflow-y-auto border-t border-line bg-void"
           >
             <nav aria-label="Mobile" className="px-gutter py-8">
               {/* The dropdowns become accordion groups. Same disclosure
@@ -482,7 +563,7 @@ export function Header() {
                   and the region unmounted while collapsed so its links stay
                   out of the tab order. */}
               <ul className="flex flex-col">
-                {site.navMenus.map((menu) => {
+                {navMenus.map((menu) => {
                   const expanded = openGroup === menu.label;
                   return (
                     <li key={menu.label} className="border-b border-line">
@@ -509,41 +590,34 @@ export function Header() {
                       </button>
 
                       {expanded && (
-                        <div className="pb-4">
-                          {menu.kind === "services"
-                            ? serviceCategories.map((category) => (
-                                <div key={category.id} className="mb-5 last:mb-0">
-                                  <h2 className="text-eyebrow font-mono uppercase text-signal">
-                                    {category.label}
-                                  </h2>
-                                  <ul className="mt-2 flex flex-col">
-                                    {servicesByCategory(category.id).map((service) => (
-                                      <li key={service.slug}>
-                                        <Link
-                                          href={`/services/${service.slug}`}
-                                          onClick={() => closeMenu(false)}
-                                          className="flex items-center gap-3 py-2.5 text-label text-ink-muted"
-                                        >
-                                          <IconTile name={service.icon} />
-                                          {service.name}
-                                        </Link>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))
-                            : menu.items.map((item) => (
-                                <Link
-                                  key={item.href}
-                                  href={item.href}
-                                  onClick={() => closeMenu(false)}
-                                  className="flex items-center gap-3 py-2.5 text-label text-ink-muted"
-                                >
-                                  <IconTile name={item.icon} />
-                                  {item.label}
-                                </Link>
-                              ))}
-                        </div>
+                        <ul className="flex flex-col pb-4">
+                          {/* The category page itself comes first. Without it
+                              the only way to reach /websites on a phone is to
+                              guess the URL — the tab that links to it on
+                              desktop is a plain accordion button here. */}
+                          <li>
+                            <Link
+                              href={menu.footer.allHref}
+                              onClick={() => closeMenu(false)}
+                              className="block py-2.5 text-label font-medium text-signal"
+                            >
+                              {menu.footer.allLabel} →
+                            </Link>
+                          </li>
+
+                          {menu.items.map((item) => (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                onClick={() => closeMenu(false)}
+                                className="flex items-center gap-3 py-2.5 text-label text-ink-muted"
+                              >
+                                <IconTile name={item.icon} />
+                                {item.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
                       )}
                     </li>
                   );
@@ -579,7 +653,8 @@ export function Header() {
               </ul>
             </nav>
           </div>
-        )}
+          )}
+        </div>
       </header>
     </>
   );

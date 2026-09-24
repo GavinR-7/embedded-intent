@@ -1,7 +1,10 @@
 import { Section, SectionHeading } from "@/components/ui/Section";
 import { home } from "@/content/home";
+import { gridShape } from "@/lib/grid";
 
 const { whatWeMeasure } = home;
+
+const shape = gridShape(whatWeMeasure.outcomes.length);
 
 /**
  * What gets reported every month.
@@ -20,9 +23,17 @@ export function WhatWeMeasure() {
         body={whatWeMeasure.body}
       />
 
-      <ul className="mt-12 grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2 lg:grid-cols-3">
-        {whatWeMeasure.outcomes.map((outcome) => (
-          <li key={outcome.name} className="lift bg-void p-7">
+      <ul
+        className={`mt-12 grid gap-px overflow-hidden rounded-card bg-line ${shape.columns}`}
+      >
+        {whatWeMeasure.outcomes.map((outcome, index) => (
+          <li
+            key={outcome.name}
+            data-reveal=""
+            className={`lift spotlight bg-void p-7 ${
+              index === whatWeMeasure.outcomes.length - 1 ? shape.lastItem : ""
+            }`}
+          >
             <h3 className="text-h3 text-ink">{outcome.name}</h3>
             <p className="mt-3 text-label text-ink-muted">{outcome.detail}</p>
           </li>

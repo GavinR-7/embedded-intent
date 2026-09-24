@@ -35,12 +35,15 @@ export default function ContactPage() {
       </div>
 
       <div className="mt-14 grid gap-12 lg:grid-cols-5 lg:gap-16">
-        <div className="lg:col-span-3">
+        <div data-reveal="" className="lg:col-span-3">
           <AuditForm />
         </div>
 
         <div className="flex flex-col gap-5 lg:col-span-2">
-          <div className="rounded-card border border-line bg-surface/40 p-7">
+          <div
+            data-reveal=""
+            className="lift spotlight rounded-card border border-line bg-surface/40 p-7"
+          >
             <h2 className="text-eyebrow font-mono uppercase text-signal">
               {audit.contactHeading}
             </h2>
@@ -91,7 +94,10 @@ export default function ContactPage() {
           {/* The anti-sell, shared with the homepage close and every service
               page via content/audit.ts. Nobody should arrive braced for a
               pitch. */}
-          <div className="rounded-card border border-line bg-surface/40 p-7">
+          <div
+            data-reveal=""
+            className="lift spotlight rounded-card border border-line bg-surface/40 p-7"
+          >
             <h2 className="text-eyebrow font-mono uppercase text-ink-subtle">
               {audit.isNotHeading}
             </h2>

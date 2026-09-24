@@ -23,6 +23,11 @@ app/                    Routes. Every file here is a URL or a route convention.
   layout.tsx            Root layout: fonts, <html>/<body>, Header, Footer, skip link.
   page.tsx              / — the homepage, composed from components/sections/.
   services/[slug]/      One page per service, prerendered from content/services.ts.
+  websites/             Category landing page. Four lines: metadata + <CategoryPage>.
+  get-found/            ditto.
+  ai-automation/        ditto. Three literal routes, not one [category] segment —
+                        a dynamic segment at the root would try to match every
+                        unknown path on the site and render a shell instead of 404.
   contact/              The audit request form.
   api/audit/route.ts    POST endpoint: zod validation, honeypot, Resend.
   work/                 Case study index.
@@ -32,13 +37,32 @@ app/                    Routes. Every file here is a URL or a route convention.
 components/
   layout/               Shell chrome used on every page (Header, Footer).
   sections/             Homepage sections. One per section, in page order.
+  category/             The shared body of all three category pages.
+  contact/              The audit form.
+  motion/               Client islands that move things. See MOTION.md.
   ui/                   Shared primitives: Section, SectionHeading, Eyebrow,
-                        ButtonLink. Small and deliberately option-poor.
-  reactbits/            Vendored React Bits components — Phase 7, hard cap of 3.
+                        ButtonLink, FaqList, BeforeAfterTable, SystemPanel.
+                        Small and deliberately option-poor.
 lib/                    Framework-agnostic helpers (hooks, utilities).
   auditRequest.ts       Zod schema + email formatting. Server-only by design.
+  grid.ts               Column shapes chosen from an item count, so no grid
+                        leaves its last card alone on a row.
+  useMediaQuery.ts      A media query as state, via useSyncExternalStore.
+  useInView.ts          Whether an element is near the viewport. Used to pause
+                        every looping animation while it is offscreen.
 content/                Typed content modules. The single source of truth.
-  site.ts               Brand, contact, nav, footer, trust line.
+  site.ts               Brand, contact, the Company menu, footer, trust line.
+  primitives.ts         Types shared by more than one content module
+                        (AtLeastThree, BeforeAfter), so neither has to import
+                        the other.
+  categories.ts         The three service categories: slug, nav label, page copy,
+                        symptoms, before/after, FAQ ids. CategorySlug is defined
+                        here and imported by services.ts, which is what makes a
+                        service's `category` a checked reference.
+  categoryPage.ts       Static labels shared by all three category pages.
+  nav.ts                The primary nav, resolved: five tabs, their panels, and
+                        the route prefixes each one owns. Generated from
+                        categories.ts + services.ts, not listed anywhere.
   services.ts           The service catalogue + price formatting helpers.
   work.ts               Case studies. Discriminated union on `status`.
   work.type-test.ts     Compile-time guard for that union. Imported by nothing.
@@ -55,7 +79,7 @@ public/                 Static assets served at the root.
 
 **No hard-coded strings in components.** Copy, service definitions, case
 studies, prices and contact details live in typed modules under `content/` and
-are imported. A component's job is layout and behaviour; it is not where the
+are imported. A component's job is layout and behavior; it is not where the
 business's phone number lives.
 
 This is not tidiness for its own sake. It means the copy can be rewritten by
@@ -162,6 +186,24 @@ and vertical rhythm. Sections alternate `void` and `surface` with a hairline
 top border at each transition, and the circuit-trace texture renders on `void`
 bands only. Never set a band background on an individual section.
 
+### Motion
+
+**`MOTION.md` is the reference.** Every effect, where it lives, its tokens, how
+to add `data-reveal` to new content, and the rule about the hero and LCP.
+
+Three things worth knowing before touching a component:
+
+- **`data-reveal=""` is the whole API.** It works because the element is inside a
+  `<Section>`, which renders `data-reveal-group`; one runtime numbers the
+  targets in each group and a single IntersectionObserver reveals them.
+- **Never put `data-reveal` on an ancestor of anything `position: fixed`.** The
+  hidden state is a `transform`, and a transform makes an element the containing
+  block for fixed descendants — the bug that rendered the mobile menu 390×1 in
+  Phase 6. The same applies to `filter` and `backdrop-filter`.
+- **Never put an `opacity-*` utility on a `data-reveal` element.** The reveal
+  rules are unlayered so they beat the utilities layer; the two would fight over
+  the same property. Dim with color instead.
+
 ## Environment variables
 
 `.env.example` lists the names with no values and **is committed**; `.gitignore`
@@ -181,16 +223,36 @@ every lead while showing a thank-you page is the worst outcome this form has.
 ## Server and client components
 
 Everything is a Server Component unless it needs state, effects or browser APIs.
-Today exactly one component opts out:
+The ones that opt out:
 
-- `components/layout/Header.tsx` — `"use client"` for the mobile menu's open
-  state, focus trap, Escape handling and the scroll-state observer.
-- `components/sections/LeadSystemPanel.tsx` — `"use client"` for the hero
-  panel's step cursor.
+- `components/layout/Header.tsx` and `NavDropdown.tsx` — menu state, the focus
+  trap, Escape handling, the scroll-state observer, and the active underline.
+- `components/ui/SystemPanel.tsx` — the panel's step cursor and event ticker.
+- `components/contact/AuditForm.tsx` — submission state and the time-trap stamp.
+- `components/motion/*` — one runtime for every scroll reveal and cursor effect
+  on the site, plus the hero glow, the cursor-lit grid, the industry strip and
+  the pinned stepper.
 
-Keep that list short. The `Footer` reads the same config and stays on the
-server, and so does every homepage section — the hero's text and CTAs ship as
-HTML with the animated chain as the only client island inside it.
+Keep that list short, and keep the copy out of it. `ScrollStepper` takes its four
+steps as **props from a Server Component** rather than importing
+`content/home.ts`: a client component that imports a content module puts every
+word of that module in the JavaScript bundle. Passed as props, the copy ships in
+the HTML and the RSC payload only.
+
+Two habits worth keeping, both cheap:
+
+- **Hidden DOM still hydrates.** The nav dropdown panels are about a hundred
+  nodes that are `display: none` until a menu opens. They now mount on the first
+  pointer or focus anywhere in the header and never unmount after that, so a
+  page load does not pay for them.
+- **`useEffect` can still run before the first paint.** The reveal system's
+  setup — a stagger index written to every target, then ~75 `observe` calls — is
+  scheduled inside one `requestAnimationFrame` so it lands after the paint LCP
+  measures.
+
+Neither of those was what cost mobile LCP in Phase 7, though it took measuring
+to find that out. The answer was a paint, not a script: two large gradient blobs
+behind the hero. `MOTION.md` has the bisect table.
 
 ## Next.js 16 specifics
 

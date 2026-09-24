@@ -1,3 +1,5 @@
+import { GridSpotlight } from "@/components/motion/GridSpotlight";
+
 /**
  * The circuit-board texture.
  *
@@ -12,8 +14,15 @@
  * The mask in the `trace-grid` utility fades it out downward, so it never ends
  * on a hard edge.
  */
-export function TraceGrid() {
+export function TraceGrid({ spotlight = false }: { spotlight?: boolean }) {
   return (
-    <div aria-hidden="true" className="trace-grid pointer-events-none absolute inset-0" />
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+      <div className="trace-grid absolute inset-0" />
+
+      {/* Opt-in, and only the homepage hero opts in. The cursor-lit grid is a
+          "this is the top of the site" flourish; on every service and category
+          hero as well it would just be how the site looks. */}
+      {spotlight && <GridSpotlight />}
+    </div>
   );
 }

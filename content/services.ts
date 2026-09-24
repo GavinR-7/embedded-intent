@@ -34,24 +34,19 @@
 
 import type { IconName } from "@/components/ui/icons";
 
+import type { CategorySlug } from "./categories";
+import type { AtLeastThree, BeforeAfter } from "./primitives";
+
 /**
- * Grouping for the Services mega menu. The menu reads this from the data
- * rather than holding its own list, so adding a service puts it in the nav
- * automatically and it can never appear in the catalogue but not the menu.
+ * Services in a category, in catalogue order.
+ *
+ * The category list itself lives in `content/categories.ts`, because a category
+ * is now a route and a landing page as well as a grouping. The nav and the
+ * homepage read the pairing through this function rather than holding their own
+ * lists, so adding a service puts it in the nav, the catalogue and its category
+ * page at once.
  */
-export type ServiceCategory = "websites" | "get-found" | "ai-automation";
-
-export const serviceCategories: readonly {
-  id: ServiceCategory;
-  label: string;
-}[] = [
-  { id: "websites", label: "Websites" },
-  { id: "get-found", label: "Get found" },
-  { id: "ai-automation", label: "AI & automation" },
-];
-
-/** Services in a category, in catalogue order. */
-export function servicesByCategory(category: ServiceCategory): readonly Service[] {
+export function servicesByCategory(category: CategorySlug): readonly Service[] {
   return services.filter((service) => service.category === category);
 }
 
@@ -78,16 +73,6 @@ export type ServiceSlug =
   | "google-ads-management"
   | "social-content-engine"
   | "custom-ai-automation";
-
-/**
- * At least three, checked at compile time.
- *
- * A plain `string[]` would let a service ship with one thin symptom, which is
- * exactly the state this type was introduced to fix. The tuple-with-rest makes
- * "fewer than three" a build error rather than something you notice on the
- * live page.
- */
-export type AtLeastThree<T> = readonly [T, T, T, ...T[]];
 
 /**
  * A price band in whole US dollars. `to: null` means "from $X" with no stated
@@ -127,19 +112,9 @@ export type ServicePricing = {
   /**
    * Third-party cost the client pays at cost, with no markup. This is a trust
    * signal and must be stated on the page wherever it applies — burying it is
-   * exactly the behaviour the positioning is defined against.
+   * exactly the behavior the positioning is defined against.
    */
   passThrough?: string;
-};
-
-/**
- * One before/after pair. Short phrases, not scenes — the scenes live in
- * `symptoms`. These read as a two-column comparison, so each side should be a
- * fragment a reader takes in at a glance.
- */
-export type BeforeAfter = {
-  before: string;
-  after: string;
 };
 
 export type Service = {
@@ -148,7 +123,7 @@ export type Service = {
   /** Whether this is the entry product or something added to it. */
   tier: "primary" | "add-on";
   /** Which mega-menu column this belongs in. */
-  category: ServiceCategory;
+  category: CategorySlug;
   /** Shown in the nav and on the flow panel. */
   icon: IconName;
   /** One line. What it is, in the owner's language. */
