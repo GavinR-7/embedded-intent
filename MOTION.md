@@ -223,6 +223,17 @@ with the count**:
 | …**twelve cells in the DOM, no animation at all** | **2.02s** |
 | final: inert cells + a transition + a timer | **2.01s**, fast on 6 of 8 |
 
+And the control that closes it, run last: the shipped commit against a twin of
+itself with the pulse cells not rendered, ten pairs, interleaved.
+
+| Arm | Median LCP | Fast runs |
+| --- | --- | --- |
+| pulses off | 2.32s | 5 of 10 |
+| pulses on | **2.26s** | 5 of 10 |
+
+Identical. Whatever is left is not the pulses — it is the flip described below,
+which hits the commit before this phase just as hard.
+
 Four 63px squares cost what twelve do, so it is not paint. It is that an element
 with a running compositable animation is promoted to its own layer, and the
 promotion lands inside the window the metric is accounting for. Deferring does
@@ -283,14 +294,42 @@ So: check `pgrep -c -f chrome-headless-shell` and `/proc/loadavg` before
 believing a Lighthouse number, and take the median of at least five runs. The
 harness now kills the process group.
 
-### Final, all four routes (Lighthouse mobile, median of 5–6)
+### Final, four routes (Lighthouse mobile)
 
-| Route | perf | a11y | best practices | LCP | CLS | TBT |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/` | 99 | 100 | 100 | 2.01s | 0 | 64ms |
-| `/ai-automation` | 99 | 100 | 100 | 1.86s | 0 | 70ms |
-| `/services/get-more-google-reviews` | 98 | 100 | 100 | 1.86s | 0 | 128ms |
-| `/contact` | 100 | 100 | 100 | 1.85s | 0 | 64ms |
+| Route | perf | a11y | BP | LCP median | best | CLS | TBT | runs |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `/` | 97 | 100 | 100 | 2.58s | 2.01s | 0 | 66ms | 15 |
+| `/websites` | 99 | 100 | 100 | 1.86s | 1.85s | 0 | 65ms | 5 |
+| `/get-found` | 99 | 100 | 100 | 1.86s | 1.85s | 0 | 65ms | 5 |
+| `/ai-automation` | 99 | 100 | 100 | 1.87s | 1.85s | 0 | 62ms | 5 |
+
+The three category routes are tight — four of five `/get-found` runs landed
+within 10ms of each other — and the illustrations on them cost nothing, which is
+what `ssr: false` buys.
+
+**`/` is honest but unsatisfying, and it is worth being precise about.** Every
+run lands in one of two modes, ~2.01s or ~2.6s, and the median just reports
+which side of the coin came up more often:
+
+| Build | Fast runs (< 2.3s) | Median |
+| --- | --- | --- |
+| a532e5a, the commit before this phase | 18 of 26 | 2.03s |
+| this commit | 6 of 15 | 2.58s |
+| this commit, pulse cells not rendered | 5 of 10 | 2.32s |
+
+The best case is identical across all three. The pulses are demonstrably not the
+difference any more — removing them entirely changes nothing. Something else in
+this phase makes `/` slightly likelier to land in the slow mode, and 26 pairs of
+interleaved runs on this machine cannot separate 18-of-26 from 6-of-15 with any
+confidence — Fisher's exact test on that table gives **p = 0.10** two-sided,
+which is suggestive and is not a result.
+
+So: `/` is somewhere between parity and about +0.3s of median LCP, and this
+machine cannot say where. That is not a satisfying answer and it should not be
+written up as one. The underlying flip is logged in `CONTENT_TODO.md` as
+something to chase before Phase 8's performance pass — a 0.64s gap is roughly
+one simulated round trip, which points at a resource that is sometimes on the
+critical path and sometimes not.
 
 ---
 

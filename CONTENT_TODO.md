@@ -263,6 +263,14 @@ site that cannot be delivered when someone taps it.
   worktree of the previous commit; see the "Interleave, or do not believe it"
   section of MOTION.md.
 
+  Phase 7b left this unresolved on purpose rather than guessing. The phase's
+  own effects were each ruled out by interleaved measurement — including the
+  ambient grid pulses, which were rewritten because of it and then shown to
+  cost nothing at all. What is left is a flip the page had before the phase.
+  The lead worth following: 0.64s is about one simulated round trip on Slow 4G,
+  so look for a request that is sometimes on the LCP path and sometimes not.
+  The mono font is `preload: false` and is the obvious first suspect.
+
 - [ ] **Category page copy is first-draft.** The symptoms and before/after pairs
   in `content/categories.ts` follow the writing rules and are pitched one level
   above the service pages, but they have not been read back against the service
