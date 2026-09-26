@@ -34,7 +34,7 @@ import type { ResolvedMenu } from "@/content/nav";
  *
  * `translate` (what `-translate-x-1/2` sets in Tailwind v4) and `transform`
  * (what the open/close transition sets) are separate CSS properties, so the
- * centring and the 6px entrance compose instead of overwriting each other.
+ * centering and the 6px entrance compose instead of overwriting each other.
  */
 const PANEL_WIDTH = "w-[min(24rem,calc(100vw-2rem))]";
 

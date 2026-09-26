@@ -21,6 +21,12 @@
  *
  * Below `sm` everything is a single column, which cannot orphan anything —
  * so the shapes only ever need to fix `sm` and up.
+ *
+ * Two defects, not one. A lone item on the last row is the obvious half; the
+ * other is an EMPTY cell on the last row, which since Phase 7b is visible as
+ * a gap in a bordered grid rather than hidden by a filled container. Every
+ * shape below therefore has to tile its rows exactly, at every breakpoint it
+ * declares.
  */
 
 export type GridShape = {
@@ -37,8 +43,11 @@ export type GridShape = {
  *   3  3-up, and one column until then.   3        exact
  *      (2-up would leave 2 + 1.)
  *   4  2x2, 4-up on a wide screen.        2, 4     exact
- *   5  2-up then 3-up; last spans the     2 + last, 3 + last
- *      gap in both.
+ *   5  2-up only; last spans the gap.    2 + last
+ *      3-up cannot work: 3 + 2 leaves an
+ *      empty cell, and a last item wide
+ *      enough to fill it pushes the
+ *      fourth onto a row of its own.
  *   6  2-up then 3-up.                    2, 3     exact
  *   7  as 5, but the last item goes
  *      full width at lg (3 + 3 + 1).
@@ -51,10 +60,7 @@ const SHAPES: Record<number, GridShape> = {
   2: { columns: "sm:grid-cols-2", lastItem: "" },
   3: { columns: "lg:grid-cols-3", lastItem: "" },
   4: { columns: "sm:grid-cols-2 xl:grid-cols-4", lastItem: "" },
-  5: {
-    columns: "sm:grid-cols-2 lg:grid-cols-3",
-    lastItem: "sm:col-span-2 lg:col-span-1",
-  },
+  5: { columns: "sm:grid-cols-2", lastItem: "sm:col-span-2" },
   6: { columns: "sm:grid-cols-2 lg:grid-cols-3", lastItem: "" },
   7: {
     columns: "sm:grid-cols-2 lg:grid-cols-3",
@@ -68,20 +74,21 @@ const SHAPES: Record<number, GridShape> = {
 };
 
 /**
- * A 2-up/3-up fallback for lists longer than the table covers.
+ * Anything longer than the table covers falls back to two columns.
  *
- * It can orphan the last item at one breakpoint or another, which is why the
- * table above exists at all — but at ten-plus items a single short last row
- * reads as a long list rather than as a mistake, and guessing at a shape for
- * every possible length would be worse than saying so here.
+ * Two columns plus "stretch the last one if the count is odd" is exact for
+ * every length, which is the property that matters: the rule is no empty cell
+ * and no lone last item, at any width, for any count. A 3-up fallback would
+ * read better for a list of eleven and would break that rule at eleven, so it
+ * is not the fallback.
+ *
+ * The table above exists to do better than two columns where the arithmetic
+ * allows it, not to be the only safe path.
  */
-const FALLBACK: GridShape = {
-  columns: "sm:grid-cols-2 lg:grid-cols-3",
-  lastItem: "",
-};
-
 export function gridShape(count: number): GridShape {
-  return SHAPES[count] ?? FALLBACK;
+  return (
+    SHAPES[count] ?? { columns: "sm:grid-cols-2", lastItem: spanLastIfOdd(count) }
+  );
 }
 
 /**

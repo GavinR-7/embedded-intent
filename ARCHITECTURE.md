@@ -37,7 +37,10 @@ app/                    Routes. Every file here is a URL or a route convention.
 components/
   layout/               Shell chrome used on every page (Header, Footer).
   sections/             Homepage sections. One per section, in page order.
-  category/             The shared body of all three category pages.
+  category/             The shared body of all three category pages, plus the
+                        per-category hero illustration. `visuals/` holds the
+                        three drawings, loaded with `ssr: false` so they are
+                        never on a category page's critical path.
   contact/              The audit form.
   motion/               Client islands that move things. See MOTION.md.
   ui/                   Shared primitives: Section, SectionHeading, Eyebrow,
@@ -46,7 +49,12 @@ components/
 lib/                    Framework-agnostic helpers (hooks, utilities).
   auditRequest.ts       Zod schema + email formatting. Server-only by design.
   grid.ts               Column shapes chosen from an item count, so no grid
-                        leaves its last card alone on a row.
+                        leaves its last card alone on a row — or an empty cell
+                        beside it, which is now visible since grids draw their
+                        rules with per-cell shadows.
+  heroTimeline.ts       The homepage intro schedule. Two beats are CSS and two
+                        are JavaScript, so every start time is derived in one
+                        place rather than written down in four.
   useMediaQuery.ts      A media query as state, via useSyncExternalStore.
   useInView.ts          Whether an element is near the viewport. Used to pause
                         every looping animation while it is offscreen.
@@ -67,7 +75,12 @@ content/                Typed content modules. The single source of truth.
   work.ts               Case studies. Discriminated union on `status`.
   work.type-test.ts     Compile-time guard for that union. Imported by nothing.
   faq.ts                Objections, tagged by service for per-page subsets.
-  home.ts               Homepage section copy.
+  home.ts               Homepage section copy. The headline is written as
+                        lines, because each one rises out of its own mask.
+  heroVisuals.ts        Copy for the three category illustrations. Read the
+                        header before adding to it: nothing in these drawings
+                        may be, or look like, a real business, a real search or
+                        a real conversation.
   servicePage.ts        Static labels shared by all nine service pages.
   workPage.ts           Static labels for /work and /work/[slug].
   audit.ts              The audit offer. Shared by the homepage close, the
@@ -153,7 +166,7 @@ variable and a utility class, with the namespace deciding which family:
 Notable decisions:
 
 - **`--color-*: initial` wipes Tailwind's stock palette.** `bg-zinc-800` and
-  friends do not exist. The tokens are the only colours, so a sixth grey cannot
+  friends do not exist. The tokens are the only colors, so a sixth grey cannot
   quietly appear. Delete that one line to restore the defaults.
 - **Fonts use `@theme inline`** so the generated utility points straight at the
   variable `next/font` defines on `<html>`, rather than one hop away through
@@ -203,6 +216,10 @@ Three things worth knowing before touching a component:
 - **Never put an `opacity-*` utility on a `data-reveal` element.** The reveal
   rules are unlayered so they beat the utilities layer; the two would fight over
   the same property. Dim with color instead.
+- **Never rule a grid with `gap-px` on a `bg-line` container.** It looks right
+  only while every cell is fully opaque; mid-reveal the container's fill shows
+  straight through and the grid is a grey slab. Transparent container with a
+  1px border, and `hairline` on each cell.
 
 ## Environment variables
 
@@ -230,8 +247,11 @@ The ones that opt out:
 - `components/ui/SystemPanel.tsx` — the panel's step cursor and event ticker.
 - `components/contact/AuditForm.tsx` — submission state and the time-trap stamp.
 - `components/motion/*` — one runtime for every scroll reveal and cursor effect
-  on the site, plus the hero glow, the cursor-lit grid, the industry strip and
-  the pinned stepper.
+  on the site, plus the hero grid, the scroll stepper and the two letters of
+  "AI" that resolve out of noise. `TypeOn` lives here and is *not* a client
+  component: the eyebrow types itself on in pure CSS.
+- `components/category/visuals/*` — the three category illustrations, each
+  loaded with `ssr: false`.
 
 Keep that list short, and keep the copy out of it. `ScrollStepper` takes its four
 steps as **props from a Server Component** rather than importing

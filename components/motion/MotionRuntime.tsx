@@ -247,6 +247,22 @@ export function MotionRuntime() {
    *
    * Not gated on reduced motion: under `reduce` there is nothing animating to
    * pause, and the attribute is harmless.
+   *
+   * -------------------------------------------------------------------------
+   * THE TRAP: this scans ONCE per navigation.
+   *
+   * Anything in the DOM by then is watched for the life of the page. Anything
+   * that mounts later — a `next/dynamic` chunk with `ssr: false`, a panel
+   * opened on click — is not, and its `data-pause-offscreen` marker sits there
+   * doing nothing, which looks exactly like it is working.
+   *
+   * That happened. The /websites lens carried the marker and kept drifting
+   * after the hero had scrolled away; it was caught by measuring, not by
+   * reading. Late-mounting islands gate themselves with `useInView` and set
+   * `data-paused` directly. A MutationObserver over the document would close
+   * the hole generically, and would cost more on every page of the site than
+   * the two components that actually need it.
+   * -------------------------------------------------------------------------
    */
   useEffect(() => {
     const targets = document.querySelectorAll<HTMLElement>(PAUSE_SELECTOR);

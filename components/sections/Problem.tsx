@@ -26,13 +26,13 @@ export function Problem() {
         five specific stories into a feature list.
       */}
       <ul
-        className={`mt-14 grid gap-px overflow-hidden rounded-card bg-line ${shape.columns}`}
+        className={`mt-14 grid gap-px overflow-hidden rounded-card border border-line ${shape.columns}`}
       >
         {problem.symptoms.map((symptom, index) => (
           <li
             key={symptom}
             data-reveal=""
-            className={`spotlight bg-void p-7 text-lead text-ink-muted ${
+            className={`hairline spotlight bg-void p-7 text-lead text-ink-muted ${
               index === problem.symptoms.length - 1 ? shape.lastItem : ""
             }`}
           >

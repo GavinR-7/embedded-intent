@@ -25,6 +25,27 @@ export type SystemRow = {
   status?: string;
 };
 
+/**
+ * One line of the hero headline.
+ *
+ * The headline is written as lines, not as a sentence, because each line is
+ * masked and rises out of that mask independently — and a mask has to be a real
+ * element. Where the browser happens to wrap a string is not something markup
+ * can put a box around, so the breaks are a content decision, made once, here.
+ * Joined with spaces, these lines are the headline.
+ *
+ * `accent` and `decrypt` are substrings of `text`, and a line carries at most
+ * one of them: the renderer splits each line once. `decrypt` is the two glyphs
+ * that resolve out of noise — see components/motion/DecryptWord.tsx.
+ */
+export type HeadingLine = {
+  text: string;
+  /** Rendered in the accent color. */
+  accent?: string;
+  /** Rendered by the decrypt component. Keep it to two or three glyphs. */
+  decrypt?: string;
+};
+
 export type Step = {
   id: string;
   name: string;
@@ -43,20 +64,17 @@ export type ComparisonRow = {
 export const home = {
   hero: {
     eyebrow: "AI automation & websites for service businesses",
-    heading: "AI that picks up when you can't.",
     /**
-     * The tail of `heading` that carries the accent color.
+     * "AI that picks up when you can't." — two lines.
      *
-     * The headline stays one string, so there is still one place it is written
-     * and a screen reader still reads one heading; the Hero finds this inside
-     * it and wraps it. If the two ever stop matching, the Hero renders the
-     * plain headline rather than a broken one.
-     *
-     * Color, not animation. A gradient sweeping across the words would have to
-     * animate `background-position`, and the Phase 7 rule is transform and
-     * opacity only — see MOTION.md.
+     * The accent is color, not a gradient sweep: a gradient moving across the
+     * words has to animate `background-position`, and the rule is transform and
+     * opacity only. See MOTION.md.
      */
-    headingAccent: "when you can't.",
+    headingLines: [
+      { text: "AI that picks up", decrypt: "AI" },
+      { text: "when you can't.", accent: "when you can't." },
+    ] satisfies HeadingLine[],
     subheading:
       "Most of your leads arrive when nobody's there to catch them. We build the website that brings them in — and the AI that answers, qualifies and books them in under a minute. Every time, including Sunday.",
     /** Secondary CTA. The primary one is site.primaryCta. */
@@ -156,13 +174,20 @@ export const home = {
     eyebrow: "The real problem",
     heading: "You're not losing jobs because you're bad at the work.",
     body: "You already do good work and you already have customers. What's missing is everything between “someone was interested” and “we got paid and they told three people.” That's a systems problem, and it's fixable.",
-    /** Scenes, not bullets. Each one is something that actually happens. */
+    /**
+     * Scenes, not bullets. Each one is something that actually happens.
+     *
+     * Six of them, and the count is load-bearing: `lib/grid.ts` picks the
+     * column shape from it, and six divides by both 2 and 3 — so there is no
+     * empty cell on the last row at any width. Five left one.
+     */
     symptoms: [
       "A form comes in Friday at 7pm. You see it Monday. They booked someone else on Saturday.",
       "You've done four hundred jobs and have thirty-one Google reviews.",
       "Every quote goes out and then waits on whoever remembers to chase it.",
       "Your phone rings while you're on a roof. That's the whole lead process.",
       "You know AI could help. Nobody has shown you where it plugs in.",
+      "You pay for ads, and nobody can tell you which one brought in a job.",
     ],
   },
 

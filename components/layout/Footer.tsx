@@ -42,6 +42,11 @@ export function Footer() {
             </p>
           </div>
 
+          {/* Five columns. Two of the three widths do not divide five, so the
+              last one stretches across the remainder rather than sitting alone
+              beside an empty cell — the same rule lib/grid.ts applies to card
+              grids, written out here because this grid's item count is fixed by
+              its markup rather than by a list length. */}
           <div className="grid grid-cols-2 gap-x-10 gap-y-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-12">
             {categories.map((category) => (
               <nav key={category.slug} data-reveal="" aria-label={category.label}>
@@ -88,7 +93,7 @@ export function Footer() {
               </nav>
             ))}
 
-            <div data-reveal="">
+            <div data-reveal="" className="col-span-2 lg:col-span-1">
               <h2 className="text-eyebrow font-mono uppercase text-ink-subtle">
                 Start here
               </h2>

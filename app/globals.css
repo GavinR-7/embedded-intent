@@ -38,7 +38,7 @@
      purpose: the palette below is the only palette, so nobody can quietly
      introduce a sixth grey at 11pm. To restore the defaults, delete that line.
 
-     Colours are authored in OKLCH: perceptually uniform, so equal steps in the
+     Colors are authored in OKLCH: perceptually uniform, so equal steps in the
      L channel look like equal steps of brightness. Every value below was
      checked to sit inside the sRGB gamut — an out-of-gamut OKLCH color gets
      silently clipped by the browser, and then the color you reasoned about is
@@ -215,6 +215,40 @@
   /* Menus and popovers: enter and exit. Short, because it is in the way of
      what you asked for. */
   --duration-menu: 180ms;
+
+  /* -------------------------------------------------------------------------
+     The hero intro (Phase 7b).
+
+     One boot sequence, four beats: the eyebrow types on, the headline rises
+     out of its masks, "AI" resolves out of noise, and then the lead panel
+     starts stepping. The absolute start times are computed in
+     lib/heroTimeline.ts — these are the durations that go into that
+     arithmetic, and the two places have to agree, so they are cross-referenced
+     in both directions.
+     ------------------------------------------------------------------------- */
+
+  /* Per character of the eyebrow. */
+  --dur-type-char: 25ms;
+  /* Half of one blink on the caret. */
+  --dur-caret-blink: 800ms;
+  /* One headline line, from under its mask to in place. */
+  --dur-line-rise: 700ms;
+  --line-stagger: 120ms;
+  /*
+     Descender room inside each line mask.
+
+     The h1 line-height is 1.05, which is tighter than the font's own
+     ascent-plus-descent, so a line box clips the tail of a "p". The mask is
+     padded by this much and pulled back by the same amount with a negative
+     margin, so the vertical rhythm is unchanged — and the rise starts this much
+     further down as well, or the top of a glyph would show in the padding
+     before its turn.
+  */
+  --line-mask-pad: 0.12em;
+  /* One glitch on the two resolved glyphs. */
+  --dur-glitch: 150ms;
+  /* Half of one ambient grid pulse: up, hold, and back down. */
+  --dur-cell-fade: 1300ms;
 }
 
 @layer base {
@@ -345,6 +379,38 @@
 }
 
 /* Skip link — offscreen until focused, then pinned to the top-left. */
+/*
+ * A grid cell that draws its own 1px dividers.
+ *
+ * ---------------------------------------------------------------------------
+ * This replaces the "gap-px on a bg-line container" technique, which had a
+ * real defect: the container was filled with the line color and the opaque
+ * cells covered all of it except the 1px gaps. That reads as a bordered table
+ * only while every cell is fully opaque. The moment a cell is mid-reveal, the
+ * container's grey fill shows straight through it — twelve grids across the
+ * site turned into solid grey slabs on the way in, and on a phone those slabs
+ * filled most of the screen while scrolling.
+ *
+ * Here the container is transparent with a 1px outer border, and each cell
+ * carries a 1px spread shadow. `gap: 1px` means two neighbouring shadows land
+ * in exactly the same 1px strip, so they read as one hairline rather than two —
+ * and, being part of the cell's own paint, the divider fades in *with* the cell
+ * instead of sitting there waiting for it. Behind an invisible cell there is
+ * now nothing but the section background.
+ *
+ * `overflow: hidden` on the container is load-bearing: it clips the shadows on
+ * the outer edges, so the frame is the container's own border and never a
+ * doubled 2px line.
+ *
+ * A shadow rather than a border, because a border would take 1px out of every
+ * cell's content box and shift the padding of 200-odd cells by a pixel each.
+ * A shadow paints outside the box and costs no layout.
+ * ---------------------------------------------------------------------------
+ */
+@utility hairline {
+  box-shadow: 0 0 0 1px var(--color-line);
+}
+
 @utility skip-link {
   position: absolute;
   left: var(--spacing-gutter);
@@ -503,6 +569,113 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
   }
   to {
     transform: translateX(130%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Keyframes, part three (Phase 7b) — the hero intro.
+   --------------------------------------------------------------------------- */
+
+/*
+ * The eyebrow typing on.
+ *
+ * `clip-path`, not an animated `width`. The classic CSS typewriter grows an
+ * inline-block's width in steps, which is a layout pass per character; this is
+ * a paint-only wipe over one short line, and the text keeps its real layout
+ * width the whole time — which is what lets the caret below ride along.
+ *
+ * The step count is the character count, so each step uncovers exactly one
+ * glyph. That only works because the line is monospace with uniform
+ * letter-spacing: every advance is identical, so N equal fractions of the
+ * element's width are N characters.
+ */
+@keyframes type-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/*
+ * The caret riding along with the wipe.
+ *
+ * The caret layer is stretched to the text's full width, so `translateX(100%)`
+ * is exactly the width of the line — and the same stepped timing function puts
+ * the block on the wipe boundary on every step, with no shared length unit
+ * between them to keep in sync. Transform only.
+ */
+@keyframes type-caret-step {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Two steps, so it is a square wave and not a pulse. A finite iteration count
+   plus `forwards` is what stops it: the caret ends hidden rather than blinking
+   at the reader for the rest of the session. */
+@keyframes type-caret-blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* A headline line rising out of its mask. `100%` is the line's own height, so
+   it starts exactly one line below where it lands, plus the mask padding. */
+@keyframes line-rise {
+  from {
+    transform: translateY(calc(100% + var(--line-mask-pad)));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* The glitch: the word itself jitters, and two horizontal slices of it are
+   pulled apart in opposite directions. Transform only, on all three. */
+@keyframes glitch-jitter {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-0.03em);
+  }
+  60% {
+    transform: translateX(0.02em);
+  }
+}
+
+@keyframes glitch-slice-a {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(-0.09em);
+  }
+  70% {
+    transform: translateX(0.05em);
+  }
+}
+
+@keyframes glitch-slice-b {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(0.08em);
+  }
+  70% {
+    transform: translateX(-0.06em);
   }
 }
 
@@ -812,8 +985,8 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
 /*
  * The industry strip.
  *
- * All of it — the loop, the soft edges, pause-on-hover and the reduced-motion
- * alternative — so the component can be a Server Component with no JavaScript
+ * All of it — the loop, the soft edges and the reduced-motion alternative — so
+ * the component can be a Server Component with no JavaScript
  * of its own. It was a client component first, purely to branch on
  * `prefers-reduced-motion` in JS; doing the branch in CSS removed a client
  * island, and with it twenty-four list items from the hydration pass and every
@@ -840,14 +1013,6 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
     animation: marquee-track 40s linear infinite;
   }
 
-  /* You are trying to read it. Hover-capable pointers only — on a touch screen
-     `:hover` sticks after a tap and would leave the strip stopped. */
-  @media (hover: hover) and (pointer: fine) {
-    &:hover [data-marquee-track] {
-      animation-play-state: paused;
-    }
-  }
-
   /*
    * The static alternative, in full.
    *
@@ -872,34 +1037,384 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+   Project utilities, part four (Phase 7b) — the hero intro.
+   --------------------------------------------------------------------------- */
+
 /*
- * The pinned "How it works" stepper, at lg and up only.
+ * A line that types itself on, with a caret.
  *
- * `--steps` is set at the call site from the number of steps, so the outer
- * block is 70vh of scroll per step and adding a fifth step does not silently
- * make each one activate for a shorter distance.
+ * Three elements: a wrapper sized to the finished text, the text itself under a
+ * stepped `clip-path` wipe, and a caret layer stretched over the wrapper. The
+ * caret is the reason the wrapper exists — `translateX(100%)` on a layer that
+ * spans the text is exactly the text's width, so the caret and the wipe stay
+ * locked together without either of them knowing how wide a character is.
  *
- * Both halves are gated on `data-pinned`, which the client component sets in an
- * effect. With no JavaScript, or under reduced motion, the attribute is never
- * added and the section is a normal stacked block — rather than a tall pinned
- * panel that scrolls for three screens without anything changing, which is what
- * a CSS-only `lg:sticky` would give.
+ * THE FULL TEXT IS IN THE DOM FROM FIRST PAINT. The wipe is a clip, not a
+ * substring: a crawler, a screen reader and a reader with JavaScript off all get
+ * the whole line. There is no JavaScript here at all.
+ *
+ * `--type-steps` is the whole timing function (`steps(46, end)`) rather than
+ * just the count, set inline by the call site. A custom property holding a
+ * complete value always substitutes; `steps(var(--n), end)` is the version that
+ * looks tidier and quietly falls back to `ease` if the substitution is ever
+ * invalid, which would turn the typing into a smooth wipe with nothing in the
+ * console to say so.
  */
-@utility pin-track {
-  @media (width >= 64rem) {
-    &[data-pinned] {
-      height: calc(var(--steps, 4) * 70vh);
+@utility type-line {
+  position: relative;
+  display: inline-block;
+}
+
+@utility type-text {
+  animation: type-in var(--type-dur) var(--type-steps) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility type-caret {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* A block cursor at the layer's left edge, which the transform then walks
+     across the line. A gradient rather than a child element, so the caret is
+     one box and not two. */
+  background: linear-gradient(
+    to right,
+    currentColor 0 0.62em,
+    transparent 0.62em
+  );
+  animation:
+    type-caret-step var(--type-dur) var(--type-steps) both,
+    type-caret-blink var(--dur-caret-blink) steps(2, jump-none)
+      var(--caret-blinks) forwards;
+
+  /* No typing, so no caret. */
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+/*
+ * A headline line, masked, rising into place.
+ *
+ * `overflow: hidden` on the mask and a transform on the inner span. The mask is
+ * a real element per line, which is why content/home.ts writes the headline as
+ * lines rather than as a sentence: where the browser happens to wrap a string is
+ * not something markup can get around.
+ *
+ * A line long enough to wrap inside its own mask still works — the mask grows to
+ * two line boxes and both rise together. It is not as pretty as a break in the
+ * right place, but nothing is ever clipped.
+ */
+@utility line-mask {
+  display: block;
+  overflow: hidden;
+  padding-block: var(--line-mask-pad);
+  margin-block: calc(-1 * var(--line-mask-pad));
+}
+
+@utility line-rise {
+  display: block;
+  animation: line-rise var(--dur-line-rise) var(--ease-out-expo)
+    var(--line-delay, 0ms) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/*
+ * "AI", resolving out of noise and glitching occasionally afterwards.
+ *
+ * The scramble is JavaScript (there is no CSS that picks a random glyph), but
+ * everything here is not: the jitter and the two slices are transforms on the
+ * element and on two pseudo-elements that take their text from `data-word`.
+ *
+ * `clip-path` on the two slices is static — it is not animated, only the
+ * transforms are. Together with `mix-blend-mode` on a two-glyph box for 150ms,
+ * that is the scoped exception to "transform and opacity only" this effect was
+ * granted, and it is worth stating how small it is: two pseudo-elements, two
+ * characters wide, for a sixth of a second, once every eight to ten seconds,
+ * and only while the hero is on screen.
+ *
+ * `isolation: isolate` keeps the blend inside this span instead of letting it
+ * reach the hero behind it.
+ */
+@utility glitch {
+  position: relative;
+  isolation: isolate;
+
+  &[data-glitch] {
+    animation: glitch-jitter var(--dur-glitch) var(--ease-precise) 1;
+  }
+
+  &[data-glitch]::before,
+  &[data-glitch]::after {
+    content: attr(data-word);
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+
+  &[data-glitch]::before {
+    color: var(--color-signal);
+    clip-path: inset(0 0 52% 0);
+    animation: glitch-slice-a var(--dur-glitch) var(--ease-precise) 1;
+  }
+
+  &[data-glitch]::after {
+    color: var(--color-alert);
+    clip-path: inset(48% 0 0 0);
+    animation: glitch-slice-b var(--dur-glitch) var(--ease-precise) 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-glitch],
+    &[data-glitch]::before,
+    &[data-glitch]::after {
+      animation: none;
+      content: none;
     }
   }
 }
 
-@utility pin-viewport {
-  @media (width >= 64rem) {
-    [data-pinned] > & {
-      position: sticky;
-      /* The sticky header is 5rem tall. */
-      top: 5rem;
-      max-height: calc(100svh - 5rem);
-    }
+/*
+ * Ambient light on the hero grid: single cells that brighten and fade.
+ *
+ * ---------------------------------------------------------------------------
+ * The cells are snapped to the ruling, and the arithmetic is the whole trick.
+ *
+ * `trace-grid` draws a 4rem tile with `background-position: center`, which
+ * centers one tile and repeats outward — so the lines land at
+ * `50% - 2rem + n * 4rem`, for integer n, in both axes. A cell placed at that
+ * offset plus a pixel, one pixel narrower than the tile, therefore sits exactly
+ * inside one square of the ruling at any container size. No measuring, no
+ * JavaScript, and it stays correct when the hero is resized.
+ * ---------------------------------------------------------------------------
+ *
+ * `--cx` / `--cy` are the integer cell coordinates from the center, set at the
+ * call site — see components/motion/GridSpotlight.tsx. Nothing else about a
+ * cell is declared here: which one lights and when is the controller's job.
+ *
+ * On a fine pointer the cursor spotlight leads and these stand down: the
+ * controller sets `data-pointer-active` while the pointer is moving in the hero
+ * and drops it two seconds after it stops or the moment it leaves. The handoff
+ * is a fade on the container rather than a pause on the cells, because pausing
+ * mid-pulse leaves a cell frozen half-lit.
+ */
+@utility grid-pulses {
+  overflow: hidden;
+  /* The same fade-out as `trace-grid`, so the pulses stop where the ruling
+     they are sitting in does. */
+  mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, #000 20%, transparent 75%);
+  opacity: 1;
+  transition: opacity var(--duration-slow) var(--ease-precise);
+
+  &[data-pointer-active] {
+    opacity: 0;
   }
+
+  /* Not dimmed — gone. A loop with no user-facing purpose is exactly what
+     `reduce` is asking us not to run. */
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * A cell has NO animation. It has a transition, and a controller.
+ *
+ * This is the one place on the site where "pure CSS loop" lost to a
+ * measurement. Twelve cells with `animation: … infinite` cost **0.6s of
+ * simulated mobile LCP** — intermittently, on five runs out of eight — and the
+ * cost did not scale with the count: four cells cost the same as twelve. It is
+ * not the paint. These are 63px squares; the area is nothing. It is that an
+ * element with a running compositable animation is promoted to its own layer,
+ * and the promotion lands inside the window the metric is accounting for.
+ *
+ * Every way of deferring it failed, and each one was measured: mounting the
+ * cells at `requestIdleCallback` (three of five runs still slow), waiting for
+ * `load` and then idle (four of five still slow), removing the mask on the
+ * wrapper, animating `background-color` instead of `opacity`. The same thing
+ * defeated the Phase 7 ambient glow's delayed fade-in: Lighthouse's mobile
+ * figure is simulated from the trace's critical path, and pushing work later in
+ * wall-clock time does not take it off that path.
+ *
+ * What does work is not having an animation at all. Twelve cells sitting in the
+ * DOM with no animation measured exactly at baseline. So they sit there inert,
+ * and `data-lit` — set on one cell at a time by the controller in
+ * components/motion/GridSpotlight.tsx — fades it up and down with a transition.
+ * At first paint nothing is animating and nothing is promoted.
+ *
+ * The visible result is the same: single cells brightening and fading, 2.6s
+ * each, one starting roughly every 900ms, in an order nobody can predict. The
+ * cost is one `setInterval` that stops when the hero is offscreen.
+ * ---------------------------------------------------------------------------
+ */
+@utility grid-cell {
+  position: absolute;
+  left: calc(50% - 2rem + var(--cx) * 4rem + 1px);
+  top: calc(50% - 2rem + var(--cy) * 4rem + 1px);
+  width: calc(4rem - 1px);
+  height: calc(4rem - 1px);
+  background-color: color-mix(in oklch, var(--color-signal) 8%, transparent);
+  opacity: 0;
+  transition: opacity var(--dur-cell-fade) var(--ease-precise);
+
+  &[data-lit] {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The category hero illustrations (Phase 7b).
+   ---------------------------------------------------------------------------
+   Three drawings, one per category page, each demonstrating what that category
+   does. They are decoration with a job, and they all obey the same three rules
+   as everything else here: transform and opacity where possible, paused when
+   offscreen, and nothing at all under `prefers-reduced-motion: reduce` beyond
+   the finished frame.
+   --------------------------------------------------------------------------- */
+
+/*
+ * The lens position, as two animatable custom properties.
+ *
+ * A plain `--lens-x` cannot be animated: custom properties are token streams,
+ * so the browser has nothing to interpolate between. `@property` gives them a
+ * type, and a typed custom property animates like any other value — which is
+ * what lets the idle drift be a CSS keyframe rather than a rAF loop writing
+ * two numbers sixty times a second.
+ *
+ * `<length-percentage>`, not `<percentage>`: the keyframes below use
+ * percentages and the pointer handler writes pixels, and a value outside the
+ * declared syntax silently falls back to the initial value.
+ */
+@property --lens-x {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --lens-y {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 42%;
+}
+
+/*
+ * The idle drift: a Lissajous figure, which is just two sine-ish loops on
+ * periods that do not divide into each other. 17s against 11s means the lens
+ * does not retrace its own path for over three minutes, so it reads as
+ * wandering rather than as a loop.
+ */
+@keyframes lens-drift-x {
+  0%,
+  100% {
+    --lens-x: 24%;
+  }
+  50% {
+    --lens-x: 76%;
+  }
+}
+
+@keyframes lens-drift-y {
+  0%,
+  100% {
+    --lens-y: 26%;
+  }
+  50% {
+    --lens-y: 74%;
+  }
+}
+
+@utility xray {
+  position: relative;
+  overflow: hidden;
+  animation:
+    lens-drift-x 17s ease-in-out infinite,
+    lens-drift-y 11s ease-in-out infinite;
+
+  /* While a fine pointer is over it the lens is the cursor, and a drift
+     underneath would fight it. The handler writes the two properties inline,
+     and an inline value only wins once the animation is out of the way. */
+  &[data-tracking] {
+    animation: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/*
+ * The polished layer, with a hole in it.
+ *
+ * `mask-image` and not `clip-path`, because the hole has to be in the middle of
+ * the layer rather than at its edge. The 4% of soft edge is what stops the lens
+ * looking like a sticker: a hard cut reads as two images, a short ramp reads as
+ * one surface being seen through.
+ */
+@utility xray-polish {
+  mask-image: radial-gradient(
+    circle var(--lens-r) at var(--lens-x) var(--lens-y),
+    transparent 0,
+    transparent 92%,
+    #000 100%
+  );
+}
+
+/* The lens itself: a ring, so there is something to follow when the layers
+   underneath happen to look similar. */
+@utility xray-ring {
+  position: absolute;
+  left: var(--lens-x);
+  top: var(--lens-y);
+  width: calc(var(--lens-r) * 2);
+  height: calc(var(--lens-r) * 2);
+  translate: -50% -50%;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklch, var(--color-signal) 45%, transparent);
+  pointer-events: none;
+}
+
+/* A message arriving in the phone thread. Runs once per mount, and the thread
+   remounts its messages when it loops, which is what replays it. */
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility message-in {
+  animation: message-in var(--duration-slow) var(--ease-out-expo) both;
+}
+
+/* Typing dots. Three of them, a third of a cycle apart. */
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@utility typing-dot {
+  animation: typing-dot 1.1s var(--ease-precise) infinite;
+  animation-delay: calc(var(--dot-i) * 0.18s);
 }

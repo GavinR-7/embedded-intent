@@ -123,20 +123,20 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
               footerChain={service.outcomeChain}
             />
 
-            <dl data-reveal="" className="mt-5 grid gap-px overflow-hidden rounded-card bg-line">
-              <div className="bg-void p-6">
+            <dl data-reveal="" className="mt-5 grid gap-px overflow-hidden rounded-card border border-line">
+              <div className="hairline bg-void p-6">
                 <dt className="text-eyebrow font-mono uppercase text-signal">
                   {servicePage.forWhomHeading}
                 </dt>
                 <dd className="mt-3 text-label text-ink-muted">{service.forWhom}</dd>
               </div>
-              <div className="bg-void p-6">
+              <div className="hairline bg-void p-6">
                 <dt className="text-eyebrow font-mono uppercase text-signal">
                   {servicePage.timelineHeading}
                 </dt>
                 <dd className="mt-3 text-label text-ink-muted">{service.timeline}</dd>
               </div>
-              <div className="bg-void p-6">
+              <div className="hairline bg-void p-6">
                 <dt className="text-eyebrow font-mono uppercase text-signal">
                   {servicePage.outcomeHeading}
                 </dt>
@@ -157,13 +157,13 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
         />
 
         <ul
-          className={`mt-12 grid gap-px overflow-hidden rounded-card bg-line ${symptomGrid.columns}`}
+          className={`mt-12 grid gap-px overflow-hidden rounded-card border border-line ${symptomGrid.columns}`}
         >
           {service.symptoms.map((symptom, index) => (
             <li
               key={symptom}
               data-reveal=""
-              className={`lift spotlight bg-void p-7 text-lead text-ink-muted ${
+              className={`hairline lift spotlight bg-void p-7 text-lead text-ink-muted ${
                 index === service.symptoms.length - 1 ? symptomGrid.lastItem : ""
               }`}
             >
@@ -208,7 +208,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
               {servicePage.examplesHeading}
             </h3>
             <ul
-              className={`mt-5 grid gap-px overflow-hidden rounded-card bg-line ${
+              className={`mt-5 grid gap-px overflow-hidden rounded-card border border-line ${
                 gridShape(service.examples.length).columns
               }`}
             >
@@ -216,7 +216,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
                 <li
                   key={example}
                   data-reveal=""
-                  className={`lift spotlight bg-void p-6 text-lead text-ink-muted ${
+                  className={`hairline lift spotlight bg-void p-6 text-lead text-ink-muted ${
                     index === (service.examples?.length ?? 0) - 1
                       ? gridShape(service.examples?.length ?? 0).lastItem
                       : ""
@@ -263,8 +263,8 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           heading={servicePage.pricingHeading}
         />
 
-        <div className="mt-12 grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2">
-          <div data-reveal="" className="spotlight bg-void p-7 sm:p-9">
+        <div className="mt-12 grid gap-px overflow-hidden rounded-card border border-line sm:grid-cols-2">
+          <div data-reveal="" className="hairline spotlight bg-void p-7 sm:p-9">
             <p className="text-eyebrow font-mono uppercase text-ink-subtle">
               {servicePage.buildLabel}
             </p>
@@ -281,7 +281,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             )}
           </div>
 
-          <div data-reveal="" className="spotlight bg-void p-7 sm:p-9">
+          <div data-reveal="" className="hairline spotlight bg-void p-7 sm:p-9">
             <p className="text-eyebrow font-mono uppercase text-ink-subtle">
               {servicePage.monthlyLabel}
             </p>

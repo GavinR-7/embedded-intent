@@ -10,6 +10,11 @@ import type { BeforeAfter } from "@/content/primitives";
  * Extracted in Phase 7: the homepage, every service page and now every category
  * page render the same thing from different data, and three copies meant three
  * places to add the reveal to.
+ *
+ * The rules here are drawn by the cells, not by the containers — see the
+ * `hairline` utility in app/globals.css. The reveal target is the row, so both
+ * halves and every rule around them fade in together; if the container drew the
+ * lines, a row that had not arrived yet would be a grey block.
  */
 export function BeforeAfterTable({
   pairs,
@@ -31,16 +36,16 @@ export function BeforeAfterTable({
         </p>
       </div>
 
-      <div className="mt-4 grid gap-px overflow-hidden rounded-card bg-line">
+      <div className="mt-4 grid gap-px overflow-hidden rounded-card border border-line">
         {pairs.map((pair) => (
-          <div key={pair.before} data-reveal="" className="grid gap-px bg-line md:grid-cols-2">
-            <div className="lift spotlight bg-void p-6 sm:p-7">
+          <div key={pair.before} data-reveal="" className="grid gap-px md:grid-cols-2">
+            <div className="hairline lift spotlight bg-void p-6 sm:p-7">
               <p className="text-eyebrow font-mono uppercase text-ink-subtle md:hidden">
                 {beforeLabel}
               </p>
               <p className="mt-3 text-lead text-ink-muted md:mt-0">{pair.before}</p>
             </div>
-            <div className="lift spotlight bg-void p-6 sm:p-7">
+            <div className="hairline lift spotlight bg-void p-6 sm:p-7">
               <p className="text-eyebrow font-mono uppercase text-signal md:hidden">
                 {afterLabel}
               </p>

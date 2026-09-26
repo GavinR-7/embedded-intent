@@ -316,6 +316,16 @@ and easing on a client-facing site read as a template.
 > the cap of three — the reasoning is in `MOTION.md`, along with every effect,
 > its tokens, and the rule that keeps reveals away from the LCP element.
 > The Tier 1 background is built; Tier 2/3 remain out of scope.
+>
+> **Phase 7b, 2026-09-25.** Reviewed from recorded scroll-throughs at 1440 and
+> 390. The reveal system was turning twelve grids into grey slabs on the way in
+> (fixed: cells draw their own rules); "How it works" was unpinned, because all
+> four steps already fitted in one viewport and the pin only trapped the scroll;
+> the marquee stopped pausing on hover; the hero gained a four-beat intro
+> (typed eyebrow, masked line rise, "AI" resolving out of noise, then the lead
+> panel) and an ambient grid that lights up on touch and when the cursor is
+> idle; and each category page gained a signature hero illustration, lazy and
+> off the critical path. Still **zero React Bits**. `MOTION.md` has all of it.
 
 ---
 

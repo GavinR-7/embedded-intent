@@ -46,6 +46,9 @@ export type PanelRow = {
  *     shows one line, and neither interval ever starts. Handled here in JS
  *     rather than CSS because the sequencing is JS-driven, and the global CSS
  *     backstop cannot reach a `setInterval`.
+ *   - Before `startDelayMs` has elapsed, neither interval has started. The
+ *     homepage hero uses this to make the panel the last beat of its intro
+ *     rather than a fifth thing moving while the headline is still arriving.
  *   - Offscreen, both intervals stop. On the homepage this panel is above the
  *     fold of a 13,000px page, so for almost all of a reader's time on it there
  *     is nothing to animate.
@@ -61,6 +64,7 @@ export function SystemPanel({
   footerChain,
   footerTicker,
   reveal = false,
+  startDelayMs = 0,
 }: {
   title: string;
   statusLabel: string;
@@ -79,11 +83,32 @@ export function SystemPanel({
   footerTicker?: readonly string[];
   /** Opt into the scroll reveal. Off in the homepage hero, on below the fold. */
   reveal?: boolean;
+  /**
+   * Hold the row sequence for this long after mount.
+   *
+   * The homepage hero passes the end of its intro schedule, so the panel is the
+   * last beat of it rather than a fifth thing moving at once — see
+   * lib/heroTimeline.ts. Service page panels pass nothing and start straight
+   * away, because there is no intro on those pages to wait for.
+   */
+  startDelayMs?: number;
 }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const { ref, inView } = useInView<HTMLDivElement>();
 
-  const animating = !prefersReducedMotion && inView;
+  /*
+   * Whether the hold has elapsed. Starts true when there is no hold, so the
+   * common case adds no state transition and no timer at all.
+   */
+  const [armed, setArmed] = useState(startDelayMs === 0);
+
+  useEffect(() => {
+    if (startDelayMs === 0) return;
+    const id = setTimeout(() => setArmed(true), startDelayMs);
+    return () => clearTimeout(id);
+  }, [startDelayMs]);
+
+  const animating = !prefersReducedMotion && inView && armed;
 
   // rows.length is the extra "all complete" beat before the loop restarts.
   const [cursor, setCursor] = useState(0);

@@ -23,7 +23,7 @@
  * **They do not render below `md`.** The delay alone only recovered half of it
  * (2.48s), because an element with an opacity animation is promoted to its own
  * compositor layer for the whole animation *including the delay* — so the
- * browser rasterises two viewport-sized gradients up front either way. Rather
+ * browser rasterizes two viewport-sized gradients up front either way. Rather
  * than shrink them until the number behaved, the honest call: this is an
  * effect that reads on a large screen and barely registers on a 390px phone,
  * and it costs the most on the device with the least to spare. Phones get the

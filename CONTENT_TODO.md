@@ -100,7 +100,7 @@ These must be resolved before the domain is pointed at the site.
 
 - [x] ~~Header CTA may be too wide on desktop.~~ Resolved 2026-09-21: the CTA
   is "Get a free audit" everywhere. Microcopy is now
-  "Free · You leave with a prioritised list either way" — the duration was
+  "Free · You leave with a prioritized list either way" — the duration was
   dropped 2026-09-22, since the audit page states it.
 
 - [x] ~~Source the "0.4s" on the hero panel, or cut it.~~ Cut 2026-09-21. It
@@ -172,9 +172,35 @@ site that cannot be delivered when someone taps it.
   advertisement.
 
 - [x] ~~React Bits, hard cap of three.~~ **Zero used.** Reasoning in MOTION.md:
-  the H1 text reveal is forbidden by the LCP rule, `CountUp` has no number on
-  this site to count, and the Tier 1 background is 60 lines of CSS. No
+  the H1 text reveal was forbidden by the LCP rule at the time, `CountUp` has no
+  number on this site to count, and the Tier 1 background is 60 lines of CSS. No
   `components/reactbits/` directory was created and no dependency was added.
+
+---
+
+## Done — Phase 7b
+
+- [x] ~~**The grey slabs during scroll reveals.**~~ Twelve grids drew their
+  rules with `gap-px` on a `bg-line` container, which shows the container's fill
+  straight through any cell that has not arrived yet. Containers are now
+  transparent with a 1px border and each cell carries its own `hairline` shadow.
+  Photographed mid-reveal at 390px to confirm — see the bottom of MOTION.md.
+
+- [x] ~~**The pinned "How it works".**~~ Unpinned. All four steps already fit in
+  one viewport, so the pin held the page still for three screens and scrolled
+  the section's own heading off the top before the first step lit up. The
+  activation, the dimming and the progress rail all stayed.
+
+- [x] ~~React Bits, second look.~~ Still **zero**. `DecryptedText` was
+  explicitly allowed for the hero if its dependency weight was light; it is
+  hand-written instead, in `components/motion/DecryptWord.tsx`, at about the
+  forty lines the alternative was estimated at.
+
+- [x] ~~**Category pages had the same hero as everything else.**~~ Each one now
+  has a drawing that demonstrates what it sells. Every label in them is in
+  `content/heroVisuals.ts` and every one is marked, in the markup, as an
+  illustration — no real business names, no real geography, no ratings printed
+  as numbers, no real conversation.
 
 ---
 
@@ -222,10 +248,20 @@ site that cannot be delivered when someone taps it.
   phases, or the four docs that matter. Worth fifteen minutes before anyone
   else ever sees this repo, but it is documentation, not the site.
 
-- [ ] **The homepage is still long** — nine sections. The pinned stepper made
-  "How it works" *taller* on desktop by design (it is 70vh per step now), which
-  is the right trade for a set piece but is worth knowing. If the page needs to
-  be shorter, the lever is fewer sections, not tighter cards.
+- [ ] **The homepage is still long** — nine sections. It got shorter in Phase
+  7b: "How it works" was 70vh of scroll per step and is now an ordinary stacked
+  list. If it needs to be shorter still, the lever is fewer sections, not
+  tighter cards.
+
+- [ ] **Mobile LCP on `/` flips between ~2.0s and ~2.65s**, on the current
+  build *and* on the commit before it, with no correlation to Lighthouse's
+  `benchmarkIndex`. The gap is about one simulated round trip, so the likely
+  cause is a resource that is sometimes on the critical path and sometimes not.
+  It predates Phase 7b and is a measurement hazard rather than a defect — but
+  it makes every comparison expensive, so it is worth an hour before Phase 8's
+  final performance pass. Until then, measure by interleaving against a
+  worktree of the previous commit; see the "Interleave, or do not believe it"
+  section of MOTION.md.
 
 - [ ] **Category page copy is first-draft.** The symptoms and before/after pairs
   in `content/categories.ts` follow the writing rules and are pitched one level

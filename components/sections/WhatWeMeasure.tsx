@@ -24,13 +24,13 @@ export function WhatWeMeasure() {
       />
 
       <ul
-        className={`mt-12 grid gap-px overflow-hidden rounded-card bg-line ${shape.columns}`}
+        className={`mt-12 grid gap-px overflow-hidden rounded-card border border-line ${shape.columns}`}
       >
         {whatWeMeasure.outcomes.map((outcome, index) => (
           <li
             key={outcome.name}
             data-reveal=""
-            className={`lift spotlight bg-void p-7 ${
+            className={`hairline lift spotlight bg-void p-7 ${
               index === whatWeMeasure.outcomes.length - 1 ? shape.lastItem : ""
             }`}
           >

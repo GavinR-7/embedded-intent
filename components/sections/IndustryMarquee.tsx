@@ -12,11 +12,14 @@ const { industries } = home;
  *
  * A Server Component. Every moving part is in the `marquee` utility in
  * app/globals.css: a 40s `translateX` on a track holding the list twice, soft
- * edges, pause on hover, and the static wrapped row under
- * `prefers-reduced-motion: reduce`. This was a client component first, only so
- * it could branch on that media query in JavaScript — doing the branch in CSS
- * took twenty-four list items out of the hydration pass and every industry name
- * out of the JavaScript bundle.
+ * edges, and the static wrapped row under `prefers-reduced-motion: reduce`. It
+ * does not stop on hover: the strip is ambient, and a band of text that halts
+ * whenever the cursor crosses it draws attention to itself rather than the
+ * page.
+ *
+ * This was a client component first, only so it could branch on that media
+ * query in JavaScript — doing the branch in CSS took twenty-four list items out
+ * of the hydration pass and every industry name out of the JavaScript bundle.
  *
  * `data-pause-offscreen` is the other half: one observer in MotionRuntime stops
  * the animation whenever the hero is not on screen.

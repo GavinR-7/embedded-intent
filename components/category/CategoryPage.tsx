@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CategoryVisual } from "@/components/category/CategoryVisual";
 import { BeforeAfterTable } from "@/components/ui/BeforeAfterTable";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { FaqList } from "@/components/ui/FaqList";
 import { IconTile } from "@/components/ui/icons";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
-import { TraceGrid } from "@/components/ui/TraceGrid";
 import { audit } from "@/content/audit";
 import type { CategorySlug } from "@/content/categories";
 import { categoryHref, getCategory } from "@/content/categories";
@@ -52,20 +52,31 @@ export function CategoryPage({ slug }: { slug: CategorySlug }) {
 
   return (
     <>
-      {/* Nothing in the hero reveals: the H1 is the largest paint on the page
-          and has to be there on the first frame. */}
-      <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
-        <div className="max-w-prose-tight">
-          <Eyebrow>{category.eyebrow}</Eyebrow>
+      {/*
+        Nothing in the hero reveals: the H1 is the largest paint on the page and
+        has to be there on the first frame.
 
-          <h1 className="mt-6 text-h1 text-ink">{category.heading}</h1>
+        No `TraceGrid` overlay either, and that is the difference between this
+        hero and every other one on the site. The circuit texture is the generic
+        treatment for the top of a page; here it is replaced by a drawing of
+        what this particular category actually does. One of the three, per page.
+      */}
+      <Section tone="void" size="lg" divider={false} bleedTop>
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+          <div className="max-w-prose-tight">
+            <Eyebrow>{category.eyebrow}</Eyebrow>
 
-          <p className="mt-7 text-lead text-ink-muted">{category.sub}</p>
+            <h1 className="mt-6 text-h1 text-ink">{category.heading}</h1>
 
-          <div className="mt-9">
-            <ButtonLink href={site.primaryCta.href}>{site.primaryCta.label}</ButtonLink>
-            <p className="mt-4 text-label text-ink-subtle">{site.ctaMicrocopy}</p>
+            <p className="mt-7 text-lead text-ink-muted">{category.sub}</p>
+
+            <div className="mt-9">
+              <ButtonLink href={site.primaryCta.href}>{site.primaryCta.label}</ButtonLink>
+              <p className="mt-4 text-label text-ink-subtle">{site.ctaMicrocopy}</p>
+            </div>
           </div>
+
+          <CategoryVisual slug={slug} />
         </div>
       </Section>
 
@@ -76,13 +87,13 @@ export function CategoryPage({ slug }: { slug: CategorySlug }) {
         />
 
         <ul
-          className={`mt-12 grid gap-px overflow-hidden rounded-card bg-line ${symptomGrid.columns}`}
+          className={`mt-12 grid gap-px overflow-hidden rounded-card border border-line ${symptomGrid.columns}`}
         >
           {category.symptoms.map((symptom, index) => (
             <li
               key={symptom}
               data-reveal=""
-              className={`lift spotlight bg-void p-7 text-lead text-ink-muted ${
+              className={`hairline lift spotlight bg-void p-7 text-lead text-ink-muted ${
                 index === category.symptoms.length - 1 ? symptomGrid.lastItem : ""
               }`}
             >
@@ -102,12 +113,12 @@ export function CategoryPage({ slug }: { slug: CategorySlug }) {
         {/* Rows, not cards. A category has three or four services and they are
             being compared against each other, which a vertical list does and a
             grid does not — and a single column cannot orphan its last item. */}
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-card bg-line">
+        <ul className="mt-12 grid gap-px overflow-hidden rounded-card border border-line">
           {items.map((service) => (
             <li key={service.slug} data-reveal="">
               <Link
                 href={`/services/${service.slug}`}
-                className="lift spotlight group flex items-center gap-5 bg-void p-6 sm:gap-6 sm:p-7"
+                className="hairline lift spotlight group flex h-full items-center gap-5 bg-void p-6 sm:gap-6 sm:p-7"
               >
                 <IconTile name={service.icon} />
 
