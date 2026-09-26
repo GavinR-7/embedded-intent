@@ -34,11 +34,17 @@ import { heroVisuals } from "@/content/heroVisuals";
  * ---------------------------------------------------------------------------
  */
 
-/** Per category, because a phone is portrait and a web page is not. */
+/**
+ * Per category, because a phone is portrait and a web page is not.
+ *
+ * /ai-automation changes shape at `lg`, and it is the only one that does: the
+ * core sits above the handset on a narrow screen and beside it on a wide one, so
+ * the box it needs is tall in one layout and wide in the other.
+ */
 const ASPECT: Record<CategorySlug, string> = {
   websites: "aspect-[4/3]",
   "get-found": "aspect-[4/3]",
-  "ai-automation": "aspect-[4/5]",
+  "ai-automation": "aspect-[5/7] lg:aspect-[4/3]",
 };
 
 /**
@@ -46,12 +52,14 @@ const ASPECT: Record<CategorySlug, string> = {
  *
  * The phone is portrait, so at the full width of a hero column it ends up
  * taller than the copy beside it and pushes its own caption off the screen.
- * Capping its width is what keeps all three roughly the same visual weight.
+ * Capping its width on a narrow screen is what keeps all three roughly the same
+ * visual weight. From `lg` the core sits beside it and the figure wants the whole
+ * column.
  */
 const MAX_WIDTH: Record<CategorySlug, string> = {
   websites: "max-w-md lg:max-w-none",
   "get-found": "max-w-md lg:max-w-none",
-  "ai-automation": "max-w-[19rem] lg:max-w-sm",
+  "ai-automation": "max-w-[19rem] lg:max-w-none",
 };
 
 const COPY: Record<CategorySlug, { caption: string; alt: string }> = {

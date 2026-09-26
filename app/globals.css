@@ -166,6 +166,22 @@
   --spacing-section: clamp(3.5rem, 7vw, 6rem);
   --spacing-section-lg: clamp(5rem, 10vw, 8rem);
 
+  /*
+     The gap between the bottom of the header and the top of a page hero.
+
+     ONE token for every hero on the site — homepage, category, service, work,
+     contact. Before this existed, the homepage hero centered its content inside
+     a `min-h-svh` box, which made the gap a function of the visitor's window
+     height rather than a design decision: 129px at 1440x900, 219px at
+     1440x1080, 399px on a tall display. Every hero is now top-aligned with this
+     padding, and the homepage's leftover height goes below the content, where
+     the marquee already sits.
+
+     Resolves to 48px at 390 and 101px at 1440. `Section` adds the 5rem header
+     height on top for bleeding heroes — see PADDING_TOP_BLEED there.
+  */
+  --spacing-hero-top: clamp(3rem, 7vw, 7rem);
+
   /* Content widths — max-w-content for full sections, max-w-prose-tight for
      running text (a readable measure is ~65 characters). */
   --container-content: 75rem;
@@ -245,10 +261,19 @@
      before its turn.
   */
   --line-mask-pad: 0.12em;
-  /* One glitch on the two resolved glyphs. */
-  --dur-glitch: 150ms;
+  /* One pass of the scan line down the headline. */
+  --dur-scan: 900ms;
   /* Half of one ambient grid pulse: up, hold, and back down. */
   --dur-cell-fade: 1300ms;
+
+  /* -------------------------------------------------------------------------
+     Hero band textures (Phase 8).
+     ------------------------------------------------------------------------- */
+
+  /* One signal pulse, end to end, along the /ai-automation ruling. */
+  --dur-signal-run: 2600ms;
+  /* Half of one crosshair fade in the /websites blueprint layer. */
+  --dur-mark-fade: 1600ms;
 }
 
 @layer base {
@@ -638,44 +663,30 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
   }
 }
 
-/* The glitch: the word itself jitters, and two horizontal slices of it are
-   pulled apart in opposite directions. Transform only, on all three. */
-@keyframes glitch-jitter {
-  0%,
+/*
+ * The scan line: a lit rule that crosses the whole H1 block, top to bottom.
+ *
+ * The element is the full height of the heading and carries the line as a
+ * 12px-tall band at its top edge, so `translateY(100%)` walks that band from the
+ * top of the heading to the bottom without anything needing to know how tall the
+ * heading is. That is the whole reason it is built this way: the alternative is
+ * animating `top`, which is layout, on a block of display type.
+ *
+ * `--ease-out-expo` is the point of the effect. It enters fast and settles, so it
+ * reads as an instrument taking a reading rather than as a shine sweeping past.
+ */
+@keyframes scan-sweep {
+  0% {
+    transform: translateY(-0.75rem);
+    opacity: 0;
+  }
+  10%,
+  86% {
+    opacity: 1;
+  }
   100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-0.03em);
-  }
-  60% {
-    transform: translateX(0.02em);
-  }
-}
-
-@keyframes glitch-slice-a {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  30% {
-    transform: translateX(-0.09em);
-  }
-  70% {
-    transform: translateX(0.05em);
-  }
-}
-
-@keyframes glitch-slice-b {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  30% {
-    transform: translateX(0.08em);
-  }
-  70% {
-    transform: translateX(-0.06em);
+    transform: translateY(100%);
+    opacity: 0;
   }
 }
 
@@ -820,23 +831,21 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
 }
 
 /*
- * The circuit grid, lit near the cursor.
+ * A hero texture, lit near the cursor.
  *
- * A second copy of the `trace-grid` lines in the accent color, masked to a
- * circle that follows the pointer. Same `background-size` and
- * `background-position` as `trace-grid`, and painted over the same box, so the
- * bright lines land exactly on the dim ones rather than beside them.
+ * Each of the four textures is drawn twice: once dim over the whole band, and
+ * once in the accent color on top of it, masked to a circle that follows the
+ * pointer. This utility is the masking half, and it knows nothing about which
+ * texture it is masking — the bright copy is supplied by the caller, either as
+ * a background (`trace-grid-lit`) or as an SVG child (`blueprint`, `contour`).
+ * That is what stopped the mask, the opacity and the transition being written
+ * out four times and drifting.
  *
  * `mask-image` creates a stacking context but not a containing block, so this
  * is safe over a hero. Only `opacity` transitions; the mask position changes
  * are paints, and they only happen while a fine pointer is inside the hero.
  */
-@utility trace-grid-lit {
-  background-image:
-    linear-gradient(to right, var(--color-signal) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--color-signal) 1px, transparent 1px);
-  background-size: 4rem 4rem;
-  background-position: center;
+@utility texture-lit {
   mask-image: radial-gradient(
     16rem circle at var(--spot-x, 50%) var(--spot-y, -30%),
     #000 0%,
@@ -846,8 +855,23 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
   transition: opacity var(--duration-slow) var(--ease-precise);
 
   &[data-lit] {
-    opacity: 0.3;
+    opacity: var(--lit-opacity, 0.3);
   }
+}
+
+/*
+ * The bright copy of the circuit grid.
+ *
+ * Same `background-size` and `background-position` as `trace-grid`, and painted
+ * over the same box, so the bright lines land exactly on the dim ones rather
+ * than beside them. Stacked with `texture-lit`, which does the masking.
+ */
+@utility trace-grid-lit {
+  background-image:
+    linear-gradient(to right, var(--color-signal) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-signal) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  background-position: center;
 }
 
 /*
@@ -1128,58 +1152,58 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
 }
 
 /*
- * "AI", resolving out of noise and glitching occasionally afterwards.
+ * The scan line, as a layer over the headline.
  *
- * The scramble is JavaScript (there is no CSS that picks a random glyph), but
- * everything here is not: the jitter and the two slices are transforms on the
- * element and on two pseudo-elements that take their text from `data-word`.
+ * Inert until the controller sets `data-scan`: there is no animation on the
+ * element at first paint, which is the rule the ambient grid cells were rewritten
+ * to obey — a running compositable animation promotes a layer, and the promotion
+ * lands inside the window the LCP measurement accounts for. This one runs for
+ * 900ms roughly every twelve seconds, and is not running when the page loads.
  *
- * `clip-path` on the two slices is static — it is not animated, only the
- * transforms are. Together with `mix-blend-mode` on a two-glyph box for 150ms,
- * that is the scoped exception to "transform and opacity only" this effect was
- * granted, and it is worth stating how small it is: two pseudo-elements, two
- * characters wide, for a sixth of a second, once every eight to ten seconds,
- * and only while the hero is on screen.
+ * Transform and opacity only. The glow is part of the gradient rather than a
+ * `box-shadow`, so there is no blurred area to re-rasterize on the way down.
  *
- * `isolation: isolate` keeps the blend inside this span instead of letting it
- * reach the hero behind it.
+ * This replaced a recurring glitch on the two letters of "AI" — a jitter plus two
+ * colour-split slices, every eight to ten seconds. That effect went because it
+ * read as a fault rather than as instrumentation, which is the opposite of what
+ * the headline is claiming. The one-time decrypt on load stayed, and with the
+ * glitch gone so did its scoped exception to "transform and opacity only": there
+ * is no `mix-blend-mode` and no animated `clip-path` left on the site.
  */
-@utility glitch {
-  position: relative;
-  isolation: isolate;
+@utility scan-line {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background-repeat: no-repeat;
+  background-size: 100% 0.75rem;
+  background-position: top left;
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    color-mix(in oklch, var(--color-signal) 14%, transparent) 4px,
+    var(--color-signal) 5px,
+    var(--color-signal) 6px,
+    color-mix(in oklch, var(--color-signal) 14%, transparent) 7px,
+    transparent 0.75rem
+  );
 
-  &[data-glitch] {
-    animation: glitch-jitter var(--dur-glitch) var(--ease-precise) 1;
+  /*
+   * Opacity is animated rather than switched on here, and that is what lets the
+   * heading keep its `overflow: visible`. The line enters above the block and
+   * leaves below it, fading at both ends, so nothing has to be clipped — and
+   * nothing can be: each headline line's mask is padded past the text box to make
+   * room for descenders, so an `overflow: hidden` anywhere on the h1 would cut the
+   * tail off every "p" and "y" in it.
+   */
+  &[data-scan] {
+    animation: scan-sweep var(--dur-scan) var(--ease-out-expo) 1;
   }
 
-  &[data-glitch]::before,
-  &[data-glitch]::after {
-    content: attr(data-word);
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    mix-blend-mode: screen;
-  }
-
-  &[data-glitch]::before {
-    color: var(--color-signal);
-    clip-path: inset(0 0 52% 0);
-    animation: glitch-slice-a var(--dur-glitch) var(--ease-precise) 1;
-  }
-
-  &[data-glitch]::after {
-    color: var(--color-alert);
-    clip-path: inset(48% 0 0 0);
-    animation: glitch-slice-b var(--dur-glitch) var(--ease-precise) 1;
-  }
-
+  /* Off entirely, not slowed down. A line crossing the headline every twelve
+     seconds is exactly the kind of unrequested motion `reduce` is about. */
   @media (prefers-reduced-motion: reduce) {
-    &[data-glitch],
-    &[data-glitch]::before,
-    &[data-glitch]::after {
-      animation: none;
-      content: none;
-    }
+    display: none;
   }
 }
 
@@ -1273,6 +1297,190 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
 }
 
 /* ---------------------------------------------------------------------------
+   Hero band textures (Phase 8).
+   ---------------------------------------------------------------------------
+   Four textures, one per kind of page, chosen from data rather than per route:
+
+     circuit    the homepage, /work, /contact — the 4rem ruling
+     blueprint  /websites and its services — a fine dot grid with crosshairs
+     contour    /get-found and its services — topographic lines
+     signal     /ai-automation and its services — the ruling, plus pulses
+
+   Which page gets which is `texture` on content/categories.ts, so a service page
+   cannot pick a different one from its own category. See
+   components/ui/HeroTexture.tsx.
+
+   All four are drawn twice: dim over the whole band, and bright under the cursor
+   through `texture-lit`. The two SVG textures colour themselves with
+   `currentColor` so the same markup serves as both copies.
+   --------------------------------------------------------------------------- */
+
+/*
+ * The band fade every texture shares.
+ *
+ * Without it a texture ends on a hard horizontal line partway down the hero,
+ * which reads as a table edge rather than as a treatment for the top of a page.
+ * `trace-grid` declares the same mask inline for historical reasons; everything
+ * else composes this.
+ */
+@utility hero-texture {
+  mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, #000 20%, transparent 75%);
+}
+
+/*
+ * The blueprint ruling — /websites and its services.
+ *
+ * A fine dot grid with a small crosshair at every major intersection: the page
+ * before it is a page, which is what the whole category is about.
+ *
+ * Three background layers, and the geometry is the point. `background-position:
+ * center` with a 1rem tile puts a dot at `50% + n * 1rem`, and with a 4rem tile
+ * puts a crosshair at `50% + n * 4rem` — which is exactly where `trace-grid`
+ * draws its lines and exactly where `grid-cell` places the ambient pulses. So
+ * the dots, the crosshairs and the lit cells all land on the same lattice, at any
+ * container size, with nothing measured.
+ *
+ * The crosshair arms are flat ellipses rather than lines. A `linear-gradient` is
+ * uniform along one axis, so it can draw a ruling but not a mark: constraining
+ * both axes in one background layer needs a radial shape. Two lozenges, 10x2 and
+ * 2x10, crossed.
+ *
+ * The stops are hard — `colour 0 100%, transparent 100%` — and that is not a
+ * detail. The first version ramped from 55% to transparent over a half-pixel
+ * radius, which is a sub-pixel band with an alpha gradient across it: correct
+ * CSS, and it painted nothing at all on screen.Low contrast has to mean a dim
+ * colour, not a shape too small and too soft to survive rasterisation.
+ */
+@utility blueprint-grid {
+  background-image:
+    radial-gradient(ellipse 5px 1px at center, var(--color-line-strong) 0 100%, transparent 100%),
+    radial-gradient(ellipse 1px 5px at center, var(--color-line-strong) 0 100%, transparent 100%),
+    radial-gradient(circle 1px at center, var(--color-line) 0 100%, transparent 100%);
+  background-size:
+    4rem 4rem,
+    4rem 4rem,
+    1rem 1rem;
+  background-position: center;
+}
+
+/* The bright copy. Same three layers, same geometry, accent colour — so the lit
+   marks land on the dim ones instead of beside them. */
+@utility blueprint-grid-lit {
+  background-image:
+    radial-gradient(ellipse 5px 1px at center, var(--color-signal) 0 100%, transparent 100%),
+    radial-gradient(ellipse 1px 5px at center, var(--color-signal) 0 100%, transparent 100%),
+    radial-gradient(circle 1px at center, var(--color-signal) 0 100%, transparent 100%);
+  background-size:
+    4rem 4rem,
+    4rem 4rem,
+    1rem 1rem;
+  background-position: center;
+}
+
+/*
+ * Signal pulses travelling along the ruling — /ai-automation only.
+ *
+ * A pulse is a short gradient dash that starts at one intersection of the 4rem
+ * grid and runs along a line to another. `--cx` / `--cy` are integer cell
+ * coordinates from the centre, exactly as `grid-cell` uses them, so a pulse is
+ * always ON a line rather than floating between two.
+ *
+ * Inert, like the ambient cells and for the same measured reason: no animation
+ * exists on these elements until the controller sets `data-run`, so nothing is
+ * promoted to a compositor layer during the paint the LCP figure is built from.
+ * `--run` is how far it travels, and may be negative to send it the other way.
+ */
+@utility signal-layer {
+  overflow: hidden;
+  mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, #000 20%, transparent 75%);
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+@utility signal-pulse {
+  position: absolute;
+  left: calc(50% - 2rem + var(--cx) * 4rem);
+  top: calc(50% - 2rem + var(--cy) * 4rem);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes signal-run-x {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  14%,
+  78% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(var(--run, 20rem));
+    opacity: 0;
+  }
+}
+
+@keyframes signal-run-y {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  14%,
+  78% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(var(--run, 12rem));
+    opacity: 0;
+  }
+}
+
+/* The dash trails behind the direction of travel, which is what makes it read
+   as something moving rather than as a mark being dragged. */
+@utility signal-pulse-x {
+  width: 2.5rem;
+  height: 1px;
+  background-image: linear-gradient(to right, transparent, var(--color-signal));
+
+  &[data-run] {
+    animation: signal-run-x var(--dur-signal-run) linear 1;
+  }
+}
+
+@utility signal-pulse-y {
+  width: 1px;
+  height: 2.5rem;
+  background-image: linear-gradient(to bottom, transparent, var(--color-signal));
+
+  &[data-run] {
+    animation: signal-run-y var(--dur-signal-run) linear 1;
+  }
+}
+
+/*
+ * A mark that fades up and back down when a controller says so.
+ *
+ * The third instance of the same shape as `grid-cell`: an inert element, a
+ * transition, and one timer choosing which one goes next. Used by the crosshairs
+ * in the /websites blueprint layer. It carries no position of its own — the call
+ * site places it, because in that layer the positions are grid-relative.
+ */
+@utility pulse-mark {
+  opacity: 0;
+  transition: opacity var(--dur-mark-fade) var(--ease-precise);
+
+  &[data-lit] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    The category hero illustrations (Phase 7b).
    ---------------------------------------------------------------------------
    Three drawings, one per category page, each demonstrating what that category
@@ -1340,10 +1548,14 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
     lens-drift-x 17s ease-in-out infinite,
     lens-drift-y 11s ease-in-out infinite;
 
-  /* While a fine pointer is over it the lens is the cursor, and a drift
-     underneath would fight it. The handler writes the two properties inline,
-     and an inline value only wins once the animation is out of the way. */
-  &[data-tracking] {
+  /*
+   * Set for the life of the component on a fine pointer, where the drift is a
+   * JavaScript loop instead — it needs state these keyframes cannot have, to
+   * ease into the cursor and to carry velocity back out of it. The loop writes
+   * the two properties inline, and an inline value only wins once the animation
+   * is out of the way. See components/category/visuals/XrayLens.tsx.
+   */
+  &[data-driven] {
     animation: none;
   }
 

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { useInView } from "@/lib/useInView";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 /**
@@ -24,17 +23,12 @@ const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>#";
  */
 const ROLL_MS = 55;
 
-/** The glitch window, and the range it waits between glitches. */
-const GLITCH_MS = 150;
-const GLITCH_MIN_GAP_MS = 8000;
-const GLITCH_MAX_GAP_MS = 10000;
-
 function randomGlyph() {
   return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
 }
 
 /**
- * Two letters that resolve out of noise, and glitch now and then afterwards.
+ * Two letters that resolve out of noise, once, on load.
  *
  * ---------------------------------------------------------------------------
  * The accessible word never changes.
@@ -53,12 +47,11 @@ function randomGlyph() {
  * letter locks halfway through the window and the second at the end. One
  * interval, not one per character.
  *
- * Afterwards it glitches for 150ms every 8–10 seconds, at a fresh random
- * interval each time so it never settles into a rhythm. `data-glitch` is what
- * the CSS in app/globals.css hangs the effect off; it is an attribute rather
- * than a class because adding and removing it is what re-triggers the
- * animation. The loop stops the moment the hero leaves the viewport, and never
- * starts at all under `prefers-reduced-motion: reduce`.
+ * And then it is done — this component has no loop. It used to glitch for 150ms
+ * every 8–10 seconds afterwards, which read as a fault rather than as
+ * instrumentation on a headline claiming the AI works. The recurring beat is now
+ * a line sweeping down the whole heading instead; see
+ * components/motion/ScanSweep.tsx. What is left here is one timer that runs once.
  */
 export function DecryptWord({
   word,
@@ -71,15 +64,13 @@ export function DecryptWord({
   scrambleMs: number;
 }) {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const { ref, inView } = useInView<HTMLSpanElement>();
 
   const [display, setDisplay] = useState(word);
-  const [glitching, setGlitching] = useState(false);
 
   /*
-   * Set once the scramble has finished, so the glitch loop below knows it may
-   * start — and so a reader who scrolls the hero away and back does not get the
-   * whole resolve again.
+   * Set once the scramble has finished, so the effect below cannot start a second
+   * one — a prop change, or a remount from a soft navigation back to the
+   * homepage, would otherwise re-scramble a headline that has already resolved.
    */
   const [resolved, setResolved] = useState(false);
 
@@ -126,39 +117,6 @@ export function DecryptWord({
     };
   }, [prefersReducedMotion, resolved, scrambleMs, startDelayMs, word]);
 
-  // ---------------------------------------------------------------- the glitch
-  /*
-   * `useRef` for the pending timer rather than state: the schedule is not
-   * something the render depends on, and putting it in state would re-render the
-   * headline every time the next glitch is booked.
-   */
-  const timerRef = useRef(0);
-
-  useEffect(() => {
-    if (prefersReducedMotion || !resolved || !inView) return;
-
-    const schedule = () => {
-      const gap =
-        GLITCH_MIN_GAP_MS +
-        Math.random() * (GLITCH_MAX_GAP_MS - GLITCH_MIN_GAP_MS);
-
-      timerRef.current = window.setTimeout(() => {
-        setGlitching(true);
-        timerRef.current = window.setTimeout(() => {
-          setGlitching(false);
-          schedule();
-        }, GLITCH_MS);
-      }, gap);
-    };
-
-    schedule();
-
-    return () => {
-      window.clearTimeout(timerRef.current);
-      setGlitching(false);
-    };
-  }, [inView, prefersReducedMotion, resolved]);
-
   return (
     /*
      * -----------------------------------------------------------------------
@@ -176,7 +134,7 @@ export function DecryptWord({
      * pushing the rest of the line.
      * -----------------------------------------------------------------------
      */
-    <span ref={ref} className="relative inline-block whitespace-nowrap">
+    <span className="relative inline-block whitespace-nowrap">
       {/* Reserves exactly the finished word's width. `invisible` is
           `visibility: hidden`, which keeps it out of the accessibility tree —
           the readable copy is the third span. */}
@@ -184,20 +142,9 @@ export function DecryptWord({
         {word}
       </span>
 
-      {/* Absolute on the wrapper rather than on `.glitch` itself: the utility
-          declares `position: relative` for its own pseudo-elements, and two
-          position utilities on one element is a fight over which layer wins. */}
+      {/* The noise, laid over the box the span above reserved. */}
       <span aria-hidden="true" className="absolute left-0 top-0">
-        <span
-          /* The pseudo-elements that draw the two offset slices take their text
-             from here — `content: attr(data-word)`. The resolved word, always,
-             because the glitch only ever runs after the scramble. */
-          data-word={word}
-          data-glitch={glitching ? "" : undefined}
-          className="glitch"
-        >
-          {display}
-        </span>
+        {display}
       </span>
 
       {/* The word itself, for anything that reads rather than looks. */}

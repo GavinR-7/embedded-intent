@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Eyebrow, Section } from "@/components/ui/Section";
-import { TraceGrid } from "@/components/ui/TraceGrid";
+import { HeroTexture } from "@/components/ui/HeroTexture";
 import { audit } from "@/content/audit";
 import { site } from "@/content/site";
 import { caseStudies, launchedStatusLine } from "@/content/work";
@@ -38,7 +38,7 @@ export default function WorkIndexPage() {
         as well as an SEO one. Nothing here reveals: it is the hero, and the h1
         is the largest paint on the page.
       */}
-      <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
+      <Section tone="void" size="hero" divider={false} bleedTop overlay={<HeroTexture />}>
         <div className="max-w-prose-tight">
           <Eyebrow>{workPage.indexEyebrow}</Eyebrow>
           <h1 className="mt-5 text-h1 text-ink">{workPage.indexHeading}</h1>

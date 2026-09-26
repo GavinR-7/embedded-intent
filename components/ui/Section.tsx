@@ -15,14 +15,16 @@
  * Alternating those two with a hairline top border at each transition makes a
  * boundary read as a crisp edge rather than as dead space.
  *
- * Section knows nothing about the circuit-trace texture. It used to render it
- * on every void band, which meant the texture appeared five or six times down
- * a page and stopped reading as a treatment for the top of the page. It is now
- * passed in as `overlay`, by the one band per route that wants it — see
- * `components/ui/TraceGrid.tsx`.
+ * Section knows nothing about the hero texture. It used to render one on every
+ * void band, which meant the texture appeared five or six times down a page and
+ * stopped reading as a treatment for the top of the page. It is now passed in as
+ * `overlay`, by the one band per route that wants it — see
+ * `components/ui/HeroTexture.tsx`.
  *
- * `size="lg"` is reserved for genuine act breaks: the hero and the close.
- * Everything between them uses the default.
+ * `size="hero"` is the top of a page: one shared top padding for every hero on
+ * the site, so the header-to-eyebrow gap cannot drift per route. `size="lg"` is
+ * for the other genuine act break, the close. Everything between them uses the
+ * default.
  *
  * Note that padding is per-section, so the gap a reader sees between two bands
  * is the sum of both sections' padding. That is intended here: the padding is
@@ -30,7 +32,7 @@
  */
 
 type Tone = "void" | "surface";
-type Size = "default" | "lg";
+type Size = "default" | "lg" | "hero";
 
 /*
  * Class names are written out in full, as literals.
@@ -52,16 +54,23 @@ type Size = "default" | "lg";
 const PADDING_TOP = {
   default: "pt-section",
   lg: "pt-section-lg",
+  hero: "pt-hero-top",
 } as const;
 
 const PADDING_TOP_BLEED = {
   default: "-mt-20 pt-[calc(var(--spacing-section)_+_5rem)]",
   lg: "-mt-20 pt-[calc(var(--spacing-section-lg)_+_5rem)]",
+  hero: "-mt-20 pt-[calc(var(--spacing-hero-top)_+_5rem)]",
 } as const;
 
+/*
+ * A hero's bottom padding is the same as any other act break. Only the top is
+ * special, because only the top is measured against the header.
+ */
 const PADDING_BOTTOM = {
   default: "pb-section",
   lg: "pb-section-lg",
+  hero: "pb-section-lg",
 } as const;
 
 export function Section({

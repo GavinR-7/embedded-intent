@@ -28,7 +28,7 @@ import type { CategorySlug } from "@/content/categories";
 const VISUALS = {
   websites: dynamic(() => import("./XrayLens"), { ssr: false }),
   "get-found": dynamic(() => import("./MapPack"), { ssr: false }),
-  "ai-automation": dynamic(() => import("./PhoneThread"), { ssr: false }),
+  "ai-automation": dynamic(() => import("./AiAutomationVisual"), { ssr: false }),
 } as const satisfies Record<CategorySlug, unknown>;
 
 export function CategoryVisualIsland({ slug }: { slug: CategorySlug }) {

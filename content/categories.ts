@@ -22,6 +22,8 @@
  * ---------------------------------------------------------------------------
  */
 
+import type { HeroTextureName } from "@/components/ui/HeroTexture";
+
 import type { FaqId } from "./faq";
 import type { AtLeastThree, BeforeAfter } from "./primitives";
 
@@ -37,6 +39,16 @@ export type Category = {
   heading: string;
   /** The lead paragraph under the H1. */
   sub: string;
+  /**
+   * The texture behind this category's hero band, and behind the hero of every
+   * service page in it.
+   *
+   * Here rather than on the route, so a service page cannot pick a different
+   * texture from its own category: it reads this field through
+   * `getCategory(service.category)`. See components/ui/HeroTexture.tsx for what
+   * each name draws. The homepage is not a category and keeps `circuit`.
+   */
+  texture: HeroTextureName;
   /** What is going wrong in his week, at category altitude. Minimum three. */
   symptoms: AtLeastThree<string>;
   /** The same business with this whole area fixed. Minimum three. */
@@ -61,6 +73,9 @@ export const categories: readonly Category[] = [
     eyebrow: "Websites",
     heading: "A website that brings in work, not just one that looks right.",
     sub: "A site is not a brochure. It is the thing standing between someone searching for what you do and someone booked in your calendar. These are the pieces that make it do that job.",
+    // A page, drawn before it is built: the dot grid and the crosshairs at the
+    // majors are the same lattice the x-ray lens in the hero measures.
+    texture: "blueprint",
     symptoms: [
       "Someone asks for your website and you send them your Facebook page instead.",
       "It opens in six seconds on a phone. They're back on Google before it finishes.",
@@ -96,6 +111,9 @@ export const categories: readonly Category[] = [
     eyebrow: "Get found",
     heading: "Be the business they find first.",
     sub: "Nobody scrolls. They call one of the first three names they see, and the one they pick is usually the one with the most reviews. This is the work that puts you in that set.",
+    // Territory. Contour lines are a map of somewhere without being a map of
+    // anywhere — which is the whole problem this category is about.
+    texture: "contour",
     symptoms: [
       "You've done four hundred jobs and have thirty-one Google reviews. The guy with nine is above you on the map.",
       "You're 12th in the map pack for the thing you do best, in the town you live in.",
@@ -126,6 +144,9 @@ export const categories: readonly Category[] = [
     eyebrow: "AI & automation",
     heading: "AI that does the work nobody has time for.",
     sub: "Not a chatbot bolted to your homepage. The specific jobs that go undone because you are on a roof: answering the 8:40pm lead, texting back the call you missed, chasing the quote nobody chased.",
+    // The circuit ruling, with pulses running along it: something is happening
+    // on this page's behalf while nobody is watching.
+    texture: "signal",
     symptoms: [
       "A quote request lands at 8:40pm. You answer it at 6:30am. They already booked someone.",
       "You missed four calls yesterday and you don't know who any of them were.",

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { runMarkController } from "@/lib/markController";
 import { useInView } from "@/lib/useInView";
 
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
@@ -30,6 +31,11 @@ const PULSE_START_MS = 2600;
  * from dark to dark — inside the 2–4s the effect is specified at.
  */
 const PULSE_HOLD_MS = 1300;
+
+/** How often a signal pulse sets off, and how long one takes end to end.
+ *  The travel time is `--dur-signal-run` in app/globals.css. */
+const SIGNAL_EVERY_MS = 1500;
+const SIGNAL_RUN_MS = 2600;
 
 /**
  * Where the ambient pulses fire.
@@ -69,16 +75,36 @@ const PULSE_CELLS: readonly PulseCell[] = [
 ];
 
 /**
- * The hero grid, alive: lit near the cursor, and pulsing on its own otherwise.
+ * Where the /ai-automation signal pulses run.
  *
- * Two layers, one listener.
+ * `cx` / `cy` are the integer cell coordinates of the start, on the same lattice
+ * as the ambient cells — so a pulse begins at an intersection of the ruling and
+ * travels along one of its lines rather than floating between two. `run` is how
+ * far, in rem, and may be negative to send it the other way.
+ *
+ * Four of them, two per axis, at distances that are not multiples of each other,
+ * so two pulses that happen to set off together do not arrive together.
+ */
+const SIGNALS: readonly { axis: "x" | "y"; cx: number; cy: number; run: number }[] = [
+  { axis: "x", cx: -4, cy: -3, run: 20 },
+  { axis: "y", cx: 2, cy: -4, run: 12 },
+  { axis: "x", cx: 3, cy: -1, run: -16 },
+  { axis: "y", cx: -2, cy: -4, run: 16 },
+];
+
+/**
+ * The hero texture, alive: lit near the cursor, and pulsing on its own otherwise.
+ *
+ * Three layers, one listener, two timers.
  *
  * **The cursor spotlight** is the Tier 1 interactive background from
  * CONTENT_TODO.md, and the constraints recorded there are the whole design: no
  * canvas, no WebGL, no JavaScript animation loop. The only handler is a
  * rAF-throttled `pointermove` that writes two custom properties; the paint is
- * entirely CSS (`trace-grid-lit` masks a copy of the grid lines to a circle
- * centered on those two values).
+ * entirely CSS (`texture-lit` masks a bright copy of the texture to a circle
+ * centered on those two values). What that bright copy is made of is the
+ * caller's business — a background for the two grid textures, an SVG child for
+ * the contour one — which is what lets one component serve all four.
  *
  * **The ambient pulses** are twelve cells that brighten and fade in an order
  * nobody can predict. They are what the effect looks like on a phone, where
@@ -89,31 +115,47 @@ const PULSE_CELLS: readonly PulseCell[] = [
  * rest of this site would do, and that version cost 0.6s of simulated mobile
  * LCP. The long version of why is on `grid-cell` in app/globals.css; the short
  * version is that a running compositable animation promotes its element to a
- * layer, the promotion lands inside the window the metric accounts for, and no
- * amount of deferring moves it off that path. So the cells are inert and a
- * `setInterval` lights one at a time through a transition. It is more
- * JavaScript than this site likes and it is the version that measured right.
+ * layer, the promotion lands inside the window the metric is accounting for, and
+ * no amount of deferring moves it off that path. So the cells are inert and a
+ * `setInterval` lights one at a time through a transition. It is more JavaScript
+ * than this site likes and it is the version that measured right.
  *
- * Two things this component coordinates, then. The pulse timer, above; and the
- * handoff — while a fine pointer is moving in the hero, `data-pointer-active`
- * fades the pulses out and the spotlight leads. Two seconds of stillness, or
- * the pointer leaving, brings them back. On a coarse pointer no pointer
- * listener is attached at all and the pulses simply run.
+ * **The signal pulses** are /ai-automation only, and they are the same pattern
+ * again: four inert dashes sitting on the ruling, one of which is sent along a
+ * line every second and a half. They do not stand down for the pointer, because
+ * they are part of that page's texture rather than a stand-in for a cursor.
  *
- * Under `prefers-reduced-motion: reduce` neither layer does anything: neither
- * the listener nor the timer is ever started — not merely ignored — and the CSS
- * hides the pulse layer outright. Offscreen, the timer stops and every lit cell
- * is cleared; the wrapper does not use `data-pause-offscreen` because there is
- * no CSS animation left for it to pause.
+ * The handoff is the third thing this coordinates: while a fine pointer is moving
+ * in the hero, `data-pointer-active` fades the ambient cells out and the spotlight
+ * leads. Two seconds of stillness, or the pointer leaving, brings them back. On a
+ * coarse pointer no pointer listener is attached at all and they simply run.
+ *
+ * Under `prefers-reduced-motion: reduce` nothing here does anything: no listener
+ * and no timer is ever started — not merely ignored — and the CSS hides both
+ * pulse layers outright. Offscreen, the timers stop and everything lit is
+ * cleared; the wrapper does not use `data-pause-offscreen` because there is no
+ * CSS animation left for it to pause.
  *
  * The listener goes on the `<section>` rather than on either layer, because both
  * are inside a `pointer-events: none` wrapper and never see a pointer. Their
  * boxes are identical — all three resolve to the section's padding box — so the
  * section's rect is the right frame of reference for a position inside them.
  */
-export function GridSpotlight() {
+export function GridSpotlight({
+  litClassName = "",
+  signals = false,
+  children,
+}: {
+  /** Classes that draw the bright copy of this page's texture. */
+  litClassName?: string;
+  /** Render the four travelling pulses. /ai-automation only. */
+  signals?: boolean;
+  /** The bright copy, where it is markup rather than a background. */
+  children?: React.ReactNode;
+}) {
   const litRef = useRef<HTMLDivElement | null>(null);
   const pulseRef = useRef<HTMLDivElement | null>(null);
+  const signalRef = useRef<HTMLDivElement | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const { ref: pulsesInViewRef, inView } = useInView<HTMLDivElement>();
 
@@ -124,45 +166,35 @@ export function GridSpotlight() {
     const layer = pulseRef.current;
     if (!layer) return;
 
-    /*
-     * One cell at a time, chosen at random from the ones that are currently
-     * dark. Picking from the dark set rather than from all of them is what
-     * stops a cell being re-lit while it is still fading out, which would look
-     * like a flicker rather than a pulse.
-     */
-    const tick = () => {
-      const dark = Array.from(
-        layer.querySelectorAll<HTMLElement>("[data-cell]:not([data-lit])"),
-        // `offsetParent` is null for a `display: none` element, which is how
-        // the four `lg`-only cells take themselves out of the running on a
-        // phone rather than being picked and then lighting nothing.
-      ).filter((cell) => cell.offsetParent !== null);
-
-      const cell = dark[Math.floor(Math.random() * dark.length)];
-      if (!cell) return;
-
-      cell.dataset.lit = "";
-      window.setTimeout(() => delete cell.dataset.lit, PULSE_HOLD_MS);
-    };
-
-    let interval = 0;
-    const start = window.setTimeout(() => {
-      tick();
-      interval = window.setInterval(tick, PULSE_EVERY_MS);
-    }, PULSE_START_MS);
-
-    return () => {
-      window.clearTimeout(start);
-      window.clearInterval(interval);
-      // Leave nothing lit behind: the timeouts that would have cleared them
-      // are about to be irrelevant, and a cell frozen at full opacity is the
-      // one state this effect must never end in.
-      for (const cell of layer.querySelectorAll<HTMLElement>("[data-lit]")) {
-        delete cell.dataset.lit;
-      }
-    };
+    return runMarkController({
+      layer,
+      selector: "[data-cell]",
+      attribute: "lit",
+      everyMs: PULSE_EVERY_MS,
+      holdMs: PULSE_HOLD_MS,
+      startMs: PULSE_START_MS,
+    });
   }, [inView, prefersReducedMotion]);
 
+  // ----------------------------------------------------------- the signals
+  useEffect(() => {
+    if (prefersReducedMotion || !inView || !signals) return;
+
+    const layer = signalRef.current;
+    if (!layer) return;
+
+    return runMarkController({
+      layer,
+      selector: "[data-signal]",
+      attribute: "run",
+      everyMs: SIGNAL_EVERY_MS,
+      // Cleared as the travel animation ends, so the next pick can use it again.
+      holdMs: SIGNAL_RUN_MS,
+      startMs: PULSE_START_MS,
+    });
+  }, [inView, prefersReducedMotion, signals]);
+
+  // ---------------------------------------------------------- the spotlight
   useEffect(() => {
     const layer = litRef.current;
     if (!layer || prefersReducedMotion) return;
@@ -185,7 +217,7 @@ export function GridSpotlight() {
       frame = 0;
       layer.style.setProperty("--spot-x", `${x}px`);
       layer.style.setProperty("--spot-y", `${y}px`);
-      // Fades the layer in the first time the pointer arrives, so the grid is
+      // Fades the layer in the first time the pointer arrives, so the texture is
       // plain until it is actually being pointed at.
       layer.dataset.lit = "";
     };
@@ -223,10 +255,16 @@ export function GridSpotlight() {
 
   return (
     <>
-      <div ref={litRef} className="trace-grid-lit absolute inset-0" />
+      <div
+        ref={litRef}
+        className={`texture-lit absolute inset-0 ${litClassName}`.trim()}
+      >
+        {children}
+      </div>
 
       {/* Two refs on one node: `pulseRef` for the controller to reach the
-          cells, and the in-view ref that stops it when the hero is gone. */}
+          cells, and the in-view ref that stops both timers when the hero is
+          gone. */}
       <div
         ref={(node) => {
           pulseRef.current = node;
@@ -243,6 +281,27 @@ export function GridSpotlight() {
           />
         ))}
       </div>
+
+      {signals && (
+        <div ref={signalRef} className="signal-layer absolute inset-0">
+          {SIGNALS.map((pulse) => (
+            <span
+              key={`${pulse.axis}${pulse.cx}:${pulse.cy}`}
+              data-signal=""
+              className={`signal-pulse ${
+                pulse.axis === "x" ? "signal-pulse-x" : "signal-pulse-y"
+              }`}
+              style={
+                {
+                  "--cx": pulse.cx,
+                  "--cy": pulse.cy,
+                  "--run": `${pulse.run}rem`,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
+      )}
     </>
   );
 }

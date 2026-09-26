@@ -1,10 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { heroVisuals } from "@/content/heroVisuals";
-import { useInView } from "@/lib/useInView";
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const { header, messages } = heroVisuals.aiAutomation;
 
@@ -21,12 +17,17 @@ const RESET_MS = 2800;
  * The whole loop as a list of frames, built once.
  *
  * A frame is "how many messages are showing, are the dots up, and for how
- * long". Precomputing it means the component is a single index advancing on a
- * single timeout, rather than a chain of nested `setTimeout`s that each have to
- * be cleaned up — and it means the loop's total length is something you can
- * read off the data instead of adding up by hand.
+ * long". Precomputing it means the loop is a single index advancing on a single
+ * timeout, rather than a chain of nested `setTimeout`s that each have to be
+ * cleaned up — and it means the loop's total length is something you can read
+ * off the data instead of adding up by hand.
+ *
+ * The frames live here, next to the markup they describe, but the index into them
+ * belongs to AiAutomationVisual: the sphere beside the phone has to flare on the
+ * same beat a message arrives on, and two components cannot share a beat by each
+ * running their own timer.
  */
-type Frame = {
+export type Frame = {
   count: number;
   /**
    * Which side the dots are on, or `null` for no dots.
@@ -39,7 +40,7 @@ type Frame = {
   ms: number;
 };
 
-const FRAMES: readonly Frame[] = messages.flatMap((message, index) => {
+export const FRAMES: readonly Frame[] = messages.flatMap((message, index) => {
   const frames: Frame[] = [];
   /*
    * No runtime guard against a `system` line asking for dots — the compiler
@@ -56,6 +57,12 @@ const FRAMES: readonly Frame[] = messages.flatMap((message, index) => {
   });
   return frames;
 });
+
+/** The frame shown under `prefers-reduced-motion`: the whole thread, at rest. */
+export const FINAL_FRAME: Pick<Frame, "count" | "typing"> = {
+  count: messages.length,
+  typing: null,
+};
 
 function Bubble({ side, text }: { side: "system" | "out" | "in"; text: string }) {
   if (side === "system") {
@@ -82,11 +89,11 @@ function Bubble({ side, text }: { side: "system" | "out" | "in"; text: string })
 }
 
 /**
- * /ai-automation — the phone thread.
+ * /ai-automation — the phone.
  *
  * A missed call at 8:41pm, answered, qualified and booked without anyone
- * touching it. The thread plays itself out with typing dots between messages,
- * pauses on the booking, and starts again.
+ * touching it. Presentational: it renders the frame it is given and owns no
+ * timer — see AiAutomationVisual for the loop.
  *
  * Each message animates in once, on mount, and the loop unmounts every message
  * when it restarts — which is what replays the entrance without a single
@@ -95,43 +102,27 @@ function Bubble({ side, text }: { side: "system" | "out" | "in"; text: string })
  *
  * Nothing in here is a real conversation, and the caption on the figure says
  * so. See the header of content/heroVisuals.ts.
- *
- * Under `prefers-reduced-motion: reduce` the whole thread renders at once with
- * no dots and no timer. Offscreen, the timer stops.
  */
-export default function PhoneThread() {
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const { ref, inView } = useInView<HTMLDivElement>();
-
-  const [frame, setFrame] = useState(0);
-
-  const current: Pick<Frame, "count" | "typing"> = prefersReducedMotion
-    ? { count: messages.length, typing: null }
-    : FRAMES[frame];
-
-  useEffect(() => {
-    if (prefersReducedMotion || !inView) return;
-    const id = setTimeout(
-      () => setFrame((index) => (index + 1) % FRAMES.length),
-      FRAMES[frame].ms,
-    );
-    return () => clearTimeout(id);
-  }, [frame, inView, prefersReducedMotion]);
-
+export function PhoneThread({
+  frame,
+  paused,
+}: {
+  frame: Pick<Frame, "count" | "typing">;
+  /** Stops the typing dots, which are a CSS keyframe loop and not on a timer. */
+  paused: boolean;
+}) {
   return (
     <div
-      ref={ref}
-      /* Stops the typing dots as well as the frame timer. Gating the timer in
-         JavaScript was not enough: the dots are a CSS keyframe loop, so the
-         last bubble left one running for the rest of the page. Set here rather
-         than through `data-pause-offscreen`, because this component mounts
-         after MotionRuntime has already collected those — see XrayLens. */
-      data-paused={inView ? undefined : ""}
-      className="flex h-full w-full items-center justify-center p-3"
+      data-paused={paused ? "" : undefined}
+      /* Sized to the handset, not to whatever is left over. With `w-full` here
+         the wrapper ate the remaining row and centred the phone inside it, which
+         put the core hard left with a gap between them instead of the three
+         pieces reading as one object. */
+      className="flex h-full min-h-0 justify-center"
     >
       {/* The handset. A rounded frame with a pill for the speaker — enough to
           read as a phone without drawing a specific one. */}
-      <div className="flex h-full w-full max-w-[15rem] flex-col overflow-hidden rounded-[1.25rem] border border-line-strong bg-void p-1.5">
+      <div className="flex h-full w-[13.5rem] max-w-full flex-col overflow-hidden rounded-[1.25rem] border border-line-strong bg-void p-1.5">
         <div className="flex items-center justify-center py-1">
           <span className="h-1 w-10 rounded-full bg-line-strong" />
         </div>
@@ -142,15 +133,15 @@ export default function PhoneThread() {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col justify-end gap-1.5 px-2 pb-2 pt-2">
-          {messages.slice(0, current.count).map((message) => (
+          {messages.slice(0, frame.count).map((message) => (
             <Bubble key={message.text} side={message.side} text={message.text} />
           ))}
 
-          {current.typing !== null && (
+          {frame.typing !== null && (
             <span
               aria-hidden="true"
               className={`flex w-fit gap-1 rounded-card px-2 py-2 ${
-                current.typing === "out"
+                frame.typing === "out"
                   ? "self-end bg-signal-wash"
                   : "self-start bg-surface-raised"
               }`}

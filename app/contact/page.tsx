@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { AuditForm } from "@/components/contact/AuditForm";
 import { Section } from "@/components/ui/Section";
-import { TraceGrid } from "@/components/ui/TraceGrid";
+import { HeroTexture } from "@/components/ui/HeroTexture";
 import { audit } from "@/content/audit";
 import { fillOwner, site } from "@/content/site";
 
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
  */
 export default function ContactPage() {
   return (
-    <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
+    <Section tone="void" size="hero" divider={false} bleedTop overlay={<HeroTexture />}>
       <div className="max-w-prose-tight">
         <h1 className="text-h1 text-ink">{audit.form.heading}</h1>
         <p className="mt-6 text-lead text-ink-muted">{audit.form.intro}</p>

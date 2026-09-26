@@ -1,11 +1,12 @@
 import { DecryptWord } from "@/components/motion/DecryptWord";
+import { ScanSweep } from "@/components/motion/ScanSweep";
 import { TypeOn } from "@/components/motion/TypeOn";
 import { IndustryMarquee } from "@/components/sections/IndustryMarquee";
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Section } from "@/components/ui/Section";
 import { SystemPanel } from "@/components/ui/SystemPanel";
-import { TraceGrid } from "@/components/ui/TraceGrid";
+import { HeroTexture } from "@/components/ui/HeroTexture";
 import type { HeadingLine } from "@/content/home";
 import { home } from "@/content/home";
 import { site } from "@/content/site";
@@ -102,9 +103,15 @@ function HeadingLineContent({ line }: { line: HeadingLine }) {
  * way an opacity-0 start would, and it was measured before and after.
  * ---------------------------------------------------------------------------
  *
- * The hero fills the viewport and distributes its content rather than stacking
- * it at the top: the main block grows to take the slack, and the trust line and
- * industry strip are pushed to the bottom edge.
+ * The hero fills the viewport, but its content is TOP-ALIGNED under a fixed
+ * `size="hero"` padding, and the slack goes below — `mt-auto` on the trust block
+ * pushes that and the industry strip to the bottom edge.
+ *
+ * It used to center the content instead, which quietly made the gap between the
+ * header and the eyebrow a function of the visitor's window height: 129px at
+ * 1440x900, 219px at 1440x1080, 399px on a tall monitor. A hero's opening gap is
+ * a design decision, so it is now one number in one token — see
+ * `--spacing-hero-top` in app/globals.css, which every hero on the site uses.
  *
  * `min-h-svh`, not `min-h-screen`: `svh` is the *small* viewport height, the
  * one that excludes mobile browser chrome. `100vh` on a phone is taller than
@@ -115,19 +122,19 @@ export function Hero() {
   return (
     <Section
       tone="void"
-      size="lg"
+      size="hero"
       divider={false}
       bleedTop
       overlay={
         <>
           <AmbientGlow />
-          <TraceGrid spotlight />
+          <HeroTexture spotlight />
         </>
       }
       className="flex min-h-svh flex-col"
       contentClassName="flex flex-1 flex-col"
     >
-      <div className="grid flex-1 content-center gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
+      <div className="grid gap-14 lg:grid-cols-2 lg:items-start lg:gap-16">
         <div>
           {/* Not the shared `Eyebrow`: this one types itself on, which needs
               three boxes rather than one. Same type treatment. */}
@@ -135,7 +142,11 @@ export function Hero() {
             <TypeOn text={hero.eyebrow} />
           </p>
 
-          <h1 className="mt-6 text-h1 text-ink">
+          {/* `relative` so the scan line can be positioned to this block — and
+              deliberately NOT `overflow-hidden`, because each line's mask is
+              padded past the text box for descenders. The line fades in above the
+              heading and out below it instead of being clipped. */}
+          <h1 className="relative mt-6 text-h1 text-ink">
             {hero.headingLines.map((line, index) => (
               <span key={line.text} className="line-mask">
                 <span
@@ -150,6 +161,8 @@ export function Hero() {
                 </span>
               </span>
             ))}
+
+            <ScanSweep />
           </h1>
 
           <p className="mt-7 max-w-prose-tight text-lead text-ink-muted">

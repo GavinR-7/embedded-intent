@@ -7,7 +7,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { FaqList } from "@/components/ui/FaqList";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
 import { SystemPanel } from "@/components/ui/SystemPanel";
-import { TraceGrid } from "@/components/ui/TraceGrid";
+import { HeroTexture } from "@/components/ui/HeroTexture";
 import { audit } from "@/content/audit";
 import { categoryHref, getCategory } from "@/content/categories";
 import { faqsForService } from "@/content/faq";
@@ -77,7 +77,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
 
   return (
     <>
-      <Section tone="void" size="lg" divider={false} bleedTop overlay={<TraceGrid />}>
+      <Section tone="void" size="hero" divider={false} bleedTop overlay={<HeroTexture texture={category.texture} spotlight />}>
         {/* Up one level, to the category this service belongs to — not to the
             homepage catalogue. A reader who came in on a service page and wants
             the alternatives wants the other three things in the same category,
@@ -89,7 +89,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           ← {category.label}
         </Link>
 
-        <div className="mt-8 grid gap-12 lg:grid-cols-5 lg:gap-16">
+        <div className="mt-8 grid gap-12 lg:grid-cols-5 lg:items-start lg:gap-16">
           <div className="lg:col-span-3">
             <Eyebrow>{servicePage.eyebrow}</Eyebrow>
 
@@ -107,8 +107,14 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             </div>
           </div>
 
-          {/* The flow panel: the same component as the homepage hero, fed
-              this service's own steps. What actually happens, in order. */}
+          {/* The flow panel, and nothing else: the same component as the
+              homepage hero, fed this service's own steps. What actually
+              happens, in order.
+
+              The three facts about the engagement used to sit under it, which
+              made this column roughly twice the height of the copy beside it
+              and left a large empty area at the bottom left of every one of the
+              eleven service pages. They are now the full-width strip below. */}
           <div className="lg:col-span-2">
             <SystemPanel
               reveal
@@ -122,29 +128,39 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
               }))}
               footerChain={service.outcomeChain}
             />
-
-            <dl data-reveal="" className="mt-5 grid gap-px overflow-hidden rounded-card border border-line">
-              <div className="hairline bg-void p-6">
-                <dt className="text-eyebrow font-mono uppercase text-signal">
-                  {servicePage.forWhomHeading}
-                </dt>
-                <dd className="mt-3 text-label text-ink-muted">{service.forWhom}</dd>
-              </div>
-              <div className="hairline bg-void p-6">
-                <dt className="text-eyebrow font-mono uppercase text-signal">
-                  {servicePage.timelineHeading}
-                </dt>
-                <dd className="mt-3 text-label text-ink-muted">{service.timeline}</dd>
-              </div>
-              <div className="hairline bg-void p-6">
-                <dt className="text-eyebrow font-mono uppercase text-signal">
-                  {servicePage.outcomeHeading}
-                </dt>
-                <dd className="mt-3 text-label text-ink">{service.outcome}</dd>
-              </div>
-            </dl>
           </div>
         </div>
+
+        {/*
+          Who it's for, how long, what you end up with — three facts, three
+          equal columns, the full width of the hero.
+
+          Stacked on mobile and 3-up from `sm`, which is also why it is a single
+          grid with `sm:grid-cols-3` rather than the `gridShape` helper: the
+          count is fixed at three by the type, so there is no odd-last-item case
+          to solve. Each cell draws its own hairline; see `hairline` in
+          app/globals.css for why the container is transparent.
+        */}
+        <dl className="mt-14 grid gap-px overflow-hidden rounded-card border border-line sm:grid-cols-3">
+          <div data-reveal="" className="hairline lift spotlight bg-void p-7">
+            <dt className="text-eyebrow font-mono uppercase text-signal">
+              {servicePage.forWhomHeading}
+            </dt>
+            <dd className="mt-3 text-label text-ink-muted">{service.forWhom}</dd>
+          </div>
+          <div data-reveal="" className="hairline lift spotlight bg-void p-7">
+            <dt className="text-eyebrow font-mono uppercase text-signal">
+              {servicePage.timelineHeading}
+            </dt>
+            <dd className="mt-3 text-label text-ink-muted">{service.timeline}</dd>
+          </div>
+          <div data-reveal="" className="hairline lift spotlight bg-void p-7">
+            <dt className="text-eyebrow font-mono uppercase text-signal">
+              {servicePage.outcomeHeading}
+            </dt>
+            <dd className="mt-3 text-label text-ink">{service.outcome}</dd>
+          </div>
+        </dl>
       </Section>
 
       {/* What's happening now. Scenes from the reader's week, not properties

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CategoryVisual } from "@/components/category/CategoryVisual";
 import { BeforeAfterTable } from "@/components/ui/BeforeAfterTable";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { HeroTexture } from "@/components/ui/HeroTexture";
 import { FaqList } from "@/components/ui/FaqList";
 import { IconTile } from "@/components/ui/icons";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
@@ -56,13 +57,26 @@ export function CategoryPage({ slug }: { slug: CategorySlug }) {
         Nothing in the hero reveals: the H1 is the largest paint on the page and
         has to be there on the first frame.
 
-        No `TraceGrid` overlay either, and that is the difference between this
-        hero and every other one on the site. The circuit texture is the generic
-        treatment for the top of a page; here it is replaced by a drawing of
-        what this particular category actually does. One of the three, per page.
+        Two things make this hero this category's rather than the site's. The
+        band texture is the category's own — a blueprint, contours or a live
+        circuit, from `texture` on content/categories.ts — instead of the generic
+        circuit ruling every other hero uses. And beside the copy is a drawing of
+        what this category actually does. One of the three, per page, and a
+        service page inherits the texture but not the drawing.
       */}
-      <Section tone="void" size="lg" divider={false} bleedTop>
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+      <Section
+        tone="void"
+        size="hero"
+        divider={false}
+        bleedTop
+        overlay={<HeroTexture texture={category.texture} spotlight />}
+      >
+        {/* `items-start`, not `items-center`. Centring the two columns against each
+            other made the gap above the eyebrow a function of how tall this
+            page's illustration happens to be — 101px on /websites, 111px on
+            /get-found. The hero's opening gap is one token, and it cannot be that
+            if a drawing beside it can move it. */}
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
           <div className="max-w-prose-tight">
             <Eyebrow>{category.eyebrow}</Eyebrow>
 
