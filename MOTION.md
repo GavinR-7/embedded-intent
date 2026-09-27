@@ -325,6 +325,19 @@ So: check `pgrep -c -f chrome-headless-shell` and `/proc/loadavg` before
 believing a Lighthouse number, and take the median of at least five runs. The
 harness now kills the process group.
 
+### The fix pass, four routes (Lighthouse mobile, 5-run median)
+
+| Route | perf | a11y | BP | LCP | CLS | TBT |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/company` | 98 | 100 | 100 | 2.01s | 0 | 120ms |
+| `/faq` | 99 | 100 | 100 | 1.85s | 0 | 120ms |
+| `/work/above-all-tent-rentals` | 98 | 100 | 100 | 2.31s | 0 | 66ms |
+| `/ai-automation` | 98 | 100 | 100 | 1.86s | 0 | 124ms |
+
+`/work/above-all-tent-rentals` carries three photographic captures of a client
+site and still lands at 98 with a CLS of 0 — the frames declare their aspect
+ratios and the images their intrinsic sizes, so nothing moves while they arrive.
+
 ### Phase 8, five routes (Lighthouse mobile, 5-run median)
 
 | Route | perf | a11y | BP | LCP | CLS | TBT |
