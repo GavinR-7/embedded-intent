@@ -34,7 +34,18 @@ app/                    Routes. Every file here is a URL or a route convention.
   work/[slug]/          Case study detail. Branches on the CaseStudy union.
   globals.css           The design system. Tokens, base layer, project utilities.
   robots.ts             Generates /robots.txt. Currently blocks everything.
+  sitemap.ts            Generates /sitemap.xml from the content modules, so a
+                        new service is in it without anyone remembering.
+  manifest.ts           Generates /manifest.webmanifest.
+  not-found.tsx         The 404, in the site's own style, with the three
+                        categories as shortcuts.
+  opengraph-image.tsx   The default social card. The three category routes each
+                        have one of their own that shadows it for that segment.
 components/
+  brand/                The logo mark, and the social card built from it. Shared
+                        by the header, the icons and the OG routes, so the mark
+                        has one definition rather than five.
+  seo/                  The JSON-LD <script> wrapper.
   layout/               Shell chrome used on every page (Header, Footer).
   sections/             Homepage sections. One per section, in page order.
   category/             The shared body of all three category pages, plus the
@@ -48,6 +59,22 @@ components/
                         Small and deliberately option-poor.
 lib/                    Framework-agnostic helpers (hooks, utilities).
   auditRequest.ts       Zod schema + email formatting. Server-only by design.
+  seo.ts                pageMetadata(): canonical, Open Graph and Twitter tags
+                        for one route. `openGraph` does NOT merge with a parent
+                        layout's, so a route that writes its own partial object
+                        silently drops siteName, locale and type — which is
+                        what five routes were doing.
+  jsonLd.ts             Structured data. Read the header: schema.org invites
+                        exactly the fabrication the rest of this repo refuses,
+                        and there are no ratings, review counts or invented
+                        addresses in it.
+  ogTheme.ts            The palette as literal sRGB, for satori, which has no
+                        stylesheet and cannot read a custom property. Every
+                        value was read back out of a real browser.
+  markController.ts     One element at a time, lit at random, on a timer. Used
+                        by the ambient grid cells, the /ai-automation signal
+                        pulses and the /websites crosshairs — all three are
+                        forbidden a CSS loop for the reason in MOTION.md.
   grid.ts               Column shapes chosen from an item count, so no grid
                         leaves its last card alone on a row — or an empty cell
                         beside it, which is now visible since grids draw their
@@ -85,6 +112,7 @@ content/                Typed content modules. The single source of truth.
   workPage.ts           Static labels for /work and /work/[slug].
   audit.ts              The audit offer. Shared by the homepage close, the
                         service pages and the Phase 6 contact page.
+  notFound.ts           The 404's copy.
 public/                 Static assets served at the root.
 ```
 
@@ -237,6 +265,13 @@ If any is missing the endpoint returns **500 and sends nothing**. It does not
 log a warning and return success — a misconfigured deploy that silently eats
 every lead while showing a thank-you page is the worst outcome this form has.
 
+One more variable is read, and it is not ours: `VERCEL`, set by the platform.
+`app/layout.tsx` mounts Vercel Analytics and Speed Insights only when it is
+present, because both load scripts from first-party paths that exist only on
+Vercel's edge. Anywhere else — including `next start` on a developer's machine —
+those are 404s, which means a failed request in every trace and a Best Practices
+penalty in every Lighthouse run. See `ON_VERCEL` there.
+
 ## Server and client components
 
 Everything is a Server Component unless it needs state, effects or browser APIs.
@@ -334,4 +369,15 @@ Enforced from Phase 1, not retrofitted:
 
 The site is **blocked from search engines in two places** and both must be
 reverted together at launch — `app/robots.ts` and the `robots` key in
-`app/layout.tsx`'s metadata. See CONTENT_TODO.md.
+`app/layout.tsx`'s metadata. robots.txt stops *crawling*; the meta tag stops
+*indexing*, which a URL can suffer from an external link without ever being
+crawled. Removing one leaves the site half-hidden.
+
+Everything else for launch is built and inert: the sitemap is complete and
+correct, the canonical URLs point at the real host, the OG cards render, and the
+structured data is in the HTML. None of it is being read yet, which is the
+intended state.
+
+`LAUNCH.md` is the ordered checklist — DNS, mail in both directions, the three
+environment variables, and how to verify each step. The crawler block comes off
+in step 7 of 8, *after* a real lead has been through the form into a real inbox.

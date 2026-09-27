@@ -11,6 +11,7 @@ import { site } from "@/content/site";
 import { caseStudies, getCaseStudy, launchedStatusLine } from "@/content/work";
 import { workPage } from "@/content/workPage";
 import { gridShape } from "@/lib/grid";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamicParams = false;
 
@@ -26,17 +27,14 @@ export async function generateMetadata(
 
   if (!study) return {};
 
-  return {
+  return pageMetadata({
     title: study.client,
     description: study.summary,
-    alternates: { canonical: `/work/${study.slug}` },
-    openGraph: {
-      title: `${study.client} — ${site.name}`,
-      description: study.summary,
-      url: `/work/${study.slug}`,
-      type: "article",
-    },
-  };
+    path: `/work/${study.slug}`,
+    // A case study is a piece of writing about one engagement, not a section of
+    // the site — the one route here where `article` is the honest type.
+    type: "article",
+  });
 }
 
 export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {

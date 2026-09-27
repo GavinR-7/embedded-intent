@@ -28,10 +28,18 @@ These must be resolved before the domain is pointed at the site.
   number in the footer should be the one wired into it, or the demo
   contradicts the pitch — and Google Voice may not support the integration.
 
-- [ ] **Favicon and app icons.** `app/favicon.ico` is still the Next.js default.
+- [x] ~~**Favicon and app icons.**~~ Resolved 2026-09-27. `public/icon.svg` is the
+  chip mark; the three PNGs beside it are rendered from it rather than redrawn,
+  and `app/manifest.ts` and the `icons` block in `app/layout.tsx` both point at
+  those exact files. `app/favicon.ico` is still the Next.js default and is still
+  served to browsers that ask for `/favicon.ico` by name — **replace it** by
+  exporting `public/icon.svg` at 32x32 and converting. Low priority: every
+  modern browser prefers the SVG.
 
-- [ ] **Default OG image.** Nothing set; links shared to SMS or Facebook
-  currently preview as bare text. (Wired up properly in Phase 8.)
+- [x] ~~**Default OG image.**~~ Resolved 2026-09-27. `app/opengraph-image.tsx`
+  covers every route, with the three category routes shadowing it. Verify the
+  cards on the real domain after launch — `og:image` resolves against
+  `metadataBase`, so they cannot be checked properly from localhost.
 
 - [ ] **🚨 Above All Tent Rentals is at PageSpeed 64 mobile / 84 desktop.**
   Flagged in `AGENCY_SITE_COPY.md`. This got sharper, not softer: it is now the
@@ -305,9 +313,17 @@ site that cannot be delivered when someone taps it.
 
 ---
 
-## Launch checklist (Phase 8 prints this — do not execute early)
+## Launch checklist
 
-1. Revert `robots.ts` and the layout `robots` metadata
-2. Point embeddedintent.com at the Vercel project
-3. Submit the sitemap to Google Search Console
-4. Create the Google Business Profile
+**Moved to `LAUNCH.md`** (written 2026-09-27). It is the ordered version of the
+list that used to be here, with the DNS records, the three environment
+variables, and how to verify each step.
+
+The ordering changed in one important way while it was being written. The
+crawler block comes off **last**, after a real lead has been through the form
+into a real inbox — not first. A site indexed while its form is silently
+dropping submissions is a worse outcome than a site indexed a day late.
+
+Still open, and not in LAUNCH.md because it is not a launch-day step:
+
+- [ ] Create the Google Business Profile.

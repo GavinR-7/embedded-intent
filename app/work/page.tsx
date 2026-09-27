@@ -9,12 +9,13 @@ import { site } from "@/content/site";
 import { caseStudies, launchedStatusLine } from "@/content/work";
 import { workPage } from "@/content/workPage";
 import { gridShape } from "@/lib/grid";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Work",
   description: workPage.indexBody,
-  alternates: { canonical: "/work" },
-};
+  path: "/work",
+});
 
 /**
  * The work index.

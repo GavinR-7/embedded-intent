@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
+import { ChipMark } from "@/components/brand/ChipMark";
 import { IconTile } from "@/components/ui/icons";
 import { activeMenuIndex, navMenus } from "@/content/nav";
 import { site } from "@/content/site";
@@ -39,24 +40,6 @@ const INDICATOR_WIDTH = 20;
  */
 const OPEN_DELAY_MS = 120;
 const CLOSE_DELAY_MS = 200;
-
-function ChipMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      aria-hidden="true"
-      className={className}
-    >
-      <rect x="5.5" y="5.5" width="13" height="13" rx="1.5" />
-      <rect x="10" y="10" width="4" height="4" fill="currentColor" stroke="none" />
-      <path d="M9 5.5V2.5M15 5.5V2.5M9 18.5v3M15 18.5v3M5.5 9h-3M5.5 15h-3M18.5 9h3M18.5 15h3" />
-    </svg>
-  );
-}
 
 export function Header() {
   const pathname = usePathname();

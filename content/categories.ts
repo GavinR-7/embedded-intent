@@ -22,6 +22,7 @@
  * ---------------------------------------------------------------------------
  */
 
+import type { IconName } from "@/components/ui/icons";
 import type { HeroTextureName } from "@/components/ui/HeroTexture";
 
 import type { FaqId } from "./faq";
@@ -49,6 +50,16 @@ export type Category = {
    * each name draws. The homepage is not a category and keeps `circuit`.
    */
   texture: HeroTextureName;
+  /**
+   * The category's icon, from the shared set.
+   *
+   * On the data rather than chosen at the call site, because more than one place
+   * now needs it — the 404 page's three shortcuts today, and anything else that
+   * lists categories tomorrow. A component picking an icon from a slug with a
+   * ternary is a mapping that exists in one file and has to be repeated in the
+   * next.
+   */
+  icon: IconName;
   /** What is going wrong in his week, at category altitude. Minimum three. */
   symptoms: AtLeastThree<string>;
   /** The same business with this whole area fixed. Minimum three. */
@@ -76,6 +87,7 @@ export const categories: readonly Category[] = [
     // A page, drawn before it is built: the dot grid and the crosshairs at the
     // majors are the same lattice the x-ray lens in the hero measures.
     texture: "blueprint",
+    icon: "browser",
     symptoms: [
       "Someone asks for your website and you send them your Facebook page instead.",
       "It opens in six seconds on a phone. They're back on Google before it finishes.",
@@ -114,6 +126,7 @@ export const categories: readonly Category[] = [
     // Territory. Contour lines are a map of somewhere without being a map of
     // anywhere — which is the whole problem this category is about.
     texture: "contour",
+    icon: "map",
     symptoms: [
       "You've done four hundred jobs and have thirty-one Google reviews. The guy with nine is above you on the map.",
       "You're 12th in the map pack for the thing you do best, in the town you live in.",
@@ -147,6 +160,7 @@ export const categories: readonly Category[] = [
     // The circuit ruling, with pulses running along it: something is happening
     // on this page's behalf while nobody is watching.
     texture: "signal",
+    icon: "gears",
     symptoms: [
       "A quote request lands at 8:40pm. You answer it at 6:30am. They already booked someone.",
       "You missed four calls yesterday and you don't know who any of them were.",

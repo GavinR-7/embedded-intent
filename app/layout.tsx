@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -51,6 +53,24 @@ export const metadata: Metadata = {
   },
   description: site.description,
 
+  /*
+   * Declared here rather than left to the app-directory file conventions.
+   *
+   * `app/icon.*` and `app/apple-icon.*` are served at hashed URLs, which is
+   * right for cache-busting and wrong for a manifest that has to name the same
+   * files by a stable path. These four live in public/, so app/manifest.ts and
+   * these tags point at exactly the same bytes. app/favicon.ico stays where it
+   * is for the browsers that still ask for /favicon.ico by name.
+   */
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/manifest.webmanifest",
+
   // ⚠️ PRE-LAUNCH ONLY — REMOVE BEFORE LAUNCH.
   // app/robots.ts asks crawlers not to *crawl* the site. This asks them not to
   // *index* it, which is a different thing: a URL discovered from an external
@@ -75,6 +95,29 @@ export const metadata: Metadata = {
  * the hiding rules simply never match and the whole page is visible.
  */
 const ARM_REVEALS = `(function(){try{document.documentElement.setAttribute("data-reveal-ready","")}catch(e){}})()`;
+
+/**
+ * Whether this build is being served by Vercel.
+ *
+ * ---------------------------------------------------------------------------
+ * The two beacons below are mounted only when it is, and the reason is not
+ * taste. Both scripts are served from first-party paths that only exist on
+ * Vercel's edge — `/_vercel/insights/script.js` and
+ * `/_vercel/speed-insights/script.js`. Anywhere else, including `next start` on
+ * this machine, those are 404s: a failed request in every trace, a console error
+ * against Best Practices, and a number in the Lighthouse runs below that is not
+ * the number the site actually gets.
+ *
+ * `VERCEL` is set by the platform during build and at runtime. Read in a Server
+ * Component, so it is resolved when the page is rendered and no part of it
+ * reaches the client bundle on any other host.
+ *
+ * What they cost where they do run: about 2.1 kB gzipped each for the wrappers
+ * (measured from the packages' own `dist/*.mjs`), plus the two scripts, fetched
+ * after the page is interactive.
+ * ---------------------------------------------------------------------------
+ */
+const ON_VERCEL = Boolean(process.env.VERCEL);
 
 export const viewport: Viewport = {
   themeColor: site.themeColor,
@@ -109,6 +152,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* One client island for every scroll reveal and cursor effect on the
             site. Renders nothing; see components/motion/MotionRuntime.tsx. */}
         <MotionRuntime />
+
+        {/* Page views, and the field Core Web Vitals of real visitors — which
+            is the number that matters and the one a lab run on a developer's
+            laptop cannot tell you. See ON_VERCEL above for why they are gated. */}
+        {ON_VERCEL && (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        )}
       </body>
     </html>
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { JsonLd } from "@/components/seo/JsonLd";
 import { BeforeAfterTable } from "@/components/ui/BeforeAfterTable";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { FaqList } from "@/components/ui/FaqList";
@@ -20,6 +21,8 @@ import {
 import { servicePage } from "@/content/servicePage";
 import { site } from "@/content/site";
 import { gridShape, spanLastIfOdd } from "@/lib/grid";
+import { serviceJsonLd } from "@/lib/jsonLd";
+import { pageMetadata } from "@/lib/seo";
 
 /**
  * One page per service, generated at build time from `content/services.ts`.
@@ -50,17 +53,11 @@ export async function generateMetadata(
 
   if (!service) return {};
 
-  return {
+  return pageMetadata({
     title: service.name,
     description: service.promise,
-    alternates: { canonical: `/services/${service.slug}` },
-    openGraph: {
-      title: `${service.name} — ${site.name}`,
-      description: service.promise,
-      url: `/services/${service.slug}`,
-      type: "website",
-    },
-  };
+    path: `/services/${service.slug}`,
+  });
 }
 
 export default async function ServicePage(props: PageProps<"/services/[slug]">) {
@@ -77,6 +74,8 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
 
   return (
     <>
+      <JsonLd data={serviceJsonLd(service)} />
+
       <Section tone="void" size="hero" divider={false} bleedTop overlay={<HeroTexture texture={category.texture} spotlight />}>
         {/* Up one level, to the category this service belongs to — not to the
             homepage catalogue. A reader who came in on a service page and wants

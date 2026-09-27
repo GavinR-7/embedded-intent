@@ -63,8 +63,11 @@ whole site by editing this block, not by hunting transitions.
 | `--dur-line-rise` | `700ms` | one headline line out of its mask |
 | `--line-stagger` | `120ms` | gap between headline lines |
 | `--line-mask-pad` | `0.12em` | descender room inside a line mask |
-| `--dur-glitch` | `150ms` | one glitch on the two resolved glyphs |
 | `--dur-cell-fade` | `1300ms` | half an ambient grid pulse, up or down |
+| `--dur-scan` | `900ms` | one pass of the scan line down the headline |
+| `--dur-signal-run` | `2600ms` | one `/ai-automation` pulse, end to end |
+| `--dur-mark-fade` | `1600ms` | half a crosshair fade under the x-ray lens |
+| `--spacing-hero-top` | `clamp(3rem, 7vw, 7rem)` | the gap under the header on every hero |
 
 The five intro values are consumed by CSS *and* by JavaScript, which cannot read
 them. `lib/heroTimeline.ts` restates them as numbers and derives every start
@@ -352,11 +355,33 @@ critical path and sometimes not.
 | Nav underline | header | imperative `transform` against a ref |
 | Eyebrow types on | homepage hero | `motion/TypeOn.tsx` + `type-*` utilities — **server**, no JS |
 | Headline lines rise | homepage hero | `line-mask` / `line-rise`, 120ms apart |
-| "AI" decrypt + glitch | homepage hero | `motion/DecryptWord.tsx` + `glitch` utility |
-| Ambient grid pulses | homepage hero | `GridSpotlight.tsx`, `grid-pulses` / `grid-cell` |
-| X-ray lens | `/websites` | `category/visuals/XrayLens.tsx`, `@property` drift |
+| "AI" decrypt | homepage hero | `motion/DecryptWord.tsx` — once, on load, then done |
+| Headline scan line | homepage hero | `motion/ScanSweep.tsx` + `scan-line`, 900ms every 12s |
+| Ambient grid pulses | every hero with `spotlight` | `GridSpotlight.tsx`, `grid-pulses` / `grid-cell` |
+| Signal pulses | `/ai-automation` + its services | `GridSpotlight.tsx`, `signal-pulse-*`, 4 dashes on the ruling |
+| Crosshair survey | `/websites` lens | `XrayLens.tsx` + `pulse-mark`, one at a time |
+| X-ray lens | `/websites` | `XrayLens.tsx` — CSS drift on coarse, rAF on fine |
 | Map pack climb | `/get-found` | `category/visuals/MapPack.tsx`, `translateY` rows |
 | Phone thread | `/ai-automation` | `category/visuals/PhoneThread.tsx`, frame schedule |
+| AI core | `/ai-automation` | `category/visuals/DotSphere.tsx` — 400 points, 2D canvas |
+| Core-to-phone pulse | `/ai-automation` | `AiAutomationVisual.tsx`, `getPointAtLength` along an SVG path |
+
+### Phase 8's effects, with budgets
+
+| Effect | Budget | Under `reduce` |
+| --- | --- | --- |
+| Headline scan line | one 900ms `transform` + `opacity` animation on one element, every 12s, hero only | `display: none` — the element is removed, not slowed |
+| Signal pulses | four inert dashes; one 2.6s `transform` + `opacity` animation at a time, one starting per 1.5s | layer is `display: none`, timer never starts |
+| Crosshair survey | ten inert marks; one `opacity` transition at a time, one per 1.4s | `transition: none`, timer never starts |
+| X-ray lens, fine pointer | one rAF writing two custom properties; no layout, no React state | no loop, no CSS drift, lens static |
+| X-ray lens, coarse pointer | **zero JavaScript** — two `@property` keyframes | animation removed |
+| AI core | one rAF; 400 `arc` fills per frame; DPR capped at 2; mounted at idle | one frame drawn, then nothing |
+| Core-to-phone pulse | one rAF for 700ms per message, 6 messages per ~12s loop | never triggered |
+| Category textures | static backgrounds and one inline SVG; no animation of their own | unchanged — they do not move |
+
+Every one of them pauses offscreen, and the AI core also pauses on
+`visibilitychange`, because a backgrounded tab throttles `requestAnimationFrame`
+rather than stopping it.
 
 ### Notes on the awkward ones
 
@@ -381,6 +406,56 @@ is an ordinary ordered list to a screen reader or a keyboard user. Under reduced
 motion there is no selection at all: every step is full brightness and the rail
 is simply full, because a quarter-filled progress rail beside four equally
 bright steps reads as broken.
+
+**The recurring glitch on "AI" is gone.** It jittered the word and pulled two
+colour-split slices apart for 150ms every eight to ten seconds, and it was the
+one effect on this site holding an exception to *animate transform and opacity
+only* — a `mix-blend-mode` on a two-glyph box and a static `clip-path` on two
+pseudo-elements. Removing it removes the exception: there is now no
+`mix-blend-mode` and no animated `clip-path` anywhere in `app/globals.css`.
+
+It went for a content reason, not a performance one. The headline claims the AI
+picks up when you can't; a headline that visibly malfunctions twice a minute
+argues the opposite. What replaced it is a 1px line with a soft glow that crosses
+the whole H1 block top to bottom over 900ms on `--ease-out-expo`, every twelve
+seconds — an instrument taking a reading rather than a fault.
+
+Two details worth keeping. The glow is part of the gradient rather than a
+`box-shadow`, so there is no blurred area to re-rasterise on the way down. And
+the element is the full height of the heading with the line drawn as a 12px band
+at its top edge, so `translateY(100%)` walks the line from the top of the heading
+to the bottom without anything needing to measure the heading — the alternative
+is animating `top`, which is layout, on a block of display type. It fades in and
+out at the ends instead of being clipped, because every headline line's mask is
+padded past the text box for descenders and an `overflow: hidden` on the h1 would
+cut the tail off every "p" and "y" in it.
+
+**The x-ray lens has two drift implementations, deliberately.** On a coarse
+pointer it is the two `@property` custom properties and a pair of keyframes, with
+no JavaScript at all — that is the case a phone gets, and a phone is where
+`/websites` is measured. On a fine pointer the same figure is driven by a rAF
+loop, because the handoff needs state CSS cannot have.
+
+The handoff was the Phase 8 fix. The lens used to snap to the cursor the instant
+it arrived and snap back to wherever the keyframes had reached the instant it
+left. Now it closes 12% of the remaining distance per frame on the way in, and on
+the way out it keeps its position *and its velocity*, coasts with a 0.92 drag,
+and is blended back onto the path over a second.
+
+Onto the **nearest point** of the path, not the elapsed one. That is the
+difference between easing back and sliding across the frame to a point the lens
+has no reason to be at. The two periods are 17s and 11s, so the figure only
+repeats after their lowest common multiple — 187s — and the whole beat has to be
+searched, because the same point recurs at phases spread right across it. 200ms
+steps is 935 samples of two cosines, once, on `pointerleave`. The obvious
+`x.period * y.period` is *a* common multiple but not the lowest one; it gives
+187,000 seconds and 935,000 samples, which is a visible stall. It is computed
+with a `gcd` for that reason.
+
+Measured, at 1440 on a fine pointer: the distance to the cursor decays
+41% → 36.1% → 31.8% → 28.0%, the largest single-frame move anywhere in the
+handoff is 5.6%, and 2.2s after the pointer leaves the lens sits 0.03% off the
+path.
 
 **The marquee does not pause on hover.** It used to. The strip is ambient, and a
 band of text that halts whenever the cursor crosses it draws attention to itself

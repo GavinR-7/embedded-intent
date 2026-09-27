@@ -1,0 +1,23 @@
+<!--
+  The chip mark, as a standalone icon.
+
+  This is the ONE place the mark's geometry is written twice. components/brand/
+  ChipMark.tsx is the other, and it is the one to edit first: this file cannot
+  import it, because a favicon is fetched by the browser before any JavaScript
+  exists and has to be a complete document on its own. The colours are literal
+  for the same reason — there is no stylesheet here, so `#060b0f` is
+  --color-void and `#45e8e8` is --color-signal, both read out of a real browser
+  rather than typed from memory (see lib/ogTheme.ts).
+
+  The three PNG sizes beside it are generated FROM this file, not redrawn. If you
+  change the mark, change ChipMark.tsx and this, then re-run the step in
+  LAUNCH.md that regenerates them.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="512" height="512">
+  <rect width="24" height="24" rx="5" fill="#060b0f"/>
+  <g fill="none" stroke="#45e8e8" stroke-width="1.5" stroke-linecap="round">
+    <rect x="5.5" y="5.5" width="13" height="13" rx="1.5"/>
+    <rect x="10" y="10" width="4" height="4" fill="#45e8e8" stroke="none"/>
+    <path d="M9 5.5V2.5M15 5.5V2.5M9 18.5v3M15 18.5v3M5.5 9h-3M5.5 15h-3M18.5 9h3M18.5 15h3"/>
+  </g>
+</svg>

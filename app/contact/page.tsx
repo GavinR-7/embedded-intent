@@ -5,12 +5,13 @@ import { Section } from "@/components/ui/Section";
 import { HeroTexture } from "@/components/ui/HeroTexture";
 import { audit } from "@/content/audit";
 import { fillOwner, site } from "@/content/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: audit.form.heading,
   description: audit.form.intro,
-  alternates: { canonical: "/contact" },
-};
+  path: "/contact",
+});
 
 /**
  * The audit request page.
