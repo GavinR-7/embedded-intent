@@ -250,6 +250,34 @@ cells with a transition, and a `setInterval` that lights one at a time. That is
 a deliberate departure from the brief's "pure CSS loops", made because the CSS
 version was measured and the JavaScript version is what fits the budget.
 
+### The LCP candidate is not always in the hero
+
+The rule everywhere else in this file is "nothing in a hero reveals", and /company
+is where that wording turned out to be wrong. The rule is **the LCP candidate
+does not reveal**, and on a phone the candidate is not always in the hero.
+
+That page's hero is short — an eyebrow, two lines and a lead — so on a 390x844
+screen the founder paragraph in the *next* band is still inside the first
+viewport, and it is the biggest block of text in it. It carried `data-reveal`,
+which means it started at `opacity: 0` and painted whenever the
+IntersectionObserver got round to it.
+
+| Page | FCP | LCP | perf |
+| --- | --- | --- | --- |
+| `/faq` | 1.06s | 1.86s | 99 |
+| `/company`, founder band revealing | 1.07s | **2.63s** | 96 |
+| `/company`, reveal removed | 1.07s | **2.01s** | 98 |
+
+Five runs each, and /company was consistent rather than bimodal — 2.62, 2.62,
+2.63, 2.65, 2.72 — which is what said it was the page and not the machine.
+Identical FCP across all three rows: the gap was entirely the wait for the
+observer.
+
+Lighthouse names the element, and that is the quickest way to find this. The
+`lcp-breakdown-insight` audit carries a node with a CSS path in it; on the bad
+runs it pointed at `div.lg:col-span-5 > p.mt-6`, which is the bio. Look there
+before guessing.
+
 ### Interleave, or do not believe it
 
 Phase 7b's numbers went bimodal: the same build returned 2.01s on some runs and

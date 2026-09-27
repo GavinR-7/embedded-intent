@@ -70,7 +70,7 @@ export default function CompanyPage() {
             channels in the footer.
           */}
           {site.owner.photo && (
-            <div data-reveal="" className="lg:col-span-2">
+            <div className="lg:col-span-2">
               <Image
                 src={site.owner.photo.src}
                 alt={site.owner.photo.alt}
@@ -82,25 +82,41 @@ export default function CompanyPage() {
             </div>
           )}
 
-          <div className={site.owner.photo ? "lg:col-span-3" : "lg:col-span-5"}>
-            <Eyebrow reveal>{companyPage.founderEyebrow}</Eyebrow>
+          {/*
+            ---------------------------------------------------------------
+            NOTHING IN THIS BLOCK REVEALS, and that is a performance decision.
 
-            <h2 data-reveal="" className="mt-5 text-h2 text-ink">
-              {whyMe.heading}
-            </h2>
+            This page's hero is short — an eyebrow, two lines and a lead — so on
+            a 390x844 phone the founder paragraph below is still inside the first
+            viewport, which made it the largest contentful paint. It carried
+            `data-reveal`, so it started at opacity 0 and painted whenever the
+            IntersectionObserver got round to it: measured LCP 2.63s against
+            1.86s on /faq, consistently across five runs, with an identical FCP
+            of 1.07s. The whole gap was the reveal.
+
+            That is the same rule the site heroes already follow — see the note
+            in components/sections/Hero.tsx. The rule is not "heroes do not
+            reveal", it is "the LCP candidate does not reveal", and on a phone
+            that candidate is not always in the hero.
+            ---------------------------------------------------------------
+          */}
+          <div className={site.owner.photo ? "lg:col-span-3" : "lg:col-span-5"}>
+            <Eyebrow>{companyPage.founderEyebrow}</Eyebrow>
+
+            <h2 className="mt-5 text-h2 text-ink">{whyMe.heading}</h2>
 
             {/* The bio. Note it is `site.owner.bio` and not page copy — the
                 owner is one record, and the two other places that name a person
                 read from the same one. */}
-            <p data-reveal="" className="mt-6 max-w-prose-tight text-lead text-ink-muted">
+            <p className="mt-6 max-w-prose-tight text-lead text-ink-muted">
               {site.owner.bio}
             </p>
 
-            <p data-reveal="" className="mt-6 max-w-prose-tight text-lead text-ink-muted">
+            <p className="mt-6 max-w-prose-tight text-lead text-ink-muted">
               {fillOwner(whyMe.body)}
             </p>
 
-            <p data-reveal="" className="mt-7 text-label text-ink-subtle">
+            <p className="mt-7 text-label text-ink-subtle">
               {site.owner.name} · {site.owner.role}
             </p>
           </div>
