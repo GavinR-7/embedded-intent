@@ -241,15 +241,34 @@ export function DotSphere({ flareKey }: { flareKey: number }) {
       context.globalAlpha = 1;
     };
 
+    /*
+     * One frame, and nothing else. `reduce` asked for a picture, not a loop.
+     *
+     * The resize and the draw have to happen TOGETHER here, and that is not
+     * fussiness. Assigning `canvas.width` clears the canvas, and a
+     * ResizeObserver always fires once when you start observing — so drawing
+     * first and observing second painted the sphere and then immediately wiped
+     * it. With no loop to repaint, `reduce` users got an empty box. It measured
+     * as zero lit pixels, which is how it was found; it does not show up in any
+     * check that only asks whether something is animating.
+     */
+    if (prefersReducedMotion) {
+      const drawStatic = () => {
+        resize();
+        draw(0, 0, 0);
+      };
+
+      drawStatic();
+      const observer = new ResizeObserver(drawStatic);
+      observer.observe(canvas);
+      return () => observer.disconnect();
+    }
+
+    // Animating: the loop repaints every frame, so the observer only has to
+    // keep the backing store the right size.
     resize();
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
-
-    // One frame, and nothing else. `reduce` asked for a picture, not a loop.
-    if (prefersReducedMotion) {
-      draw(0, 0, 0);
-      return () => observer.disconnect();
-    }
 
     let raf = 0;
 
