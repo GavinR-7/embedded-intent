@@ -423,7 +423,8 @@ critical path and sometimes not.
 | X-ray lens | `/websites` | `XrayLens.tsx` — CSS drift on coarse, rAF on fine |
 | Map pack climb | `/get-found` | `category/visuals/MapPack.tsx`, `translateY` rows |
 | Phone thread | `/ai-automation` | `category/visuals/PhoneThread.tsx`, frame schedule |
-| AI core | `/ai-automation` | `category/visuals/DotSphere.tsx` — 400 points, 2D canvas |
+| AI core | `/ai-automation` | `category/visuals/DotSphere.tsx` — 240 points + a 72-point equator, 2D canvas |
+| Thinking ripple | `/ai-automation` | same file — a radial wave, once per message |
 | Core-to-phone pulse | `/ai-automation` | `AiAutomationVisual.tsx`, `getPointAtLength` along an SVG path |
 
 ### Phase 8's effects, with budgets
@@ -435,7 +436,8 @@ critical path and sometimes not.
 | Crosshair survey | ten inert marks; one `opacity` transition at a time, one per 1.4s | `transition: none`, timer never starts |
 | X-ray lens, fine pointer | one rAF writing two custom properties; no layout, no React state | no loop, no CSS drift, lens static |
 | X-ray lens, coarse pointer | **zero JavaScript** — two `@property` keyframes | animation removed |
-| AI core | one rAF; 400 `arc` fills per frame; DPR capped at 2; mounted at idle | one frame drawn, then nothing |
+| AI core | one rAF; 312 `arc` fills per frame; DPR capped at 2; mounted at idle | one frame drawn, then nothing |
+| Thinking ripple | no extra frames — it is a term in the position maths the loop already runs | never triggered |
 | Core-to-phone pulse | one rAF for 700ms per message, 6 messages per ~12s loop | never triggered |
 | Category textures | static backgrounds and one inline SVG; no animation of their own | unchanged — they do not move |
 
@@ -516,6 +518,53 @@ Measured, at 1440 on a fine pointer: the distance to the cursor decays
 41% → 36.1% → 31.8% → 28.0%, the largest single-frame move anywhere in the
 handoff is 5.6%, and 2.2s after the pointer leaves the lens sits 0.03% off the
 path.
+
+**The AI core was blurry, and it took three separate fixes.** Not one.
+
+It was 400 points drawn at radius 0.5-1.7px with back-hemisphere alpha as low as
+0.07. Every one of those numbers was wrong in the same direction. A filled arc
+below about 1px has no solid centre — it is entirely antialiased edge — so four
+hundred of them read as haze rather than as points, and the faintest were
+contributing fog and nothing else.
+
+  1. **Fewer points.** 240, plus a 72-point equator. Four hundred dots cannot
+     each be 2-3px inside a 144px circle without merging into a field.
+  2. **Bigger, and depth-scaled harder.** 1.4px at the back to 2.8px at the
+     front, with alpha on `depth²` so the back hemisphere falls away fast
+     instead of fogging the front.
+  3. **Rounded to whole device pixels**, which needed the drawing to move into
+     device-pixel space — no `setTransform(dpr, …)` — or the rounding would have
+     been to CSS pixels and meant nothing. A 2px dot centred on a half pixel is
+     a 3px smudge.
+
+The tilt also moved. It used to be baked into the stored points, which were then
+rotated about the world Y axis — so the lean itself wobbled through the turn.
+Spinning about the sphere's own axis and *then* leaning the result is a globe,
+and it is what lets the equator be a stable ring rather than a shape that flexes.
+
+**The equator is points, not a stroked ellipse.** Drawn as points it goes through
+exactly the same rotation, depth and ripple maths as the rest of the cloud, so it
+leans with the sphere and lifts with the wave instead of sitting over the top of
+them like a sticker.
+
+**The ripple is one term in maths the loop was already doing.** When a message
+goes out, a wave crosses the surface: every point is pushed straight out from the
+centre by a gaussian over its arc distance from the point facing the viewer.
+
+That distance is free. Both the point and the view direction are unit vectors and
+the view direction is (0, 0, 1), so the cosine of the angle between them is just
+the point's own `z` after rotation — `acos(z2)`, with no dot product to compute.
+The crest travels from 0 to π over 1100ms and loses height as it goes, so it
+settles rather than stopping.
+
+Measured on the live page: **7 discrete ripples over 14 seconds** — one per
+message in the thread's loop — lifting the silhouette from a resting 70.6px to a
+peak of 80.3px, a 13.7% displacement, each visible at the rim for about 365ms.
+
+The pulse to the phone is then held 780ms so it leaves as the wave is crossing.
+The order is the point of the pairing: something was worked out, and then
+something was sent. Fired together they read as two decorations that happened to
+be synchronised.
 
 **The marquee does not pause on hover.** It used to. The strip is ambient, and a
 band of text that halts whenever the cursor crosses it draws attention to itself

@@ -78,6 +78,15 @@ export const home = {
     subheading:
       "Most of your leads arrive when nobody's there to catch them. We build the website that brings them in — and the AI that answers, qualifies and books them in under a minute. Every time, including Sunday.",
     /** Secondary CTA. The primary one is site.primaryCta. */
+    /*
+     * Stays a same-page anchor, deliberately.
+     *
+     * "How it works" has its own home now at /company#how-it-works, and the nav
+     * and footer both point there. This one does not, because it sits in the
+     * homepage hero and the homepage keeps its own copy of that section three
+     * bands further down — so this scrolls to it. Sending someone off the page
+     * they just landed on, to read the same four steps, would be worse.
+     */
     secondaryCta: { label: "See how it works", href: "/#how-it-works" },
   },
 

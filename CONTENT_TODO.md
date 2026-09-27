@@ -82,11 +82,41 @@ These must be resolved before the domain is pointed at the site.
   the client's own words, with permission. The field is optional in the type,
   so no entry is broken by its absence.
 
-- [ ] **Measured results for Above All.** It ships as `status: "launched"`,
-  which renders "results tracking in progress" and no results section. It can
-  only move to `status: "measured"` when there is a real before/after number
-  *and* a stated source for how it was measured. The type will not let a
-  results block exist otherwise — this is the point.
+- [ ] **Measured results for Above All — the exact list.** It ships as
+  `status: "launched"`, which renders "results tracking in progress" and no
+  results section at all. Moving it to `status: "measured"` needs, per metric, a
+  real before number, a real after number, and a stated source. The type refuses
+  a results block otherwise; that is the point, and it is not to be worked
+  around.
+
+  The owner is collecting these. Exactly what is needed:
+
+  | Metric | Where it comes from |
+  | --- | --- |
+  | Calls from the Google listing | GBP → Performance → **Calls**, last 28 days vs the previous 28 |
+  | Website clicks from the listing | GBP → Performance → **Website clicks**, same two windows |
+  | Direction requests | GBP → Performance → **Directions**, same two windows |
+  | Quote requests per month | Count of form submissions, the month before launch vs a full month after |
+
+  Notes that decide whether the numbers are usable:
+  - **Both windows, every time.** A single "after" figure is not a result. The
+    28-day comparison is what GBP shows natively, so it is the one to screenshot.
+  - **Write down the dates.** `source` has to say which two windows were
+    compared — "GBP Performance, 2026-09-01 to 2026-09-28 vs 2026-08-04 to
+    2026-08-31" — not "Google Business Profile".
+  - **Tent rental is seasonal.** Comparing September to August is comparing two
+    different parts of the season. Say so in `source` if the windows straddle
+    one; a comparison that flatters us for a reason we did not cause is the kind
+    of number this repo exists to refuse.
+  - Quote requests before launch may not exist as a count. If the old site had no
+    form, the honest entry is not "0 → n" — it is to leave the metric out.
+
+- [ ] **Testimonial from Above All.** Two or three sentences, attributed to a
+  named person with their role — `testimonial` in `content/work.ts` is optional
+  and the field is simply absent today. Never written on a client's behalf, and
+  never paraphrased from a phone call: get it in writing and use their words.
+  Worth asking for the specific thing rather than "how did we do" — what they
+  noticed about the quotes coming in now is the answer that is worth printing.
 
 - [ ] **Social profiles.** `content/site.ts` → `social` is `[]`, which renders
   nothing. Add once the profiles exist; an icon row of dead links is worse than

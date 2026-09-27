@@ -102,7 +102,27 @@ export type SiteConfig = {
    * Why section and the contact card name him. Those two places are the
    * exception, not the default.
    */
-  owner: { name: string; role: string };
+  owner: {
+    name: string;
+    role: string;
+    /**
+     * Who is behind the practice, in his own voice.
+     *
+     * Rendered on /company. **TODO(owner): confirm or rewrite** — this was
+     * drafted, not dictated, and it is the one paragraph on the site that speaks
+     * for a named person. Tracked in CONTENT_TODO.md.
+     */
+    bio: string;
+    /**
+     * A photograph, once there is one.
+     *
+     * `null` rather than a placeholder, and the component renders nothing at all
+     * when it is null — the same rule `email`, `phone` and `social` follow. A
+     * grey silhouette where a face should be is worse than no picture: it says
+     * the page was built for someone who never showed up.
+     */
+    photo: { src: string; alt: string; width: number; height: number } | null;
+  };
 };
 
 export const site: SiteConfig = {
@@ -121,15 +141,28 @@ export const site: SiteConfig = {
 
   companyMenu: {
     label: "Company",
-    href: "/work",
-    allLabel: "All our work",
-    owns: ["/work"],
-    // Deliberately no About, Blog or Guides. An empty page in the nav is
-    // worse than an absent one — see CONTENT_TODO.md for About.
+    href: "/company",
+    allLabel: "About Embedded Intent",
+    owns: ["/company", "/work", "/faq"],
+    /*
+     * Every one of these is a real page now.
+     *
+     * Two of them used to be homepage anchors — `/#how-it-works` and `/#faq` —
+     * which meant the Company tab could only ever take you back to the homepage
+     * and scroll. The homepage keeps both sections; these point at the standalone
+     * pages, which are the ones worth linking to from a nav and the ones a search
+     * engine can rank on their own.
+     */
     items: [
       {
+        label: "About",
+        href: "/company",
+        description: "Who builds this, and how the work actually runs",
+        icon: "user",
+      },
+      {
         label: "How it works",
-        href: "/#how-it-works",
+        href: "/company#how-it-works",
         description: "Find, build, automate, measure — and what each step produces",
         icon: "gears",
       },
@@ -141,7 +174,7 @@ export const site: SiteConfig = {
       },
       {
         label: "FAQ",
-        href: "/#faq",
+        href: "/faq",
         description: "Ownership, timelines, CRMs, and what happens when AI gets it wrong",
         icon: "chat",
       },
@@ -157,9 +190,10 @@ export const site: SiteConfig = {
     {
       heading: "Company",
       links: [
-        { label: "How it works", href: "/#how-it-works" },
+        { label: "About", href: "/company" },
+        { label: "How it works", href: "/company#how-it-works" },
         { label: "Our work", href: "/work" },
-        { label: "FAQ", href: "/#faq" },
+        { label: "FAQ", href: "/faq" },
         { label: "Contact", href: "/contact" },
       ],
     },
@@ -169,7 +203,12 @@ export const site: SiteConfig = {
   // which is correct — an icon row linking to dead profiles is worse than none.
   social: [],
 
-  owner: { name: "Gavin", role: "Founder" },
+  owner: {
+    name: "Gavin",
+    role: "Founder",
+    bio: "Embedded Intent is run by Gavin, an electrical and computer engineer from Long Island. The name comes from embedded systems — building intelligence into the thing itself instead of bolting it on beside it. That's how we work with every business: the website, the follow-up and the automation, built into how you already run.",
+    photo: null,
+  },
 
   hours: "Mon–Fri, 9am–6pm ET",
   responseCommitment: "Forms answered within one business day",

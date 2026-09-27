@@ -15,6 +15,16 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 const PULSE_MS = 700;
 
 /**
+ * How long the pulse waits after a message before it sets off.
+ *
+ * The core ripples first — see `RIPPLE_MS` in DotSphere — and the pulse leaves
+ * once that wave is most of the way across. The order is the whole point of the
+ * pairing: something was worked out, and then something was sent. Firing both at
+ * once read as two decorations that happened to be synchronised.
+ */
+const PULSE_DELAY_MS = 780;
+
+/**
  * How long to leave the page alone before the sphere mounts, if nothing else
  * wakes it first.
  *
@@ -94,10 +104,11 @@ function Connector({ pulseKey, active }: { pulseKey: number; active: boolean }) 
     if (!path || !dot) return;
 
     const length = path.getTotalLength();
-    const startedAt = performance.now();
     let raf = 0;
+    let startedAt = 0;
 
     const step = (now: number) => {
+      if (startedAt === 0) startedAt = now;
       const k = Math.min((now - startedAt) / PULSE_MS, 1);
       const point = path.getPointAtLength(length * k);
 
@@ -108,8 +119,13 @@ function Connector({ pulseKey, active }: { pulseKey: number; active: boolean }) 
       if (k < 1) raf = requestAnimationFrame(step);
     };
 
-    raf = requestAnimationFrame(step);
+    // Held until the core has finished thinking about it.
+    const hold = window.setTimeout(() => {
+      raf = requestAnimationFrame(step);
+    }, PULSE_DELAY_MS);
+
     return () => {
+      window.clearTimeout(hold);
       cancelAnimationFrame(raf);
       dot.setAttribute("opacity", "0");
     };

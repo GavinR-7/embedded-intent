@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { DeviceFrame } from "@/components/work/DeviceFrame";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Eyebrow, Section, SectionHeading } from "@/components/ui/Section";
 import { HeroTexture } from "@/components/ui/HeroTexture";
@@ -10,7 +10,6 @@ import { audit } from "@/content/audit";
 import { site } from "@/content/site";
 import { caseStudies, getCaseStudy, launchedStatusLine } from "@/content/work";
 import { workPage } from "@/content/workPage";
-import { gridShape } from "@/lib/grid";
 import { pageMetadata } from "@/lib/seo";
 
 export const dynamicParams = false;
@@ -60,8 +59,73 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
           <p className="mt-7 max-w-prose-tight text-lead text-ink-muted">
             {study.summary}
           </p>
+
+          {/*
+            The single most persuasive thing this page has is the site itself,
+            working, on the reader's own phone — so it is offered high, before
+            any of our description of it, and again at the bottom.
+
+            `rel="noopener"` with `target="_blank"`: without it the opened tab
+            gets a `window.opener` handle back to this one and can navigate it.
+            `noreferrer` is deliberately NOT set — this is a client we want to
+            send identifiable traffic to, and stripping the referrer would hide
+            that from their analytics.
+          */}
+          <p className="mt-9">
+            <a
+              href={study.liveUrl}
+              target="_blank"
+              rel="noopener"
+              className="cta-sheen lift group inline-flex items-center gap-2 rounded-field border border-signal/40 px-5 py-3 text-label font-medium text-signal transition-colors duration-[var(--duration-fast)] hover:border-signal"
+            >
+              {workPage.liveLabel}
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5"
+              >
+                →
+              </span>
+            </a>
+          </p>
+          <p className="mt-3 text-label text-ink-subtle">{workPage.liveNote}</p>
         </div>
       </Section>
+
+      {/*
+        The captures, high on the page and framed as the devices they were taken
+        on: one browser window full width, then the two phones side by side.
+        Above the prose, because "mobile-first rebuild" is a thing to be shown.
+      */}
+      {study.images.length > 0 && (
+        <Section tone="void">
+          <SectionHeading
+            eyebrow={workPage.shotsEyebrow}
+            heading={workPage.shotsHeading}
+          />
+
+          <div className="mt-12 flex flex-col gap-10">
+            {study.images
+              .filter((image) => image.frame === "browser")
+              .map((image) => (
+                <div key={image.src} data-reveal="">
+                  <DeviceFrame image={image} priority sizes="(min-width: 1024px) 75rem, 100vw" />
+                </div>
+              ))}
+
+            {/* Two phones, side by side from `sm`. A phone frame at full width
+                on a desktop is a very tall picture of very little. */}
+            <div className="grid gap-8 sm:grid-cols-2">
+              {study.images
+                .filter((image) => image.frame === "phone")
+                .map((image) => (
+                  <div key={image.src} data-reveal="">
+                    <DeviceFrame image={image} sizes="(min-width: 640px) 17rem, 80vw" />
+                  </div>
+                ))}
+            </div>
+          </div>
+        </Section>
+      )}
 
       <Section tone="surface">
         <div className="grid gap-12 lg:grid-cols-5 lg:gap-16">
@@ -98,6 +162,48 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
           </div>
         </div>
       </Section>
+
+      {/*
+        What changed about the SITE. Not what it did for the business.
+
+        The distinction is enforced one level down: `changed` lives on
+        CaseStudyBase and is available to every entry, while `results` exists
+        only on the `measured` variant. So a case study can describe what was
+        built on the day it launches, and still has nothing to say about
+        outcomes until somebody has measured them.
+      */}
+      {study.changed.length > 0 && (
+        <Section tone="void">
+          <SectionHeading
+            eyebrow={workPage.changedEyebrow}
+            heading={workPage.changedHeading}
+            body={workPage.changedNote}
+          />
+
+          <ul className="mt-12 grid gap-px overflow-hidden rounded-card border border-line">
+            {study.changed.map((pair) => (
+              <li
+                key={pair.after}
+                data-reveal=""
+                className="hairline grid gap-4 bg-void p-6 sm:grid-cols-2 sm:gap-8 sm:p-7"
+              >
+                <div>
+                  <p className="text-eyebrow font-mono uppercase text-ink-subtle">
+                    {workPage.changedBeforeLabel}
+                  </p>
+                  <p className="mt-3 text-label text-ink-muted">{pair.before}</p>
+                </div>
+                <div>
+                  <p className="text-eyebrow font-mono uppercase text-signal">
+                    {workPage.changedAfterLabel}
+                  </p>
+                  <p className="mt-3 text-lead text-ink">{pair.after}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {/*
         ============================================================
@@ -190,34 +296,6 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
         </Section>
       )}
 
-      {/* Screenshots. Renders nothing while `images` is empty, which is the
-          current state — see CONTENT_TODO.md. Real alt text comes from the
-          data, never generated here. */}
-      {study.images.length > 0 && (
-        <Section tone="void">
-          {/* Columns from the count. Three screenshots in a fixed two-column
-              grid left the third alone on its own row — and `sizes` has to
-              follow the shape, or the browser downloads the wrong file. */}
-          <ul className={`grid gap-6 ${gridShape(study.images.length).columns}`}>
-            {study.images.map((image) => (
-              <li
-                key={image.src}
-                data-reveal=""
-                className="relative aspect-[4/3] overflow-hidden rounded-card border border-line"
-              >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  sizes="(min-width: 1024px) 33vw, 100vw"
-                  className="object-cover"
-                />
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-
       {/* Optional in the type, so a case study without one is not broken —
           and nobody is tempted to write a quote on the client's behalf. */}
       {study.testimonial && (
@@ -235,6 +313,33 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
           </figure>
         </Section>
       )}
+
+      {/* The live site again, at the bottom, where someone who has read the whole
+          page is deciding what to do next. The same link as the hero — not a
+          second URL to keep in step, because both read `study.liveUrl`. */}
+      <Section tone="void">
+        <div className="flex flex-col items-start gap-5 rounded-card border border-line bg-surface/40 p-7 sm:flex-row sm:items-center sm:justify-between sm:p-9">
+          <div>
+            <p className="text-h3 text-ink">{study.client}</p>
+            <p className="mt-2 text-label text-ink-subtle">{workPage.liveNote}</p>
+          </div>
+
+          <a
+            href={study.liveUrl}
+            target="_blank"
+            rel="noopener"
+            className="cta-sheen lift group inline-flex shrink-0 items-center gap-2 rounded-field border border-signal/40 px-5 py-3 text-label font-medium text-signal transition-colors duration-[var(--duration-fast)] hover:border-signal"
+          >
+            {workPage.liveLabel}
+            <span
+              aria-hidden="true"
+              className="transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5"
+            >
+              →
+            </span>
+          </a>
+        </div>
+      </Section>
 
       <Section tone="surface" size="lg">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">

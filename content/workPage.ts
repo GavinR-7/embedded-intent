@@ -26,6 +26,26 @@ export const workPage = {
   problemHeading: "The problem",
   builtHeading: "What was built",
 
+  /** The live site. Stated as an invitation, not a nav label. */
+  liveLabel: "Visit the live site",
+  liveNote: "Opens the real thing, in a new tab. Try it on your phone.",
+
+  /*
+   * Deliberately NOT "What improved" or "The results". Every pair under this
+   * heading is a thing that was built — see the `changed` field in
+   * content/work.ts for why that distinction is enforced by the type and not
+   * just by the copy.
+   */
+  changedEyebrow: "What changed",
+  changedHeading: "The old site, and what replaced it.",
+  changedNote:
+    "Changes to the site itself, not outcomes. What these did to the business is being measured now, and goes up when it exists.",
+  changedBeforeLabel: "Before",
+  changedAfterLabel: "After",
+
+  shotsEyebrow: "The site",
+  shotsHeading: "On a laptop, and in a hand.",
+
   resultsEyebrow: "Measured",
   resultsHeading: "What changed, and how we know.",
   metricLabel: "Metric",

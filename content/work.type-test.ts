@@ -25,6 +25,8 @@ const resultsOnLaunched: CaseStudy = {
   summary: "Adding results to a launched case study must not compile.",
   problem: "Type-test fixture.",
   built: [],
+  changed: [],
+  liveUrl: "https://example.com",
   images: [],
   launchedAt: "2026-01-01",
   // @ts-expect-error — `launched` has no `results` field, by design.
@@ -40,6 +42,8 @@ const launchedAtOnMeasured: CaseStudy = {
   summary: "Measured entries carry results, not a launch date.",
   problem: "Type-test fixture.",
   built: [],
+  changed: [],
+  liveUrl: "https://example.com",
   images: [],
   results: [
     {
@@ -63,6 +67,8 @@ const resultWithoutSource: CaseStudy = {
   summary: "Every measured result must state how it was measured.",
   problem: "Type-test fixture.",
   built: [],
+  changed: [],
+  liveUrl: "https://example.com",
   images: [],
   // @ts-expect-error — missing required `source`.
   results: [{ metric: "Mobile PageSpeed", before: "41", after: "96" }],
@@ -78,6 +84,8 @@ const validMeasured: CaseStudy = {
   summary: "This shape is legal and must stay legal.",
   problem: "Type-test fixture.",
   built: ["A thing that was built"],
+  changed: [],
+  liveUrl: "https://example.com",
   images: [],
   results: [
     {

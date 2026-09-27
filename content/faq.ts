@@ -14,6 +14,9 @@
  * the one that goes stale is always the one in the FAQ.
  */
 
+import type { Category, CategorySlug } from "./categories";
+import { categories } from "./categories";
+import { getService } from "./services";
 import type { ServiceSlug } from "./services";
 
 export type FaqItem = {
@@ -149,4 +152,87 @@ export function faqsByIds(ids: readonly FaqId[]): readonly FaqItem[] {
 
     return item;
   });
+}
+
+/**
+ * Every question, grouped for the /faq page.
+ *
+ * ---------------------------------------------------------------------------
+ * Derived from the `services` tags that were already here, not from a second
+ * list of ids. That matters more than it looks: `content/categories.ts` also
+ * names questions per category, and those sets OVERLAP — "What does it actually
+ * cost?" is on all three category pages. A page that grouped by those would
+ * print the same answer three times.
+ *
+ * So each question lands in exactly one group: the category most of its tagged
+ * services belong to. Ties go to the earlier category, which is
+ * `content/categories.ts` order and therefore the site's own order of
+ * importance. A question with no tags is general and goes in the first group.
+ *
+ * The consequence to know about: retagging a question in `services` can move it
+ * between groups on this page. That is the intended behaviour — the tags are the
+ * statement of what a question is about, and this page is a view of them.
+ * ---------------------------------------------------------------------------
+ */
+export type FaqGroup = {
+  /** Stable id, used as the heading's anchor. */
+  id: string;
+  heading: string;
+  items: readonly FaqItem[];
+};
+
+/** Questions with no service tags at all. Ownership, pricing, sequencing. */
+const GENERAL_GROUP = { id: "general", heading: "General" } as const;
+
+function primaryCategory(item: FaqItem): CategorySlug | null {
+  if (item.services.length === 0) return null;
+
+  const counts = new Map<CategorySlug, number>();
+  for (const slug of item.services) {
+    const service = getService(slug);
+    if (!service) continue;
+    counts.set(service.category, (counts.get(service.category) ?? 0) + 1);
+  }
+
+  let best: CategorySlug | null = null;
+  let bestCount = 0;
+  // `categories` order, so a tie resolves the same way every build.
+  for (const category of categories) {
+    const count = counts.get(category.slug) ?? 0;
+    if (count > bestCount) {
+      best = category.slug;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+export function faqGroups(): readonly FaqGroup[] {
+  const general: FaqItem[] = [];
+  const byCategory = new Map<CategorySlug, FaqItem[]>();
+
+  for (const item of faqs) {
+    const slug = primaryCategory(item);
+    if (slug === null) {
+      general.push(item);
+      continue;
+    }
+    const bucket = byCategory.get(slug);
+    if (bucket) bucket.push(item);
+    else byCategory.set(slug, [item]);
+  }
+
+  const groups: FaqGroup[] = [];
+  if (general.length > 0) groups.push({ ...GENERAL_GROUP, items: general });
+
+  for (const category of categories as readonly Category[]) {
+    const items = byCategory.get(category.slug);
+    if (items && items.length > 0) {
+      groups.push({ id: category.slug, heading: category.label, items });
+    }
+  }
+
+  // An empty group is never pushed, so the page cannot render a heading with
+  // nothing under it if every question in a category is retagged away.
+  return groups;
 }

@@ -28,6 +28,11 @@ app/                    Routes. Every file here is a URL or a route convention.
   ai-automation/        ditto. Three literal routes, not one [category] segment —
                         a dynamic segment at the root would try to match every
                         unknown path on the site and render a shell instead of 404.
+  company/              Who builds this, and how the work runs. Owns the
+                        #how-it-works anchor the nav points at; the homepage
+                        keeps its own copy of that section.
+  faq/                  Every question, grouped, with FAQPage structured data
+                        built from the same array the page renders.
   contact/              The audit request form.
   api/audit/route.ts    POST endpoint: zod validation, honeypot, Resend.
   work/                 Case study index.
@@ -46,6 +51,9 @@ components/
                         by the header, the icons and the OG routes, so the mark
                         has one definition rather than five.
   seo/                  The JSON-LD <script> wrapper.
+  work/                 The device frames a case study's captures sit inside.
+                        HTML and CSS in the site's tokens, so the chrome is
+                        ours and only the pixels are the client's.
   layout/               Shell chrome used on every page (Header, Footer).
   sections/             Homepage sections. One per section, in page order.
   category/             The shared body of all three category pages, plus the
@@ -113,6 +121,10 @@ content/                Typed content modules. The single source of truth.
   audit.ts              The audit offer. Shared by the homepage close, the
                         service pages and the Phase 6 contact page.
   notFound.ts           The 404's copy.
+  companyPage.ts        /company's copy. The founder's paragraph is NOT here —
+                        it is site.owner.bio, so the three places that name a
+                        person read one record.
+  faqPage.ts            /faq's furniture. The questions are faq.ts.
 public/                 Static assets served at the root.
 ```
 

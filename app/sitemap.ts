@@ -27,7 +27,8 @@ import { caseStudies } from "@/content/work";
  * worse than an honest "this is when the site was last deployed".
  *
  * Priorities say what this business thinks matters: the homepage, then the three
- * category pages someone actually lands on, then the services, then the rest.
+ * category pages someone actually lands on, then the services, then /company and
+ * /faq — both of which are pages someone reads before deciding — then the rest.
  * They are a hint and search engines are free to ignore them.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -51,6 +52,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     })),
 
+    { url: url("/company"), lastModified, changeFrequency: "yearly", priority: 0.7 },
+    { url: url("/faq"), lastModified, changeFrequency: "monthly", priority: 0.7 },
     { url: url("/contact"), lastModified, changeFrequency: "yearly", priority: 0.7 },
     { url: url("/work"), lastModified, changeFrequency: "monthly", priority: 0.6 },
 

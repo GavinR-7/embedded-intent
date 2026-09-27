@@ -23,6 +23,8 @@
  * waiting to be added if and when they genuinely launch.
  */
 
+import type { BeforeAfter } from "./primitives";
+
 export type MeasuredResult = {
   /** What was measured: "Mobile PageSpeed" */
   metric: string;
@@ -38,10 +40,37 @@ export type MeasuredResult = {
   source: string;
 };
 
+/**
+ * A device-framed capture of the live site.
+ *
+ * `frame` decides what is drawn around it: `browser` gets the chrome of a
+ * desktop window, `phone` gets a handset. Both frames are HTML and CSS in the
+ * site's own tokens — see components/work/DeviceFrame.tsx — so what is stored
+ * here is the screen content only, with no fake chrome baked into the pixels.
+ * That is why the captures are viewport-sized rather than full-page: the frame
+ * is a screen, and a screen shows one screenful.
+ */
+export type CaseStudyImage = {
+  src: string;
+  alt: string;
+  frame: "browser" | "phone";
+  /** Intrinsic pixel size of the file, so next/image reserves the right box. */
+  width: number;
+  height: number;
+};
+
 export type CaseStudyBase = {
   slug: string;
   client: string;
   location: string;
+  /**
+   * The live site.
+   *
+   * The most persuasive thing a case study has is the thing itself, working, on
+   * the reader's own phone. Absolute and external, so the component knows to
+   * open it in a new tab with `rel="noopener"`.
+   */
+  liveUrl: string;
   /** One or two sentences. Used on cards and in metadata. */
   summary: string;
   /**
@@ -53,7 +82,23 @@ export type CaseStudyBase = {
   problem: string;
   /** What was actually built. Deliverables, not adjectives. */
   built: string[];
-  images: { src: string; alt: string }[];
+  /**
+   * What changed about the site, as before and after.
+   *
+   * ---------------------------------------------------------------------------
+   * THESE ARE NOT RESULTS. Every pair describes something that was BUILT — a
+   * thing the old site did not do and the new one does. No traffic, no calls, no
+   * conversion rate, no "faster" without a measurement behind it.
+   *
+   * That distinction is the whole reason this field is separate from `results`,
+   * which only exists on the `measured` variant of the union. A launched case
+   * study can honestly say "the quote form now asks for the event date" on the
+   * day it ships. It cannot say anything about what that changed until somebody
+   * has measured it.
+   * ---------------------------------------------------------------------------
+   */
+  changed: BeforeAfter[];
+  images: CaseStudyImage[];
   /** Omit entirely where there isn't one. Never write it on a client's behalf. */
   testimonial?: { quote: string; attribution: string };
 };
@@ -68,34 +113,86 @@ export const caseStudies: CaseStudy[] = [
     status: "launched",
     client: "Above All Tent Rentals",
     location: "Saint James, NY",
+    liveUrl: "https://abovealltents.com",
     /** ISO 8601. Display formatting happens at render, never in the data. */
     launchedAt: "2026-08-20",
+    /*
+     * "the date and the guest count", not "the date and the site".
+     *
+     * The earlier wording said the quote flow captured the event LOCATION. It
+     * does not — checked against the live form, whose fields are name, phone,
+     * email, event date, estimated guests, occasion and what they are interested
+     * in. Close enough to true to survive a year unnoticed, which is exactly the
+     * kind of claim this repo is built to refuse.
+     */
     summary:
-      "A mobile-first rebuild for a Long Island event rental company, built around a quote request that asks for the date and the site first — so a usable inquiry arrives instead of a name and a number.",
+      "A mobile-first rebuild for a Long Island event rental company, built around a quote request that asks for the date and the guest count first — so a usable inquiry arrives instead of a name and a number.",
     problem:
       "Tent rental is a deadline purchase, researched on a phone, usually at night. By the time someone is looking they already know their date and roughly how many people they need to cover; what they want is to find out quickly whether you are free and what it will cost. Anything that makes them wait until business hours for that answer is the point where most of them stop looking and start calling somebody else.",
     built: [
       "Custom site, built mobile-first",
       "Rebuilt from the ground up rather than restyled",
-      "Quote request flow that captures event date, location and guest count up front",
+      "Quote request flow that captures event date, guest count and occasion up front",
+      "Call and Get a quote bar pinned to the bottom of the screen on phones",
     ],
     /*
-     * Captured from the live site. Alt text describes what is actually in each
-     * frame — it is read by someone who cannot see the screenshot, so "site
-     * screenshot" would tell them nothing.
+     * Every pair below is a thing that exists on the live site and can be
+     * checked by opening it. Nothing here is an outcome.
+     */
+    changed: [
+      {
+        before: "Built for a desktop browser, shrunk down for phones",
+        after: "Designed for a phone first, since that is where the research happens",
+      },
+      {
+        before: "A contact form asking for a name and a message",
+        after: "A quote request asking for the event date, guest count and occasion",
+      },
+      {
+        before: "What they rent, described in paragraphs",
+        after: "Tents, inflatables, tables and chairs pickable as options in the request",
+      },
+      {
+        before: "Calling meant finding the number in the header",
+        after: "Call and Get a quote sit in a bar pinned to the bottom of every phone screen",
+      },
+      {
+        before: "Hours and service area buried on a contact page",
+        after: "Both stated where someone deciding whether to call will see them",
+      },
+    ],
+    /*
+     * Captured from the live site at 1440x900 and 390x844, at the device pixel
+     * ratio each size would really have, with the scrollbars hidden — they go
+     * inside frames drawn in CSS, and a real scrollbar inside a drawn browser
+     * window reads as a mistake. JPEG, because every one of them is mostly a
+     * photograph of a lawn.
+     *
+     * Alt text describes what is actually in each frame. It is read by someone
+     * who cannot see the screenshot, so "site screenshot" would tell them
+     * nothing, and it is the only part of this that a caption cannot carry.
      */
     images: [
       {
         src: "/work/above-all-tent-rentals/homepage-desktop.jpg",
-        alt: "The Above All Tent Rental homepage on a laptop: a photograph of a bounce house and a water slide set up on a lawn beside the water, headed \u201cWe\u2019ve Got You Covered!\u201d, with Get a quote and Call buttons side by side.",
+        alt: "The Above All Tent Rental homepage on a desktop browser: a photograph of a bounce house and a water slide set up on a lawn beside the water, headed \u201cWe\u2019ve Got You Covered!\u201d, with Get a quote and Call 631-265-TENT buttons side by side.",
+        frame: "browser",
+        width: 1440,
+        height: 900,
       },
       {
         src: "/work/above-all-tent-rentals/homepage-phone.jpg",
         alt: "The same homepage on a phone, with the navigation collapsed to a menu button and the quote and call buttons stacked within thumb reach.",
+        frame: "phone",
+        width: 1170,
+        height: 2532,
       },
       {
-        src: "/work/above-all-tent-rentals/quote-request-phone.png",
-        alt: "The quote request page on a phone, headed \u201cLet\u2019s plan your event.\u201d, listing phone, email, address and daily opening hours above a map, with Call and Get a quote buttons pinned to the bottom of the screen.",
+        src: "/work/above-all-tent-rentals/quote-request-phone.jpg",
+        alt: "The quote request form on a phone, asking for phone, email, event date, estimated guests and the occasion, then what they are interested in as pickable options \u2014 tent, inflatables, mechanical bull, tables and chairs, linens, decor and lighting \u2014 with Call and Get a quote pinned to the bottom of the screen.",
+        frame: "phone",
+        width: 1170,
+        height: 2532,
       },
     ],
     // No `testimonial` field: there is no quote yet. Omitted, not invented.

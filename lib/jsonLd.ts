@@ -1,3 +1,4 @@
+import type { FaqItem } from "@/content/faq";
 import type { Service } from "@/content/services";
 import { site } from "@/content/site";
 
@@ -82,5 +83,30 @@ export function serviceJsonLd(service: Service) {
       { "@type": "Place", name: "Long Island" },
       { "@type": "AdministrativeArea", name: "New York" },
     ],
+  };
+}
+
+/**
+ * The FAQ page's questions and answers.
+ *
+ * Built from the same `faqs` array the page renders, so the answer a crawler is
+ * given is character-for-character the answer a reader is given. That is not
+ * only tidiness: an FAQPage whose structured data says something the visible
+ * page does not is a manual-action risk, and the usual way it happens is a
+ * second copy of the answers written for the markup.
+ *
+ * `acceptedAnswer.text` takes plain text — the answers in content/faq.ts are
+ * plain text, and the type there says so.
+ */
+export function faqPageJsonLd(items: readonly FaqItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${site.url}/faq#faq`,
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
   };
 }
