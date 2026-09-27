@@ -297,7 +297,23 @@ So: check `pgrep -c -f chrome-headless-shell` and `/proc/loadavg` before
 believing a Lighthouse number, and take the median of at least five runs. The
 harness now kills the process group.
 
-### Final, four routes (Lighthouse mobile)
+### Phase 8, five routes (Lighthouse mobile, 5-run median)
+
+| Route | perf | a11y | BP | LCP | CLS | TBT |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/` | 98 | 100 | 100 | 2.11s | 0 | 104ms |
+| `/websites` | 99 | 100 | 100 | 1.96s | 0 | 106ms |
+| `/ai-automation` | 98 | 100 | 100 | 1.96s | 0 | 142ms |
+| `/services/online-booking-setup` | 99 | 100 | 100 | 1.96s | 0 | 106ms |
+| `/contact` | 99 | 100 | 100 | 2.00s | 0 | 106ms |
+
+The homepage's bimodality — the 2.01s/2.6s split that Phase 7b could not
+explain — did not reproduce in this session. One five-run set came back at
+2.02, 2.00, 2.02, 2.01, 2.01. That is not a fix, because nothing was changed
+that could have fixed it; it is the same machine behaving differently on a
+different day, which is the point the section above is making.
+
+### Phase 7b, four routes, for comparison
 
 | Route | perf | a11y | BP | LCP median | best | CLS | TBT | runs |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -305,6 +321,50 @@ harness now kills the process group.
 | `/websites` | 99 | 100 | 100 | 1.86s | 1.85s | 0 | 65ms | 5 |
 | `/get-found` | 99 | 100 | 100 | 1.86s | 1.85s | 0 | 65ms | 5 |
 | `/ai-automation` | 99 | 100 | 100 | 1.87s | 1.85s | 0 | 62ms | 5 |
+
+### The Phase 8 TBT finding
+
+Total Blocking Time roughly doubled across every route, and it took two
+measurements to separate two different causes. Both were found by noticing that
+`/contact` had regressed — a page Phase 8 changed almost nothing about, which is
+what made it the useful control.
+
+**Cause one: a static import of something never rendered.** The layout imported
+`Analytics` and `SpeedInsights` and rendered them behind `process.env.VERCEL`.
+The gate works and was verified — no beacon request is ever made off Vercel. It
+does not keep the code out of the bundle: a static import in a layout puts the
+module in that layout's client reference manifest, so a **50.7 kB / 16.7 kB
+gzipped chunk was preloaded, parsed and evaluated on every route**, rendered or
+not. Moving both behind `next/dynamic` in a client boundary took `/contact` from
+144ms to 107ms and dropped the chunk from every page's HTML.
+
+**Cause two: unattributed, and honestly so.** Interleaved against the previous
+commit, six pairs:
+
+| Arm | perf | LCP | TBT |
+| --- | --- | --- | --- |
+| a668992, before Phase 8 | 99 | 1.96s | **52ms** (37, 39, 40, 53, 55, 55) |
+| Phase 8, beacons removed entirely | 99 | 1.96s | **104ms** (82, 85, 104, 104, 106, 113) |
+
+Two distributions that do not overlap at all, so the remaining ~50ms is real and
+is not the beacons. What it *is* did not survive scrutiny. The obvious reading —
+Style & Layout went from a mean of 192ms to 244ms — falls apart per run: 151,
+222, 265, 158, 206, 149 against 275, 285, 189, 319, 127, 269. Those overlap
+heavily. Script evaluation is indistinguishable (328 vs 334).
+
+So the total work is not clearly higher; it is distributed into tasks that cross
+the 50ms long-task threshold where the previous build's did not. The best
+available explanation is the stylesheet, which grew 55.2 kB to 57.8 kB and 787
+rules to 818 for three hero textures that `/contact` does not use — Tailwind
+emits one bundle for the site, so every page pays for `blueprint-grid` whether or
+not it draws one. That is a hypothesis with a mechanism, not a measurement, and
+it is written down as one.
+
+**What it costs in the thing that is graded: nothing.** The performance score is
+99 on both arms, LCP is identical, CLS is 0, and 104ms is comfortably inside
+Lighthouse's "good" band for TBT. It is logged in CONTENT_TODO.md rather than
+chased further, because the next honest step is per-route CSS, which this stack
+does not do without a fight.
 
 The three category routes are tight — four of five `/get-found` runs landed
 within 10ms of each other — and the illustrations on them cost nothing, which is

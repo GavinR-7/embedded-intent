@@ -313,6 +313,20 @@ site that cannot be delivered when someone taps it.
 
 ---
 
+## Open performance lead
+
+- [ ] **~50ms of TBT appeared site-wide in Phase 8 and is not attributed.**
+  Interleaved against the previous commit on `/contact`, six pairs: 52ms → 104ms,
+  distributions that do not overlap. It is **not** the Vercel beacons (removing
+  them entirely leaves 104ms) and it is not script evaluation. The stylesheet
+  grew 55.2 kB → 57.8 kB and 787 → 818 rules for three hero textures that most
+  routes never draw, and Tailwind emits one bundle for the whole site, so that is
+  the leading suspect. The performance score, LCP and CLS are all unchanged, so
+  this is not urgent — but the next step is route-scoped CSS, and it is worth
+  knowing that before the stylesheet grows again. Full write-up in MOTION.md.
+
+---
+
 ## Launch checklist
 
 **Moved to `LAUNCH.md`** (written 2026-09-27). It is the ordered version of the

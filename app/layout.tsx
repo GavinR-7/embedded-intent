@@ -1,8 +1,7 @@
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { VercelBeacons } from "@/components/analytics/VercelBeacons";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { MotionRuntime } from "@/components/motion/MotionRuntime";
@@ -112,9 +111,11 @@ const ARM_REVEALS = `(function(){try{document.documentElement.setAttribute("data
  * Component, so it is resolved when the page is rendered and no part of it
  * reaches the client bundle on any other host.
  *
- * What they cost where they do run: about 2.1 kB gzipped each for the wrappers
- * (measured from the packages' own `dist/*.mjs`), plus the two scripts, fetched
- * after the page is interactive.
+ * What they cost where they do run: 16.7 kB gzipped of chunk, plus the two
+ * scripts, both fetched after the page is interactive. That number is the
+ * shipped chunk, not the 2.1 kB each the packages' own `dist/*.mjs` files
+ * measure — see components/analytics/VercelBeacons.tsx, which is where the
+ * difference between the two turned out to matter.
  * ---------------------------------------------------------------------------
  */
 const ON_VERCEL = Boolean(process.env.VERCEL);
@@ -156,12 +157,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* Page views, and the field Core Web Vitals of real visitors — which
             is the number that matters and the one a lab run on a developer's
             laptop cannot tell you. See ON_VERCEL above for why they are gated. */}
-        {ON_VERCEL && (
-          <>
-            <Analytics />
-            <SpeedInsights />
-          </>
-        )}
+        {ON_VERCEL && <VercelBeacons />}
       </body>
     </html>
   );
