@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "check:mobile": "node scripts/check-mobile.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
