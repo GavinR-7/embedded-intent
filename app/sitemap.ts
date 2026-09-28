@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { categories, categoryHref } from "@/content/categories";
+import { legalDocuments } from "@/content/legal";
 import { services } from "@/content/services";
 import { site } from "@/content/site";
 import { caseStudies } from "@/content/work";
@@ -28,7 +29,8 @@ import { caseStudies } from "@/content/work";
  *
  * Priorities say what this business thinks matters: the homepage, then the three
  * category pages someone actually lands on, then the services, then /company and
- * /faq — both of which are pages someone reads before deciding — then the rest.
+ * /faq — both of which are pages someone reads before deciding — then the rest,
+ * with the two legal pages last.
  * They are a hint and search engines are free to ignore them.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -62,6 +64,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "yearly" as const,
       priority: 0.5,
+    })),
+
+    // Last, and lowest: nobody searches for these, and they should never
+    // outrank a service page. They are in the sitemap because a legal notice
+    // that cannot be found is not a notice — and because a carrier reviewing an
+    // SMS registration has to be able to reach both of them.
+    ...legalDocuments.map((doc) => ({
+      url: url(`/${doc.slug}`),
+      lastModified,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
     })),
   ];
 }

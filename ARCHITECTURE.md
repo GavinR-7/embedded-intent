@@ -42,6 +42,12 @@ app/                    Routes. Every file here is a URL or a route convention.
   sitemap.ts            Generates /sitemap.xml from the content modules, so a
                         new service is in it without anyone remembering.
   manifest.ts           Generates /manifest.webmanifest.
+  privacy/, terms/      The two legal pages. Four lines each: the copy is
+                        content/legal.ts and the layout is
+                        components/legal/LegalPage.tsx, shared by both. Read the
+                        header of the content module before editing either —
+                        every sentence in them describes real behaviour, and two
+                        of them are quoted verbatim from a carrier requirement.
   not-found.tsx         The 404, in the site's own style, with the three
                         categories as shortcuts.
   opengraph-image.tsx   The default social card. The three category routes each

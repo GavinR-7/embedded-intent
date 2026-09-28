@@ -145,9 +145,27 @@ export function Footer() {
         </ul>
 
         <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-eyebrow font-mono uppercase text-ink-subtle">
-            © {year} {site.name}
-          </p>
+          {/* Copyright and the small print on one line: the legal pages are
+              reference material, so they sit with the year rather than in a
+              column of things someone is meant to read. */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <p className="text-eyebrow font-mono uppercase text-ink-subtle">
+              © {year} {site.name}
+            </p>
+
+            <ul className="flex flex-wrap items-center gap-x-6 max-sm:gap-y-0">
+              {site.legalLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="tap-target rounded-sm text-eyebrow font-mono uppercase text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {site.social.length > 0 && (
             <ul className="flex gap-5">

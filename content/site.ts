@@ -86,6 +86,15 @@ export type SiteConfig = {
   /** Sits directly under the CTA wherever it appears. */
   ctaMicrocopy: string;
   footerColumns: readonly FooterColumn[];
+  /**
+   * The small print, shown beside the copyright rather than in a column.
+   *
+   * Not part of `footerColumns` on purpose: those are the catalogue and the
+   * company, and a reader scanning them is deciding whether to hire us. Privacy
+   * and terms are reference material — they belong where reference material
+   * goes, which is the bottom line of the page.
+   */
+  legalLinks: readonly NavItem[];
   social: readonly SocialLink[];
   /** The three-part trust line used under the hero and in the footer. */
   trustPoints: readonly string[];
@@ -197,6 +206,11 @@ export const site: SiteConfig = {
         { label: "Contact", href: "/contact" },
       ],
     },
+  ],
+
+  legalLinks: [
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
   ],
 
   // TODO(launch): add profiles once they exist. An empty array renders nothing,

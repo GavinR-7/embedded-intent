@@ -41,6 +41,22 @@ These must be resolved before the domain is pointed at the site.
   cards on the real domain after launch — `og:image` resolves against
   `metadataBase`, so they cannot be checked properly from localhost.
 
+- [ ] **No lawyer has read `/privacy` or `/terms`.** Added 2026-09-28. Both
+  pages are an accurate description of what the site actually does — the form
+  fields are the fields in `lib/auditRequest.ts`, "there is no database" is true
+  of `app/api/audit/route.ts`, and "cookieless" is true of the only two scripts
+  on the site — plus the disclosures a carrier requires before it will carry
+  business text messages. **That is not the same as legal advice, and nobody
+  with a licence has looked at them.** What to do about it is the owner's call:
+  have them reviewed, or publish them as the honest description they are. Two
+  things to know either way:
+  - The two sentences in `/privacy#sms` marked verbatim in `content/legal.ts`
+    are the wording A2P 10DLC registration asks for. Do not let a reviewer
+    reword them without checking that the carrier still accepts it.
+  - The terms state a 50/50 deposit-and-delivery split and that scope and price
+    live in a written agreement per project. If either becomes untrue of how the
+    work is actually sold, the page is wrong the day it changes.
+
 - [ ] **🚨 Above All Tent Rentals is at PageSpeed 64 mobile / 84 desktop.**
   Flagged in `AGENCY_SITE_COPY.md`. This got sharper, not softer: it is now the
   *only* case study on the site, so the one piece of proof we show scores 64 on
