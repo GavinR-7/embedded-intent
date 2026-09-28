@@ -1311,3 +1311,55 @@ measurement is in the CSS so nobody tries it again.
 one `--spacing-hero-top` token (`clamp(3rem, 7vw, 7rem)` — 3rem below ~430px).
 Service pages and the case study read 106px because the category back link sits
 above the eyebrow; that is the link, not the spacing.
+
+---
+
+## `npm run verify` (2026-09-28)
+
+One command for "is this ready for someone to look at": typecheck, lint, build,
+`check:mobile` at 360/390/430, full-page screenshots of every route at 390 and
+1440, and Lighthouse mobile on every route. Output goes to `verify-output/`
+(gitignored); `verify-output/summary.md` is a table that pastes into a PR
+description. Exit code is 0 only if nothing FAILed.
+
+Files: `scripts/verify.mjs` (the runner), `scripts/screenshots.mjs` (also
+`npm run screenshots` on its own), `scripts/offline-fonts.mjs`, and a `scale`
+option on `scripts/cdp.mjs`. No new dependencies: Lighthouse runs through
+`npx lighthouse@13.5.0`, so it never lands in a Vercel install.
+
+Thresholds come from the build standards: performance < 90 FAIL, < 95 WARN;
+CLS ≥ 0.01 FAIL, > 0 WARN; accessibility and best practices < 90 FAIL, < 100
+WARN. SEO is reported but not judged while the pre-launch `noindex` is on.
+
+### Things that are new here
+
+- **It finds a browser by itself.** `CHROME_BIN` still wins; otherwise the
+  Playwright headless shell is used (already on the cloud machines). Lighthouse
+  13 ignores `--chrome-path` and reads `CHROME_PATH`, so that is what it gets.
+- **Screenshots run under `prefers-reduced-motion: reduce`.** With motion on,
+  everything below the fold is still waiting for its reveal and the capture is
+  empty bands. Under `reduce` the reveal system does not exist (MOTION.md rule 3).
+- **Full-page capture is a clip, not a giant viewport.** Resizing the viewport
+  to the page height (13,000px on the phone homepage) makes headless Chrome skip
+  painting most tiles: the hero, then black. The script walks the page once so
+  lazy images load, scrolls back up, and captures with `captureBeyondViewport`
+  and a full-height clip.
+- **The phone view is 2x, deliberately.** At devicePixelRatio 1, headless Chrome
+  never finished the preloaded `next/image` on `/work/above-all-tent-rentals` and
+  the load event never fired. Real phones are 2–3x. Each route also has a 20s
+  load deadline so one bad page costs one screenshot, not the run.
+- **It builds where Google Fonts is blocked.** The cloud sandboxes block
+  fonts.googleapis.com, and `next/font/google` fetches at build time. When the
+  probe fails, `offline-fonts.mjs` uses Next's own test hook
+  (`NEXT_FONT_GOOGLE_MOCKED_RESPONSES`) to serve the same Geist variable fonts
+  from the `geist` npm package over a throwaway localhost server (Turbopack
+  fetches font URLs over HTTP and rejects file paths). On Vercel and on a normal
+  machine it does nothing.
+
+### First run (cloud sandbox, 1 Lighthouse run per route)
+
+Everything PASS; Lighthouse WARN. Performance 93–98 on all 22 routes,
+accessibility and best practices 100 everywhere, CLS 0.000 everywhere. LCP sits
+at 2.9–3.1s on most routes, the top of the bimodal band from the font notes, and
+this machine is slower than the WSL box that measured 98+. Worth a 3-run median
+(`VERIFY_LH_RUNS=3`) before reading anything into it.
