@@ -17,6 +17,7 @@ export async function connect({
   reduced = false,
   port = 9222,
   profile = "check",
+  scale,
 } = {}) {
   const bin = process.env.CHROME_BIN;
   if (!bin) throw new Error("set CHROME_BIN to a chrome-headless-shell binary");
@@ -78,7 +79,7 @@ export async function connect({
   const resize = (w, h) =>
     send(
       "Emulation.setDeviceMetricsOverride",
-      { width: w, height: h, deviceScaleFactor: mobile ? 3 : 1, mobile },
+      { width: w, height: h, deviceScaleFactor: scale ?? (mobile ? 3 : 1), mobile },
       sessionId,
     );
   await resize(width, height);
