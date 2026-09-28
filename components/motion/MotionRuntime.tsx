@@ -8,8 +8,8 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 /**
  * Everything page-wide that needs a pointer or a viewport.
  *
- * Mounted once, in the root layout. Two effects, two listeners for the entire
- * site:
+ * Mounted once, in the root layout. A handful of effects, and one listener each
+ * for the entire site:
  *
  *   - ONE IntersectionObserver watching every `data-reveal` element. One
  *     observer with N targets, not N observers — an observer per element is
@@ -21,17 +21,14 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
  *     cards and rows. Delegation is what keeps every card a Server Component:
  *     the alternative is a client wrapper around each grid.
  *
+ *   - ONE delegated `click` on `document`, so that following a link to the page
+ *     you are already on goes back to the top of it.
+ *
  * It renders nothing.
  */
 
 /** Only elements that have not revealed yet. Re-scanning is therefore cheap. */
 const PENDING_SELECTOR = "[data-reveal]:not([data-revealed])";
-
-/** Every reveal target, for working out an element's position in its section. */
-const REVEAL_SELECTOR = "[data-reveal]";
-
-/** `Section` puts this on its <section>, and the footer on its <footer>. */
-const GROUP_SELECTOR = "[data-reveal-group]";
 
 /**
  * Cards and rows that light up under the cursor.
@@ -52,11 +49,66 @@ const PAUSE_SELECTOR = "[data-pause-offscreen]";
 /**
  * Cap on the stagger index.
  *
- * An eleven-item list at 70ms apart would take 770ms to finish arriving, and
- * the last card would still be fading in well after the reader got to it.
- * After the sixth element everything shares the same delay.
+ * Eleven cards at 60ms apart would take 660ms to finish arriving, and the last
+ * one would still be fading in well after the reader reached it. From the fifth
+ * element on, everything in one batch shares a delay.
  */
-const MAX_STAGGER_INDEX = 6;
+const MAX_STAGGER_INDEX = 4;
+
+/**
+ * How fast counts as flying past, in viewport heights per second.
+ *
+ * Above this there is nothing to see: an element's 600ms fade would finish
+ * several screens after the reader has gone by, so the animation is only ever
+ * witnessed in arrears, as a screen of half-faded cards catching up. It reveals
+ * instantly instead.
+ */
+const FAST_SCROLL_VIEWPORTS = 2;
+
+/**
+ * A scroll sample older than this says nothing about how fast the page is
+ * moving NOW. Without it, the reveal that lands just after a fling ends would
+ * be judged by the fling's speed.
+ */
+const VELOCITY_STALE_MS = 100;
+
+/**
+ * A jump is not a scroll.
+ *
+ * `window.scrollTo`, a route change returning to the top, and following an
+ * anchor all move the page by thousands of pixels between one frame and the
+ * next, which as a velocity is six figures — and would class every element on
+ * the destination screen as flown past.
+ *
+ * That is not theoretical: it made every navigation from low on a page deliver
+ * its next screen with no animation at all, because Next scrolls the new route
+ * to the top and the listener below saw a 12,035px move.
+ *
+ * The test is the DISTANCE BETWEEN TWO CONSECUTIVE SAMPLES, with no reference to
+ * how long they were apart — which is the version that works. Scrolling cannot
+ * cover a viewport height between two scroll events, because the browser fires
+ * one per frame for as long as the page is moving; a hard fling on a phone
+ * manages a tenth of that per frame. So the only way to see a whole screen of
+ * travel in one sample is for the page to have been put there.
+ *
+ * (The first attempt at this also required the two samples to be within one
+ * frame of each other, which sounds stricter and is simply wrong: the effect
+ * takes its first sample when it runs, the router scrolls a few milliseconds
+ * later, and 12,035px over 50ms is not one frame — so the rule never fired and
+ * every route change still arrived unanimated.)
+ */
+const TELEPORT_VIEWPORTS = 1;
+
+/**
+ * How far below the fold still counts as arriving, in viewport heights.
+ *
+ * Slightly looser than the observer's own `rootMargin` of 8%, and the slack is
+ * the point: the observer decides when this callback runs and the live rect read
+ * inside it decides what to do, so the second test has to be the more generous
+ * of the two. An element the observer reports as arriving and the callback
+ * decides is not yet arriving will never be reported again.
+ */
+const ARRIVAL_FOLD = 1.1;
 
 /** How long to wait before assuming the observer is never going to work. */
 const SAFETY_NET_MS = 3000;
@@ -66,29 +118,11 @@ function reveal(node: Element) {
 }
 
 /**
- * Number each section's reveal children in document order.
- *
- * This is the "Section assigns a stagger index automatically" half of the
- * system, and it is done here rather than in the Section component because
- * Section is a Server Component: it would have to walk and clone its children
- * to reach them, which only works for direct children and breaks the moment
- * something is nested one level deeper. A group marker plus a document-order
- * walk at runtime handles any nesting and needs nothing from the author.
+ * Revealed with no animation at all. One rule in app/globals.css keys off the
+ * value; the end state is the same as an ordinary reveal.
  */
-function assignStaggerIndices() {
-  for (const group of document.querySelectorAll(GROUP_SELECTOR)) {
-    const targets = group.querySelectorAll<HTMLElement>(REVEAL_SELECTOR);
-
-    targets.forEach((node, index) => {
-      // Already revealed elements keep whatever delay they had; rewriting it
-      // would do nothing but dirty their style.
-      if (node.dataset.revealed !== undefined) return;
-      node.style.setProperty(
-        "--reveal-i",
-        String(Math.min(index, MAX_STAGGER_INDEX)),
-      );
-    });
-  }
+function revealInstantly(node: Element) {
+  (node as HTMLElement).dataset.revealed = "instant";
 }
 
 export function MotionRuntime() {
@@ -118,41 +152,153 @@ export function MotionRuntime() {
 
     let observerRan = false;
 
+    /*
+     * Scroll speed, in px/s, sampled from the scroll event rather than measured
+     * inside the observer callback.
+     *
+     * One listener, two numbers, no layout read: `scrollY` is already available
+     * to the event. The observer cannot work this out for itself — it is handed
+     * rectangles, not a velocity — and asking for `scrollY` inside its callback
+     * would be a fresh read on a frame that is already committing style.
+     */
+    let lastY = window.scrollY;
+    let lastAt = performance.now();
+    let pxPerSecond = 0;
+
+    const onScroll = () => {
+      const now = performance.now();
+      const y = window.scrollY;
+      const elapsed = now - lastAt;
+      // Under a millisecond apart, the division is mostly noise.
+      if (elapsed < 1) return;
+
+      const distance = Math.abs(y - lastY);
+
+      // A teleport, not a fling. See TELEPORT_VIEWPORTS.
+      pxPerSecond =
+        distance > TELEPORT_VIEWPORTS * window.innerHeight
+          ? 0
+          : (distance / elapsed) * 1000;
+
+      lastY = y;
+      lastAt = now;
+    };
+
+    const flyingPast = () =>
+      performance.now() - lastAt < VELOCITY_STALE_MS &&
+      pxPerSecond > FAST_SCROLL_VIEWPORTS * window.innerHeight;
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     const observer = new IntersectionObserver(
       (entries) => {
         observerRan = true;
 
+        /*
+         * -------------------------------------------------------------------
+         * The stagger is by ARRIVAL, not by position in the section.
+         *
+         * Numbering a section's children in document order — which is what this
+         * used to do — gives every element a fixed delay whether or not anything
+         * else arrives with it. Scroll slowly and each card waits out the delay
+         * of the cards above it for nothing. Scroll quickly and a whole
+         * section's worth of delays fire at once, which is the burst.
+         *
+         * An IntersectionObserver callback is already the right batch: it holds
+         * exactly the elements that crossed the line in the same frame. Sorting
+         * those top to bottom (then left to right, for a row of cards, which
+         * share a top) and numbering them is a stagger of precisely the elements
+         * the reader is about to look at, and nothing else.
+         * -------------------------------------------------------------------
+         */
+        /*
+         * -------------------------------------------------------------------
+         * THE RECTANGLES ARE READ LIVE, NOT TAKEN FROM THE ENTRY.
+         *
+         * `entry.boundingClientRect` is a snapshot from when the browser
+         * computed the intersection, and the callback runs later. Usually the
+         * difference is nothing. On a soft navigation it is everything: React
+         * commits the new page, this effect observes its elements, and only
+         * THEN does the router scroll the new route to the top — so the
+         * snapshot describes the new page's first screen as seen from 12,000px
+         * down, every element in it reporting a `bottom` far above the viewport.
+         * Classified from the snapshot, every navigation from low on a page
+         * delivered its next screen already revealed, with no animation at all.
+         *
+         * So the observer is treated as what it reliably is — a signal that
+         * something may have changed — and the positions are read for real. All
+         * the reads happen in this loop, before any write below, so it is one
+         * layout flush per callback and not one per element.
+         * -------------------------------------------------------------------
+         */
+        const arriving: { node: HTMLElement; rect: DOMRect }[] = [];
+        const passed: HTMLElement[] = [];
+        const fold = window.innerHeight * ARRIVAL_FOLD;
+
         for (const entry of entries) {
+          const node = entry.target as HTMLElement;
+          const rect = node.getBoundingClientRect();
+
           /*
-           * Either 15% of the element is showing, or the element is so tall
-           * that 15% of it never can be.
-           *
-           * The second half matters: with a single 0.15 threshold, an element
-           * taller than about 6.6 viewports can never reach the ratio, so it
-           * would never intersect and never reveal — and because the observer
-           * did fire, the safety net below would not catch it either. That is
-           * a content-is-invisible bug waiting for the first very long card.
+           * Already above the viewport. The reader has passed it — they scrolled
+           * through it faster than the observer reported, or the page was opened
+           * part-way down at an anchor. There is nothing to animate into view.
            */
-          const root = entry.rootBounds;
-          const tallerThanRoot =
-            root !== null && entry.boundingClientRect.height > root.height * 0.6;
-          const arrived =
-            entry.intersectionRatio >= 0.15 ||
-            (tallerThanRoot && entry.intersectionRect.height > 0);
+          if (rect.bottom <= 0) {
+            passed.push(node);
+            continue;
+          }
 
-          if (!arrived) continue;
+          /*
+           * Still below the fold: wait for it. `isIntersecting` is taken as a
+           * yes even when the live rect disagrees, because an observer that has
+           * reported an element will not report it again until its state
+           * changes — dropping one here on a stricter test of our own is how an
+           * element ends up hidden for good.
+           */
+          if (!entry.isIntersecting && rect.top >= fold) continue;
 
-          reveal(entry.target);
+          arriving.push({ node, rect });
+        }
+
+        for (const node of passed) {
+          revealInstantly(node);
+          observer.unobserve(node);
+        }
+
+        if (arriving.length === 0) return;
+
+        if (flyingPast()) {
+          for (const { node } of arriving) {
+            revealInstantly(node);
+            observer.unobserve(node);
+          }
+          return;
+        }
+
+        arriving.sort((a, b) => a.rect.top - b.rect.top || a.rect.left - b.rect.left);
+
+        arriving.forEach(({ node }, index) => {
+          node.style.setProperty("--reveal-i", String(Math.min(index, MAX_STAGGER_INDEX)));
+          reveal(node);
           // One-shot. Nothing re-hides on the way back up, so there is no
           // reason to keep watching it.
-          observer.unobserve(entry.target);
-        }
+          observer.unobserve(node);
+        });
       },
       {
-        threshold: [0, 0.15],
-        // Reveal 10% into the viewport rather than exactly at the edge, so an
-        // element is already settled by the time it is properly in view.
-        rootMargin: "0px 0px -10% 0px",
+        threshold: 0,
+        /*
+         * A POSITIVE bottom margin, which grows the root box downwards: an
+         * element intersects while it is still 8% of a viewport BELOW the fold.
+         * The 600ms fade therefore plays as the element comes onto the screen
+         * and is finished by the time it is properly in view.
+         *
+         * The old value was `-10%`, which shrank the box and meant nothing began
+         * moving until the element was a tenth of a screen inside it — late,
+         * and then trying to catch up in front of the reader.
+         */
+        rootMargin: "0px 0px 8% 0px",
       },
     );
 
@@ -168,7 +314,6 @@ export function MotionRuntime() {
      */
     let frame = requestAnimationFrame(() => {
       frame = 0;
-      assignStaggerIndices();
       for (const node of pending) observer.observe(node);
     });
 
@@ -186,6 +331,7 @@ export function MotionRuntime() {
     return () => {
       if (frame !== 0) cancelAnimationFrame(frame);
       clearTimeout(net);
+      window.removeEventListener("scroll", onScroll);
       observer.disconnect();
     };
   }, [pathname, prefersReducedMotion]);
@@ -231,6 +377,84 @@ export function MotionRuntime() {
       document.removeEventListener("pointermove", onPointerMove);
       if (frame !== 0) cancelAnimationFrame(frame);
     };
+  }, [prefersReducedMotion]);
+
+  // ------------------------------------------------- a link to the current page
+  /*
+   * Clicking a link to the page you are already on takes you to the top of it.
+   *
+   * A router that does nothing is the correct behaviour for a navigation to the
+   * same URL, and it is the wrong behaviour for the thing people are actually
+   * doing when they click the logo: they are asking to start again. Nothing at
+   * all happens today — no scroll, no feedback — which reads as a broken link.
+   *
+   * ---------------------------------------------------------------------------
+   * Delegated on `document`, rather than a handler on each link.
+   *
+   * The site has the logo, five nav tabs' worth of dropdown items, a mobile
+   * sheet and four columns of footer links, spread over a client Header and a
+   * server Footer. Adding an `onClick` to each one means either repeating the
+   * same nine lines a dozen times or turning the footer into a client component
+   * to hold them. One listener covers every link on every page, including ones
+   * added later, and keeps the footer on the server.
+   *
+   * WHY THERE IS NO `defaultPrevented` GUARD: `next/link` calls
+   * `preventDefault()` in its own click handler, and React's delegated listener
+   * is attached to the document at hydration — before this one — so by the time
+   * we run, every internal link has already been prevented. Bailing on that flag
+   * would mean bailing on every link we care about. `preventDefault` here is
+   * therefore belt and braces for the no-JS-router case; the scroll is ours
+   * either way. Other handlers on the link still run, which is exactly how the
+   * mobile sheet closes itself when you tap the logo inside it.
+   * ---------------------------------------------------------------------------
+   */
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      // Let the browser have anything that is not a plain left click: a new
+      // tab, a new window, a download, a context menu.
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+
+      const link = (event.target as Element | null)?.closest("a[href]");
+      if (!link) return;
+      if (link.hasAttribute("download")) return;
+
+      const target = link.getAttribute("target");
+      if (target !== null && target !== "_self") return;
+
+      let url: URL;
+      try {
+        url = new URL((link as HTMLAnchorElement).href, window.location.href);
+      } catch {
+        return;
+      }
+
+      if (url.origin !== window.location.origin) return;
+
+      /*
+       * An in-page anchor is a link to the current page with somewhere specific
+       * to go, and it already works. `/#how-it-works` on the homepage is the one
+       * the site actually uses.
+       */
+      if (url.hash !== "") return;
+
+      if (
+        url.pathname + url.search !==
+        window.location.pathname + window.location.search
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion ? "instant" : "smooth",
+      });
+    };
+
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
   }, [prefersReducedMotion]);
 
   // ----------------------------------------------------------- offscreen pause

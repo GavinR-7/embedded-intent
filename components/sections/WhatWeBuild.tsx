@@ -132,7 +132,7 @@ export function WhatWeBuild() {
               <h3 data-reveal="">
                 <Link
                   href={categoryHref(category.slug)}
-                  className="rounded-sm text-eyebrow font-mono uppercase text-signal transition-colors duration-[var(--duration-fast)] hover:text-signal-dim"
+                  className="tap-target rounded-sm text-eyebrow font-mono uppercase text-signal transition-colors duration-[var(--duration-fast)] hover:text-signal-dim"
                 >
                   {category.label} →
                 </Link>

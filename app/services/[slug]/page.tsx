@@ -83,7 +83,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             which is exactly what /websites is. */}
         <Link
           href={categoryHref(service.category)}
-          className="rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
+          className="tap-target rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
         >
           ← {category.label}
         </Link>

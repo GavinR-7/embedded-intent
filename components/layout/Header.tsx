@@ -433,7 +433,10 @@ export function Header() {
         <div className="mx-auto flex h-20 max-w-content items-center justify-between gap-4 px-gutter">
           <Link
             href="/"
-            className="flex items-center gap-3 rounded-sm text-ink transition-colors duration-[var(--duration-fast)] hover:text-signal"
+            // min-h-11 rather than a taller chip: 44px of hit area inside an
+            // 80px bar costs no layout and makes the most-tapped link on a
+            // phone a finger wide as well as a finger tall.
+            className="flex min-h-11 items-center gap-3 rounded-sm text-ink transition-colors duration-[var(--duration-fast)] hover:text-signal"
             onClick={() => closeMenu(false)}
           >
             <ChipMark className="h-9 w-9 text-signal" />
@@ -503,7 +506,7 @@ export function Header() {
             aria-label={open ? "Close menu" : "Open menu"}
             onPointerDown={prime}
             onClick={() => (open ? closeMenu(true) : openMenu())}
-            className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-field text-ink transition-colors duration-[var(--duration-fast)] hover:bg-surface-raised lg:hidden"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-field text-ink transition-colors duration-[var(--duration-fast)] hover:bg-surface-raised lg:hidden"
           >
             <svg
               viewBox="0 0 24 24"
@@ -582,7 +585,7 @@ export function Header() {
                             <Link
                               href={menu.footer.allHref}
                               onClick={() => closeMenu(false)}
-                              className="block py-2.5 text-label font-medium text-signal"
+                              className="flex min-h-11 items-center text-label font-medium text-signal"
                             >
                               {menu.footer.allLabel} →
                             </Link>
@@ -593,7 +596,7 @@ export function Header() {
                               <Link
                                 href={item.href}
                                 onClick={() => closeMenu(false)}
-                                className="flex items-center gap-3 py-2.5 text-label text-ink-muted"
+                                className="flex min-h-11 items-center gap-3 py-2 text-label text-ink-muted"
                               >
                                 <IconTile name={item.icon} />
                                 {item.label}

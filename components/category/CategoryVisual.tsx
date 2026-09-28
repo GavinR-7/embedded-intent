@@ -37,13 +37,33 @@ import { heroVisuals } from "@/content/heroVisuals";
 /**
  * Per category, because a phone is portrait and a web page is not.
  *
- * /ai-automation changes shape at `lg`, and it is the only one that does: the
- * core sits above the handset on a narrow screen and beside it on a wide one, so
- * the box it needs is tall in one layout and wide in the other.
+ * /ai-automation changes shape at `lg`: the core sits above the handset on a
+ * narrow screen and beside it on a wide one, so the box it needs is tall in one
+ * layout and wide in the other.
+ *
+ * /get-found has NO fixed ratio below `sm`, and that is a fix rather than a
+ * preference. Its drawing is a map above a four-row list, and a 4:3 box 350px
+ * wide is 262px tall — enough for the map and three of the rows. The fourth row
+ * was drawn 37px below the bottom of a box with `overflow: hidden` on it, so on
+ * every phone the illustration of a business climbing to first place was missing
+ * the position it climbed from, and nothing about that looked like a bug: the
+ * clip was doing exactly what it was told. Off a fixed ratio the box is as tall
+ * as the drawing needs, and scripts/check-mobile.mjs now fails if any text inside
+ * one of these frames lands outside it.
+ *
+ * WHICH IS WHY THE MIN-HEIGHT IS THERE. Dropping the ratio also dropped the
+ * reserved space, and the box is empty until the client chunk arrives: the first
+ * measurement after that change had /get-found at CLS 0.086 in all five runs,
+ * from a frame that grew by 347px under the caption. 21.75rem is 348px, and 347
+ * is what the drawing measures at every width below `sm` — every part of it (the
+ * query bar, the 10rem map, the heading, four 1.75rem rows) is a fixed size, so
+ * the number does not move with the viewport. A MINIMUM rather than a height, so
+ * that if the drawing ever does grow it costs a layout shift instead of a clip:
+ * one of those is caught by Lighthouse and the other was invisible for a month.
  */
 const ASPECT: Record<CategorySlug, string> = {
   websites: "aspect-[4/3]",
-  "get-found": "aspect-[4/3]",
+  "get-found": "aspect-auto max-sm:min-h-[21.75rem] sm:aspect-[4/3]",
   "ai-automation": "aspect-[5/7] lg:aspect-[4/3]",
 };
 

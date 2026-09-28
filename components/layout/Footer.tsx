@@ -13,8 +13,9 @@ import { site } from "@/content/site";
  * listed here. A second hand-maintained list of services is a second list to
  * forget to update.
  *
- * `data-reveal-group` makes the footer one stagger group, so its columns arrive
- * in order rather than all at once. See components/motion/MotionRuntime.tsx.
+ * Its columns stagger as they arrive, like every other band's contents — the
+ * runtime works out which elements arrived together rather than being told where
+ * the groups are. See components/motion/MotionRuntime.tsx.
  */
 export function Footer() {
   // Evaluated when the page is rendered. These pages are statically generated,
@@ -26,13 +27,13 @@ export function Footer() {
   const hasContact = site.email !== null || site.phone !== null;
 
   return (
-    <footer data-reveal-group="" className="border-t border-line bg-void">
+    <footer className="border-t border-line bg-void">
       <div className="mx-auto max-w-content px-gutter py-16">
         <div className="flex flex-col gap-12 lg:flex-row lg:justify-between lg:gap-16">
           <div data-reveal="" className="max-w-xs">
             <Link
               href="/"
-              className="rounded-sm text-[0.9375rem] font-semibold tracking-tight text-ink"
+              className="tap-target rounded-sm text-[0.9375rem] font-semibold tracking-tight text-ink"
             >
               {site.name}
             </Link>
@@ -53,17 +54,17 @@ export function Footer() {
                 <h2 className="text-eyebrow font-mono uppercase text-ink-subtle">
                   <Link
                     href={categoryHref(category.slug)}
-                    className="rounded-sm transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                    className="tap-target rounded-sm transition-colors duration-[var(--duration-fast)] hover:text-signal"
                   >
                     {category.label}
                   </Link>
                 </h2>
-                <ul className="mt-4 flex flex-col gap-3">
+                <ul className="mt-4 flex flex-col gap-3 max-sm:mt-1 max-sm:gap-0">
                   {servicesByCategory(category.slug).map((service) => (
                     <li key={service.slug}>
                       <Link
                         href={`/services/${service.slug}`}
-                        className="rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                        className="tap-target rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
                       >
                         {service.name}
                       </Link>
@@ -78,12 +79,12 @@ export function Footer() {
                 <h2 className="text-eyebrow font-mono uppercase text-ink-subtle">
                   {column.heading}
                 </h2>
-                <ul className="mt-4 flex flex-col gap-3">
+                <ul className="mt-4 flex flex-col gap-3 max-sm:mt-1 max-sm:gap-0">
                   {column.links.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                        className="tap-target rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
                       >
                         {link.label}
                       </Link>
@@ -97,11 +98,11 @@ export function Footer() {
               <h2 className="text-eyebrow font-mono uppercase text-ink-subtle">
                 Start here
               </h2>
-              <ul className="mt-4 flex flex-col gap-3">
+              <ul className="mt-4 flex flex-col gap-3 max-sm:mt-1 max-sm:gap-0">
                 <li>
                   <Link
                     href={site.primaryCta.href}
-                    className="rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                    className="tap-target rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
                   >
                     {site.primaryCta.label}
                   </Link>
@@ -112,7 +113,7 @@ export function Footer() {
                       <li>
                         <a
                           href={`mailto:${site.email}`}
-                          className="rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                          className="tap-target rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
                         >
                           {site.email}
                         </a>
@@ -122,7 +123,7 @@ export function Footer() {
                       <li>
                         <a
                           href={`tel:${site.phone.e164}`}
-                          className="rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                          className="tap-target rounded-sm text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-signal"
                         >
                           {site.phone.display}
                         </a>
@@ -156,7 +157,7 @@ export function Footer() {
                     href={profile.href}
                     rel="me noopener noreferrer"
                     target="_blank"
-                    className="rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                    className="tap-target rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
                   >
                     {profile.label}
                   </a>

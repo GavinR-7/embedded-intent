@@ -118,16 +118,6 @@ export function Section({
   return (
     <section
       id={id}
-      /*
-        Marks this band as a stagger group.
-
-        The runtime numbers every `data-reveal` element inside it in document
-        order and writes `--reveal-i`, so the eyebrow, the heading and then each
-        card arrive 70ms apart. Nothing in a section has to know its own index,
-        which is what stops the numbers going wrong the moment someone reorders
-        two blocks. See components/motion/MotionRuntime.tsx.
-      */
-      data-reveal-group=""
       className={[
         "relative",
         // Clears the sticky 80px header when an anchor is followed, so the

@@ -131,6 +131,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      /*
+       * Smooth for anchors, instant for route changes.
+       *
+       * app/globals.css sets `scroll-behavior: smooth` on <html>, which is what
+       * makes an in-page anchor glide. Next used to suppress that during a route
+       * change itself; from Next 16 it only does so when this attribute is
+       * present, and without it every navigation from low on a page ANIMATES the
+       * scroll back to the top — through the new page. Three thousand pixels of
+       * the page you just asked for, sweeping past at speed, tripping reveals on
+       * the way so the first screen arrives half-animated with holes in it.
+       *
+       * The attribute tells Next "yes, that smooth scrolling is deliberate,
+       * turn it off around navigations", which is exactly the split we want.
+       * Documented in node_modules/next/dist/docs/, under scroll behaviour.
+       */
+      data-scroll-behavior="smooth"
       // The inline script below adds an attribute to this element before React
       // hydrates. Without this, React treats the extra attribute as a mismatch.
       suppressHydrationWarning
@@ -145,7 +161,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <Header />
-        <main id="main" className="flex-1">
+        {/*
+          `overflow-x-clip` is a safety net, not the fix for anything.
+
+          Nothing should be wider than the viewport in the first place, and
+          scripts/check-mobile.mjs fails the build's verification if anything is.
+          But the cost of being wrong about that on a phone is that mobile Safari
+          zooms the entire page out to fit the offender, which makes every page on
+          the site look subtly broken and points at nothing in particular. One
+          declaration turns that failure into a clipped edge.
+
+          `clip`, not `hidden`: `overflow: hidden` makes this element a scroll
+          container, and `position: sticky` sticks to the nearest scroll
+          container — so the stepper panel in "How it works" would pin itself to
+          a box that never scrolls and stop working. `clip` does not create one.
+        */}
+        <main id="main" className="flex-1 overflow-x-clip">
           {children}
         </main>
         <Footer />

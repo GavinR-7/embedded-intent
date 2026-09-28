@@ -63,7 +63,7 @@ export default function ContactPage() {
                   <dd className="mt-1">
                     <a
                       href={`tel:${site.phone.e164}`}
-                      className="rounded-sm text-label text-ink transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                      className="tap-target rounded-sm text-label text-ink transition-colors duration-[var(--duration-fast)] hover:text-signal"
                     >
                       {site.phone.display}
                     </a>
@@ -77,7 +77,7 @@ export default function ContactPage() {
                   <dd className="mt-1">
                     <a
                       href={`mailto:${site.email}`}
-                      className="rounded-sm text-label text-ink transition-colors duration-[var(--duration-fast)] hover:text-signal"
+                      className="tap-target rounded-sm text-label text-ink transition-colors duration-[var(--duration-fast)] hover:text-signal"
                     >
                       {site.email}
                     </a>

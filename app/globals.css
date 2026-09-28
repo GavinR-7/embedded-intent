@@ -218,15 +218,22 @@
      would imply these are per-element choices when the point is that they are
      not.
 
-     The reveal numbers are measured from cantandodigital.com, which is the
-     reference for how this should feel: opacity over 0.7s, movement over
-     0.8s — the slightly longer travel is what stops it reading as a flicker —
-     on an expo-out curve, 18px of travel, 70ms apart down a section.
+     The first version of these came from cantandodigital.com — 0.7s fade, 0.8s
+     move, `--ease-out-expo`, 18px, 70ms apart — and on this site it read late,
+     then rushed: the expo curve puts most of its travel in the first third, so
+     an element that started at 15% visible appeared to snap the rest of the way
+     in. `cubic-bezier(0.33, 1, 0.68, 1)` spends its time more evenly, which at
+     a shorter duration reads calmer, not slower. The curve is reveal-only;
+     `--ease-out-expo` is still right for things that settle into a position.
+
+     Movement stays 100ms longer than the fade, so an element is fully opaque
+     slightly before it stops moving.
      ------------------------------------------------------------------------- */
-  --dur-reveal-fade: 700ms;
-  --dur-reveal-move: 800ms;
-  --reveal-stagger: 70ms;
+  --dur-reveal-fade: 600ms;
+  --dur-reveal-move: 700ms;
+  --reveal-stagger: 60ms;
   --reveal-distance: 18px;
+  --ease-reveal: cubic-bezier(0.33, 1, 0.68, 1);
 
   /* Menus and popovers: enter and exit. Short, because it is in the way of
      what you asked for. */
@@ -274,6 +281,19 @@
   --dur-signal-run: 2600ms;
   /* Half of one crosshair fade in the /websites blueprint layer. */
   --dur-mark-fade: 1600ms;
+}
+
+/*
+ * Less travel on a phone.
+ *
+ * 18px is a small fraction of a 1440px column and a visible fraction of a 390px
+ * one — the same distance that reads as a settle on a desktop reads as a jump on
+ * a phone, where everything is stacked and every card does it in turn.
+ */
+@media (width < 40rem) {
+  :root {
+    --reveal-distance: 12px;
+  }
 }
 
 @layer base {
@@ -495,20 +515,42 @@ html[data-reveal-ready] [data-reveal] {
      element is fully opaque slightly before it stops moving, which is what
      makes it read as settling into place rather than sliding on.
 
-     The delay is the element's index within its section (`--reveal-i`, written
-     by the runtime) times the stagger. Unset means 0, so an element outside
-     any section still reveals — it just does not wait its turn.
+     `--reveal-i` is the element's place in the group that ARRIVED WITH IT, not
+     its index in the section — written by the runtime at the moment it reveals,
+     top to bottom then left to right. A section whose eleven cards come into
+     view one at a time now staggers nothing, because nothing arrived alongside
+     anything; the same section scrolled into view in one movement staggers all
+     of them. Unset means 0, so an element the runtime never numbered still
+     reveals — it just does not wait its turn.
   */
   transition:
-    opacity var(--dur-reveal-fade) var(--ease-out-expo)
+    opacity var(--dur-reveal-fade) var(--ease-reveal)
       calc(var(--reveal-i, 0) * var(--reveal-stagger)),
-    transform var(--dur-reveal-move) var(--ease-out-expo)
+    transform var(--dur-reveal-move) var(--ease-reveal)
       calc(var(--reveal-i, 0) * var(--reveal-stagger));
 }
 
 html[data-reveal-ready] [data-reveal][data-revealed] {
   opacity: 1;
   transform: none;
+}
+
+/*
+   Content you have already passed, or are flying past, does not animate.
+
+   The runtime writes `data-revealed="instant"` instead of an empty value when an
+   element arrives entirely above the viewport, or while the page is moving
+   faster than two viewport heights a second — see
+   components/motion/MotionRuntime.tsx. Both cases used to produce the same
+   thing: a screen of cards all fading in at once, several of them starting
+   after the reader had already scrolled past where they are. There is no
+   animation to see at that speed, only the arrears of one.
+
+   `[data-revealed]` above matches any value, so this rule only has to switch
+   the transition off; the end state is already shared.
+*/
+html[data-reveal-ready] [data-reveal][data-revealed="instant"] {
+  transition: none;
 }
 
 /*
@@ -1022,6 +1064,32 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
  * Without the mask, names appear and vanish at a hard vertical line, which reads
  * as clipping rather than as motion continuing past the edge.
  */
+/*
+ * A standalone link or chip, given a finger-sized hit area on a phone.
+ *
+ * 44px is the number Apple's guidance uses and WCAG 2.5.5 asks for; WCAG 2.5.8,
+ * which is the AA one, asks for 24px. A footer full of 17px-tall catalogue links
+ * clears the AA bar and is still a bad time on a phone, so standalone links get
+ * the bigger box — a link inside a sentence does NOT, because a 44px line in a
+ * paragraph would wreck the paragraph, and both standards exempt it.
+ *
+ * Below `sm` only. The hit area is a touch problem: a mouse hits a 17px row
+ * every time, and growing every footer row by 27px at desktop widths would cost
+ * a third of the footer's height to solve a problem nobody has there.
+ *
+ * `inline-flex`, so the box is only as wide as the text plus the minimum — a
+ * `block` would make the whole column's width tappable and put the hit area of
+ * one link under the text of the next.
+ */
+@utility tap-target {
+  @media (width < 40rem) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    min-inline-size: 2.75rem;
+  }
+}
+
 @utility marquee {
   overflow: hidden;
   mask-image: linear-gradient(
@@ -1032,6 +1100,16 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
     transparent 100%
   );
 
+  /*
+   * 40s at every width, and that is measured rather than assumed.
+   *
+   * The phone pass tried slowing this down below `sm` on the theory that a strip
+   * crossing a 390px screen must read faster than one crossing 1440px. It does,
+   * and it is still slow: the track is the same 2309px everywhere (the text does
+   * not change size), so it travels at 28.9px/s, which is one industry name
+   * every 2.5s and a full 390px screen every 13.5s. At 64s that became 18.2px/s
+   * and read as stalled. Left alone.
+   */
   & [data-marquee-track] {
     width: max-content;
     animation: marquee-track 40s linear infinite;
@@ -1089,10 +1167,45 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
 @utility type-line {
   position: relative;
   display: inline-block;
+
+  /*
+   * THE CARET IS CLIPPED HERE, AND THIS IS NOT A COSMETIC CHOICE.
+   *
+   * The caret layer spans this box and is walked across it with
+   * `translateX(100%)`, so at the end of the animation it sits one full box
+   * width to the right of where it started — outside this element. On a desktop
+   * that is a few hundred px of empty space nobody notices. On a 390px phone,
+   * where this line wraps to two lines and the box is therefore 350px wide, the
+   * caret ended at x=511 and the PAGE became 511px wide: mobile Safari zooms out
+   * to fit the widest thing in the document, so every word on the homepage got
+   * smaller to make room for an invisible 6px block.
+   *
+   * `clip`, not `hidden`: `hidden` would make this a scroll container, and a
+   * scroll container is a scrollport that `position: sticky` descendants stick
+   * to. There are none in here today. `clip` means there never can be a problem.
+   * The single axis is deliberate too — the block caret is slightly taller than
+   * its line box, and clipping the other axis would shave it.
+   */
+  overflow-x: clip;
 }
 
+/*
+ * Typing runs from `sm` up, and nowhere below it.
+ *
+ * Measured, not guessed: the eyebrow needs 412px to sit on one line, so it wraps
+ * on every phone (2 lines at 360, 390 and 430; 1 line from about 452px). A wipe
+ * that uncovers a two-line block by column reveals the bottom line's first word
+ * before the top line's last one, which does not read as typing at all — and the
+ * caret, which only makes sense on one line, would be tracking a boundary that
+ * is in two places at once.
+ *
+ * Below `sm` the text is simply there. It is in the HTML either way, so this
+ * costs nothing and hides nothing.
+ */
 @utility type-text {
-  animation: type-in var(--type-dur) var(--type-steps) both;
+  @media (width >= 40rem) {
+    animation: type-in var(--type-dur) var(--type-steps) both;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -1111,10 +1224,16 @@ html[data-reveal-ready] [data-reveal][data-revealed] {
     currentColor 0 0.62em,
     transparent 0.62em
   );
-  animation:
-    type-caret-step var(--type-dur) var(--type-steps) both,
-    type-caret-blink var(--dur-caret-blink) steps(2, jump-none)
-      var(--caret-blinks) forwards;
+  /* No typing below `sm` (see `type-text`), so no caret there either. */
+  display: none;
+
+  @media (width >= 40rem) {
+    display: block;
+    animation:
+      type-caret-step var(--type-dur) var(--type-steps) both,
+      type-caret-blink var(--dur-caret-blink) steps(2, jump-none)
+        var(--caret-blinks) forwards;
+  }
 
   /* No typing, so no caret. */
   @media (prefers-reduced-motion: reduce) {

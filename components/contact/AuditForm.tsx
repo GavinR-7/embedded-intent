@@ -278,7 +278,7 @@ export function AuditForm() {
         <button
           type="submit"
           disabled={status === "submitting"}
-          className="inline-flex items-center justify-center rounded-field bg-signal px-5 py-3 text-label font-semibold text-void transition-colors duration-[var(--duration-fast)] ease-precise hover:bg-signal-dim disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center justify-center rounded-field bg-signal px-5 py-3 text-label font-semibold text-void transition-colors duration-[var(--duration-fast)] ease-precise hover:bg-signal-dim disabled:cursor-not-allowed disabled:opacity-60"
         >
           {status === "submitting" ? form.submittingLabel : form.submitLabel}
         </button>

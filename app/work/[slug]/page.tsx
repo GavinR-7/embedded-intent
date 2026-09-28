@@ -47,7 +47,7 @@ export default async function CaseStudyPage(props: PageProps<"/work/[slug]">) {
       <Section tone="void" size="hero" divider={false} bleedTop overlay={<HeroTexture />}>
         <Link
           href="/work"
-          className="rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
+          className="tap-target rounded-sm text-label text-ink-subtle transition-colors duration-[var(--duration-fast)] hover:text-signal"
         >
           ← {workPage.backLabel}
         </Link>

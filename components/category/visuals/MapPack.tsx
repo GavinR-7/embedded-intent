@@ -127,7 +127,14 @@ export default function MapPack() {
           search. Two arterials on the diagonal, three cross streets, a river,
           and a few blocks. `xMidYMid slice` rather than `none` — stretching a
           drawing of roads to fit turns the strokes into a table. */}
-      <div className="relative h-[46%] shrink-0 overflow-hidden border-b border-line bg-surface/40">
+      {/*
+          A percentage of the frame's height where the frame HAS a height, and a
+          fixed height below `sm` where it does not — see the note on `ASPECT` in
+          components/category/CategoryVisual.tsx. `h-[46%]` of an auto-height
+          parent resolves to `auto`, and this box's children are all absolutely
+          positioned, so it would collapse to nothing and take the map with it.
+      */}
+      <div className="relative h-40 shrink-0 overflow-hidden border-b border-line bg-surface/40 sm:h-[46%]">
         <svg
           viewBox="0 0 100 34"
           preserveAspectRatio="xMidYMid slice"

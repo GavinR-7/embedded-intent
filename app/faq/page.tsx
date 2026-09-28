@@ -67,7 +67,7 @@ export default function FaqPage() {
                 <li key={group.id}>
                   <a
                     href={`#${group.id}`}
-                    className="lift block rounded-field border border-line px-3.5 py-2 text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-ink"
+                    className="tap-target lift block rounded-field border border-line px-3.5 py-2 text-label text-ink-muted transition-colors duration-[var(--duration-fast)] hover:text-ink"
                   >
                     {group.heading}
                   </a>

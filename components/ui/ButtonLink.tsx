@@ -26,7 +26,10 @@ export function ButtonLink({
   className?: string;
 }) {
   const base =
-    "group inline-flex items-center justify-center gap-2 rounded-field px-5 py-3 text-label font-semibold transition-colors duration-[var(--duration-fast)] ease-precise";
+    // `min-h-11` on top of the padding: the padding alone makes this 42px,
+    // which is two pixels short of the 44px touch target the rest of the site
+    // holds to, and two pixels nobody would ever find by looking.
+    "group inline-flex min-h-11 items-center justify-center gap-2 rounded-field px-5 py-3 text-label font-semibold transition-colors duration-[var(--duration-fast)] ease-precise";
 
   const variants = {
     // void on signal measures 13.14:1.
