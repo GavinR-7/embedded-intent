@@ -1152,3 +1152,162 @@ this; it renders three images through `next/image`.
 
 `next typegen && tsc --noEmit`. A fresh clone fails a bare `tsc` because
 `PageProps` and `LayoutProps` only exist once a build has generated them.
+
+
+## Mobile + motion pass (2026-09-27)
+
+Every diagnosis here was measured on a production build with iPhone 13
+emulation, and two of them had been wrong on every phone for weeks without
+looking wrong on a desktop at any width.
+
+### The homepage was 511px wide on a 390px phone
+
+`document.documentElement.scrollWidth` was 511 at 390, 483 at 360 and 565 at
+430 — on `/` only. Mobile Safari zooms a whole page out to fit its widest
+element, so every word on the homepage was being shrunk to make room for an
+invisible 6px block.
+
+The block was the typing caret. `TypeOn` stretches a caret layer across the
+eyebrow's box and walks it with `translateX(100%)`, so at the end of the
+animation the caret sits one full box width to the right of the text. On a
+desktop that is empty space nobody notices. On a phone the eyebrow wraps to two
+lines — it needs 412px to fit on one, so it wraps at every phone width and
+straightens out around 452px — which makes the box 350px wide and puts the caret
+at x=511.
+
+Three changes, in order of who they protect:
+
+1. `type-line` gets `overflow-x: clip`, so the caret cannot leave its own line.
+   `clip`, not `hidden`: `hidden` would make it a scroll container, and
+   `position: sticky` descendants stick to the nearest scroll container.
+2. The typing itself now runs from `sm` up and nowhere below it. A column wipe
+   over two lines uncovers the second line's first word before the first line's
+   last one, which does not read as typing at all, and a caret that tracks a
+   wipe boundary has nothing to track when the boundary is in two places. Below
+   `sm` the eyebrow is simply there — it is in the HTML either way.
+3. `overflow-x: clip` on `<main>` as a net, so the next one of these is a
+   clipped edge rather than a zoomed-out page.
+
+And a committed check, because "looks fine on my screen" has now failed twice:
+`scripts/check-mobile.mjs` asserts `scrollWidth === clientWidth` on every route
+in the sitemap at 360, 390 and 430, and names the offending elements when it
+fails. It skips anything an ancestor clips — the marquee track is legitimately
+2309px wide inside `overflow: hidden`, and listing it buries the one line that
+matters.
+
+### The `/get-found` illustration was missing its bottom row
+
+The frame is `aspect-[4/3]` with `overflow: hidden`. At 390 that box is 350×262,
+and the drawing is a 160px map above a four-row list: "Competitor C" was rendered
+37px below the bottom edge. The illustration of a business climbing from fourth
+place to first was missing fourth place, on every phone, and nothing looked
+broken because the clip was doing exactly what it was told.
+
+Below `sm` the ratio comes off and the box is as tall as the drawing. **Which
+immediately cost CLS 0.086** — the frame is empty until the client chunk arrives,
+so it grew by 347px under its own caption, consistently, in all five Lighthouse
+runs. A `min-height` of 21.75rem holds the space: 347px is what the drawing
+measures at every width below `sm`, because every part of it is a fixed size. A
+minimum rather than a height, so a future change to the drawing costs a shift
+rather than a clip — Lighthouse catches one of those, and the other hid for a
+month.
+
+The same script now also fails if any text inside a `role="img"` figure lands
+outside it.
+
+### Route changes were sweeping through the new page
+
+`globals.css` sets `scroll-behavior: smooth` on `<html>` for anchors. Next 16 no
+longer overrides that during a route change unless `<html>` carries
+`data-scroll-behavior="smooth"` (documented in
+`node_modules/next/dist/docs/01-app/02-guides/upgrading/version-16.md`), so
+navigating from the footer of a long page *animated* the scroll to the top —
+through the page you had just asked for.
+
+Measured from the bottom of `/` (y=12035) to `/websites`, sampling `scrollY` on
+45 consecutive frames: without the attribute, 45 of 45 frames were mid-scroll
+(12035 → 5626 → 5624 → 5617 …); with it, 0 of 45. Anchors are still smooth.
+
+### Reveals: late, then rushed, then bursty — all three measured
+
+| | before | after |
+| --- | --- | --- |
+| trigger point (fraction of viewport at reveal) | 0.89 | 1.07 |
+| curve | `cubic-bezier(0.16, 1, 0.3, 1)` | `cubic-bezier(0.33, 1, 0.68, 1)` |
+| fade / move | 700 / 800ms | 600 / 700ms |
+| travel | 18px | 18px, 12px below `sm` |
+| 390px, slow scroll | 55 reveals across delay indices 0–6, 22 at the cap | 52 reveals, all at index 0 |
+| 1440px, slow scroll | indices 0–6, batches of 5 | indices 0–4, batches of 5 |
+| 390px, ~3000px/s fling | 73 of 73 animated | 73 of 73 instant |
+
+The stagger is now by arrival rather than by position in the section, which is
+what removes the two extremes at once: an observer callback already holds exactly
+the elements that crossed the line together, so sorting those top-to-bottom and
+numbering them staggers a row of cards and leaves a lone element waiting for
+nothing. `data-reveal-group` is gone; nothing reads it.
+
+Two things had to be got right to make it work at all, and neither was obvious:
+
+- **A jump is not a scroll.** The fast-scroll test uses a velocity sampled from
+  the scroll event, and `window.scrollTo` — including the router returning a new
+  route to the top — is six figures of px/s. Every navigation from low on a page
+  delivered its destination screen unanimated until a sample showing more than a
+  viewport height of travel was read as a teleport. (A first attempt required the
+  two samples to be within one frame of each other, which sounds stricter and is
+  simply wrong: the effect samples when it runs and the router scrolls a few
+  milliseconds later.)
+- **`entry.boundingClientRect` is a snapshot, and on a soft navigation it is
+  taken before the router scrolls.** It described the new page's first screen as
+  seen from 12,000px down, every element reporting a `bottom` far above the
+  viewport, so everything on it classified as "already passed". The rectangles
+  are now read live inside the callback, all of them before any write, which is
+  one layout flush per batch.
+
+### A link to the page you are already on goes to the top of it
+
+A `Link` to the current route does nothing — correct for a router, wrong for
+what someone clicking the logo is asking for. One delegated `click` listener on
+`document` handles every link on the site, which is what keeps the footer a
+Server Component: a handler per link would mean adding one to the logo, five
+dropdowns, the mobile sheet and four footer columns.
+
+There is deliberately **no `defaultPrevented` guard**. `next/link` calls
+`preventDefault()` in its own handler and React's delegated listener is attached
+to the document at hydration — before this one — so bailing on that flag would
+mean bailing on every internal link. Links with a hash are left alone, and so are
+modified clicks, new tabs and downloads. Verified on `/`, `/work` and `/faq`:
+1600 → 0, still on the same route; and `/#how-it-works` still scrolls to y=4398
+rather than to the top.
+
+### Tap targets at 360 / 390 / 430
+
+44×44 below `sm`, through one `tap-target` utility applied per link. A link inside
+a sentence does not get it — both WCAG 2.5.5 and Apple's guidance exempt running
+text, and a 44px line inside a paragraph would wreck the paragraph.
+
+Fixed: the menu toggle (40→44), the header logo (36→44), every footer link
+(14–19→44), the four "All X services →" rows in the mobile sheet (38→44), the
+primary button everywhere (42→44 — two pixels nobody would find by looking), the
+contact form's submit (42→44), the homepage's category links (14→44), the service
+and case-study back links (17→44), the FAQ jump chips (36→44) and the phone and
+email links on `/contact` (17→44).
+
+The footer's link rows swap their 12px gap for padding below `sm`, so 44px rows
+cost **65px** of footer height on a phone (1131 → 1196px), not the 600 a naive
+version would have. 25 controls in the mobile menu and every control in the
+header and footer now measure ≥44px at all three widths.
+
+### The marquee was left alone, and that is the finding
+
+The brief allowed slowing the industry strip below `sm` "if it reads frantic".
+Measured: the track is the same 2309px at every width, so it travels at 28.9px/s
+everywhere — one industry name every 2.5s, and a full 390px screen every 13.5s.
+At 64s that became 18.2px/s and read as stalled. The change was reverted and the
+measurement is in the CSS so nobody tries it again.
+
+### Hero spacing, for the record
+
+48px from the header to the eyebrow at 360, 390 and 430 on every hero, from the
+one `--spacing-hero-top` token (`clamp(3rem, 7vw, 7rem)` — 3rem below ~430px).
+Service pages and the case study read 106px because the category back link sits
+above the eyebrow; that is the link, not the spacing.

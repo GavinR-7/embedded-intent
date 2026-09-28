@@ -51,12 +51,13 @@ whole site by editing this block, not by hunting transitions.
 
 | Token | Value | What it drives |
 | --- | --- | --- |
-| `--ease-out-expo` | `cubic-bezier(0.16, 1, 0.3, 1)` | every reveal, the nav underline |
+| `--ease-out-expo` | `cubic-bezier(0.16, 1, 0.3, 1)` | the nav underline, things that settle |
 | `--ease-precise` | `cubic-bezier(0.4, 0, 0.2, 1)` | hovers, menus, the stepper |
-| `--dur-reveal-fade` | `700ms` | a revealing element's opacity |
-| `--dur-reveal-move` | `800ms` | a revealing element's travel |
-| `--reveal-stagger` | `70ms` | gap between siblings in one section |
-| `--reveal-distance` | `18px` | how far a revealing element travels |
+| `--ease-reveal` | `cubic-bezier(0.33, 1, 0.68, 1)` | reveals, and only reveals |
+| `--dur-reveal-fade` | `600ms` | a revealing element's opacity |
+| `--dur-reveal-move` | `700ms` | a revealing element's travel |
+| `--reveal-stagger` | `60ms` | gap between elements that arrive together |
+| `--reveal-distance` | `18px`, `12px` below `sm` | how far a revealing element travels |
 | `--duration-menu` | `180ms` | dropdowns, the mobile sheet |
 | `--dur-type-char` | `25ms` | one character of the hero eyebrow |
 | `--dur-caret-blink` | `800ms` | one whole blink of the typing caret |
@@ -94,16 +95,64 @@ Put `data-reveal=""` on the element. That is the whole API.
 <li data-reveal="" className="lift spotlight bg-void p-7">
 ```
 
-It works because the element is inside a `<Section>`, which renders
-`data-reveal-group` on its `<section>`. The runtime numbers every `data-reveal`
-element inside each group in document order and writes `--reveal-i`, so an
-eyebrow, its heading, its lead and then each card arrive 70ms apart. Nothing has
-to know its own index, which is what stops the numbers going wrong the moment
-someone reorders two blocks. The index is capped at 6 — an eleven-item list
-would otherwise take 770ms to finish arriving.
+One `IntersectionObserver` in the runtime watches every one of them, adds
+`data-revealed` when it arrives, and stops watching it.
 
 `SectionHeading` already reveals its three parts. `Eyebrow` takes `reveal` as an
 opt-in prop, because it is also used in heroes.
+
+### The stagger is by arrival, not by position
+
+An `IntersectionObserver` callback already holds exactly the elements that
+crossed the line in the same frame. The runtime sorts those top to bottom (then
+left to right, for a row of cards, which share a top), writes `--reveal-i` as
+`0, 1, 2…` capped at 4, and that is the stagger: a row of four cards that
+arrives together goes 0/60/120/180ms, and an element that arrives alone waits for
+nothing.
+
+It used to number each `<Section>`'s children in document order instead, from a
+`data-reveal-group` marker on the section — which gave every element a fixed
+delay whether or not anything arrived with it. **That marker is gone; do not add
+it back.** Measured on the homepage at 390px, scrolling slowly: before, 55
+reveals spread across delay indices 0–6, 22 of them at the cap, every one waiting
+out up to 420ms for elements it did not arrive with, and never more than one
+element arriving at a time. After: 52 reveals, every one at index 0. At 1440px,
+where cards do share a row, the indices spread 0–4 with batches of five.
+
+### Two cases that do not animate at all
+
+The runtime writes `data-revealed="instant"`, and one rule switches the
+transition off:
+
+- **Content already above the viewport.** The reader has passed it.
+- **Content being flown past.** Above two viewport heights a second, the 600ms
+  fade would finish several screens after the reader had gone by, so a fling used
+  to leave a trail of half-faded cards catching up. Measured at 390px with a
+  ~3000px/s fling: before, 73 of 73 animated; after, 73 of 73 instant.
+
+Scroll speed is sampled from one passive `scroll` listener. **A jump is not a
+scroll:** a sample showing more than a viewport height of travel is a
+`scrollTo`, an anchor, or the router returning a new route to the top — not a
+fling, because the browser fires a scroll event per frame for as long as the page
+is really moving. Without that rule every navigation from low on a page delivered
+its destination unanimated.
+
+### Where the reveal starts
+
+`rootMargin: "0px 0px 8% 0px"` and `threshold: 0`, so an element is reported
+while it is still 8% of a viewport *below* the fold and the movement plays as it
+comes onto the screen. It was `-10%` with a `0.15` threshold, which meant nothing
+began until the element was a tenth of a screen inside the viewport. Measured on
+the homepage, as a fraction of viewport height at the moment of reveal: 0.89
+before, 1.07 after, at both 390px and 1440px.
+
+**The rectangles are read live, not taken from the entry.**
+`entry.boundingClientRect` is a snapshot from when the intersection was
+computed, and on a soft navigation the router scrolls the new route to the top
+*after* the runtime has observed its elements — so the snapshot describes the new
+page's first screen as seen from 12,000px down. The observer is treated as a
+signal that something changed; the positions are read for real, all in one loop
+before any write, so it is one layout flush per callback.
 
 ### Four things that will bite you
 
@@ -149,10 +198,11 @@ scripts, or a hydration that never finishes all mean the attribute is absent,
 the rules never match, and every word is visible. **The failure mode of the
 whole system is "no animation", never "no content".**
 
-On top of that: no `IntersectionObserver` reveals everything immediately; an
-observer that has not run at all after 3s reveals everything and disconnects;
-and an element taller than ~60% of the viewport is revealed on any intersection
-rather than at the 0.15 threshold it could never reach.
+On top of that: no `IntersectionObserver` reveals everything immediately, and an
+observer that has not run at all after 3s reveals everything and disconnects.
+`threshold: 0` means an element taller than the viewport needs no special case —
+under the old `0.15` threshold, anything taller than about 6.6 viewports could
+never reach the ratio and would never have revealed at all.
 
 ### The LCP rule
 
@@ -324,6 +374,20 @@ five of six consecutive runs.
 So: check `pgrep -c -f chrome-headless-shell` and `/proc/loadavg` before
 believing a Lighthouse number, and take the median of at least five runs. The
 harness now kills the process group.
+
+### The mobile + motion pass, two routes (Lighthouse mobile, 5-run median)
+
+| Route | perf | a11y | BP | LCP | CLS | TBT |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/` | 98 | 100 | 100 | 2.01s | 0 | 117ms |
+| `/get-found` | 98 | 100 | 100 | 2.03s | 0 | 111ms |
+
+`/get-found` was measured twice, and the first measurement is the useful one:
+**CLS 0.086 in all five runs**, from taking the fixed aspect ratio off its hero
+illustration on phones without putting anything in its place. The frame is empty
+until the client chunk arrives, so it grew by 347px under its own caption. A
+`min-height` matching the drawing's measured height put it back to 0 — and took
+perf from 95 to 98.
 
 ### The fix pass, four routes (Lighthouse mobile, 5-run median)
 
@@ -824,6 +888,18 @@ installed and no dependency weight was added.
 ---
 
 ## Verifying it
+
+### The one check that runs every pass
+
+`npm run check:mobile` (with `CHROME_BIN` set — see BUILD_NOTES.md) against a
+production build. Every route in the sitemap, at 360, 390 and 430:
+
+- `document.documentElement.scrollWidth === clientWidth`
+- nothing clipped inside a hero illustration
+
+Both of those were real, live defects when the check was written, and both had
+been invisible in a desktop browser at every width. Add to this script rather
+than writing a new one; it is committed for exactly that reason.
 
 Reduced motion is checked, not assumed. With `Emulation.setEmulatedMedia` set to
 `prefers-reduced-motion: reduce`, on the homepage:

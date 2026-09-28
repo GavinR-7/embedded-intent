@@ -46,6 +46,14 @@ app/                    Routes. Every file here is a URL or a route convention.
                         categories as shortcuts.
   opengraph-image.tsx   The default social card. The three category routes each
                         have one of their own that shadows it for that segment.
+scripts/                Verification that outlives a session. Plain Node, no
+                        dependency: `CHROME_BIN=… node scripts/check-mobile.mjs`
+                        against a production build on :3000, or `npm run
+                        check:mobile`. It fails on horizontal overflow at 360,
+                        390 and 430, and on anything clipped inside a hero
+                        illustration. Run it on every pass.
+  cdp.mjs               A minimal Chrome DevTools Protocol client.
+  routes.mjs            Every route, read from the running sitemap.
 components/
   brand/                The logo mark, and the social card built from it. Shared
                         by the header, the icons and the OG routes, so the mark
@@ -246,9 +254,10 @@ to add `data-reveal` to new content, and the rule about the hero and LCP.
 
 Three things worth knowing before touching a component:
 
-- **`data-reveal=""` is the whole API.** It works because the element is inside a
-  `<Section>`, which renders `data-reveal-group`; one runtime numbers the
-  targets in each group and a single IntersectionObserver reveals them.
+- **`data-reveal=""` is the whole API.** One IntersectionObserver in the runtime
+  watches every target on the page, reveals it as it comes on screen, and
+  staggers whichever targets arrive in the same frame. Nothing marks groups and
+  nothing carries an index.
 - **Never put `data-reveal` on an ancestor of anything `position: fixed`.** The
   hidden state is a `transform`, and a transform makes an element the containing
   block for fixed descendants — the bug that rendered the mobile menu 390×1 in
@@ -376,6 +385,14 @@ Enforced from Phase 1, not retrofitted:
   `globals.css`, plus per-component static alternatives where the animation
   carries meaning.
 - The mobile menu traps focus, closes on Escape and returns focus to its toggle.
+- Standalone links and controls are at least 44×44px below `sm` — the
+  `tap-target` utility, applied per link rather than globally, because a link
+  inside a sentence is part of the sentence and both WCAG and Apple's guidance
+  exempt it. `scripts/check-mobile.mjs` and the probe beside it measure this at
+  360, 390 and 430.
+- No horizontal overflow at any phone width, verified per route rather than
+  assumed: mobile Safari zooms a whole page out to fit its widest element, so one
+  element 120px too wide shrinks every word on the page and points at nothing.
 
 ## Pre-launch state
 
