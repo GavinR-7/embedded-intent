@@ -28,7 +28,7 @@
  * ---------------------------------------------------------------------------
  */
 import { connect } from "./cdp.mjs";
-import { routes } from "./routes.mjs";
+import { selectedRoutes } from "./routes.mjs";
 
 const ORIGIN = process.env.ORIGIN ?? "http://localhost:3000";
 const WIDTHS = [360, 390, 430];
@@ -100,7 +100,7 @@ const CLIP_PROBE = `(() => {
 })()`;
 
 const browser = await connect({ port: 9411, profile: "mobile-check" });
-const paths = await routes(ORIGIN);
+const paths = await selectedRoutes(ORIGIN);
 let failures = 0;
 
 for (const width of WIDTHS) {

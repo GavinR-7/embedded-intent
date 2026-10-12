@@ -49,3 +49,7 @@ next-env.d.ts
 # literal "C:\Users\...\lighthouse.12345678" directory in the working
 # directory. Never ours to commit.
 /C:*
+
+# `npm run verify` output: screenshots, Lighthouse JSON, summary. Regenerated
+# on every run; the summary table goes into the PR description instead.
+/verify-output/
