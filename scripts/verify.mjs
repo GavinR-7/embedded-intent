@@ -45,13 +45,16 @@ import { spawn } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { sleep } from "./cdp.mjs";
 import { offlineFonts } from "./offline-fonts.mjs";
-import { routes } from "./routes.mjs";
+import { selectedRoutes } from "./routes.mjs";
 
-const ROOT = resolve(import.meta.dirname, "..");
+// fileURLToPath rather than import.meta.dirname: the latter is Node 20.11+,
+// and Next 16 supports Node 20.9.
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "verify-output");
 const PORT = Number(process.env.VERIFY_PORT ?? 3100);
 const ORIGIN = `http://127.0.0.1:${PORT}`;
@@ -238,8 +241,7 @@ if (!built) {
   const server = await startServer();
   const env = { ORIGIN, CHROME_BIN: chrome, VERIFY_ROUTES: ONLY?.join(",") ?? "" };
   try {
-    const all = await routes(ORIGIN);
-    paths = ONLY ? all.filter((p) => ONLY.includes(p)) : all;
+    paths = await selectedRoutes(ORIGIN);
 
     await step("mobile (360/390/430)", "node", ["scripts/check-mobile.mjs"], env);
 

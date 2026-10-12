@@ -14,3 +14,26 @@ export async function routes(origin = "http://localhost:3000") {
   if (paths.length === 0) throw new Error("sitemap listed no routes");
   return paths;
 }
+
+/**
+ * The routes a check should run on: every route, or the `VERIFY_ROUTES`
+ * subset (comma-separated paths). A requested path the sitemap doesn't list
+ * is an error, not a silent skip: a typo would otherwise produce an empty
+ * selection and a run that "passes" without checking anything.
+ */
+export async function selectedRoutes(origin = "http://localhost:3000") {
+  const all = await routes(origin);
+  const wanted = (process.env.VERIFY_ROUTES ?? "")
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean)
+    .map((p) => (p.length > 1 ? p.replace(/\/$/, "") : p));
+  if (wanted.length === 0) return all;
+  const missing = wanted.filter((p) => !all.includes(p));
+  if (missing.length) {
+    throw new Error(
+      `VERIFY_ROUTES lists paths the sitemap doesn't: ${missing.join(", ")}`,
+    );
+  }
+  return all.filter((p) => wanted.includes(p));
+}

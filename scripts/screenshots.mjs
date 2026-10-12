@@ -27,13 +27,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { connect, sleep } from "./cdp.mjs";
-import { routes } from "./routes.mjs";
+import { selectedRoutes } from "./routes.mjs";
 
 const ORIGIN = process.env.ORIGIN ?? "http://localhost:3000";
 const OUT = process.env.SCREENSHOT_DIR ?? "verify-output/screenshots";
-const ONLY = process.env.VERIFY_ROUTES
-  ? process.env.VERIFY_ROUTES.split(",").map((r) => r.trim())
-  : null;
 
 /** Chrome refuses captures much taller than this; nothing on the site is. */
 const MAX_HEIGHT = 16000;
@@ -46,8 +43,7 @@ const VIEWS = [
 const slug = (path) =>
   path === "/" ? "home" : path.replace(/^\//, "").replaceAll("/", "--");
 
-const all = await routes(ORIGIN);
-const paths = ONLY ? all.filter((p) => ONLY.includes(p)) : all;
+const paths = await selectedRoutes(ORIGIN);
 let written = 0;
 
 for (const view of VIEWS) {
