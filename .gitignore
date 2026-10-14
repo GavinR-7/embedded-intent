@@ -53,3 +53,7 @@ next-env.d.ts
 # `npm run verify` output: screenshots, Lighthouse JSON, summary. Regenerated
 # on every run; the summary table goes into the PR description instead.
 /verify-output/
+
+# `scripts/audit.mjs` output: outreach drafts that name real businesses and
+# list their problems. Never committed.
+/audit-output/
