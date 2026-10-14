@@ -7,6 +7,7 @@
  *
  *   1. typecheck                    `npm run typecheck`
  *   2. lint                         `npm run lint`
+ *   2b. unit tests                  `npm test` (node:test, needs Node 22.18+)
  *   3. build                        `npm run build` (the rest needs it)
  *   4. mobile                       `check:mobile` at 360/390/430, every route
  *   5. screenshots                  every route at 390 and 1440
@@ -229,6 +230,7 @@ const started = new Date();
 
 await step("typecheck", "npm", ["run", "typecheck"]);
 await step("lint", "npm", ["run", "lint"]);
+await step("unit tests", "npm", ["test"]);
 const fonts = await offlineFonts();
 const built = await step("build", "npm", ["run", "build"], fonts.env);
 fonts.close();
