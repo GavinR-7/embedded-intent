@@ -109,8 +109,15 @@ function findChrome() {
     if (!existsSync(root)) continue;
     for (const dir of readdirSync(root).sort().reverse()) {
       if (!dir.startsWith("chromium_headless_shell")) continue;
-      const bin = join(root, dir, "chrome-linux", "headless_shell");
-      if (existsSync(bin)) return bin;
+      // Older Playwright builds unpack to chrome-linux/headless_shell, newer
+      // ones to chrome-headless-shell-linux64/chrome-headless-shell.
+      for (const rel of [
+        "chrome-headless-shell-linux64/chrome-headless-shell",
+        "chrome-linux/headless_shell",
+      ]) {
+        const bin = join(root, dir, rel);
+        if (existsSync(bin)) return bin;
+      }
     }
   }
   return null;
