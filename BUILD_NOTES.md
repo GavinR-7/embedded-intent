@@ -1363,3 +1363,18 @@ accessibility and best practices 100 everywhere, CLS 0.000 everywhere. LCP sits
 at 2.9–3.1s on most routes, the top of the bimodal band from the font notes, and
 this machine is slower than the WSL box that measured 98+. Worth a 3-run median
 (`VERIFY_LH_RUNS=3`) before reading anything into it.
+
+---
+
+## verify: find the newer Playwright headless shell (2026-10-14)
+
+`scripts/verify.mjs` only looked for `chrome-linux/headless_shell`. Current
+Playwright unpacks `chrome-headless-shell-linux64/chrome-headless-shell`
+instead, so `npm run verify` failed with "no browser" unless `CHROME_BIN` was
+set. `findChrome()` now tries both layouts.
+
+Re-measured `/` (mobile, median of 3) with the same binary: 95 / 2.67s on one
+set of runs, 98 / 2.01s on the next. LCP here is bimodal (about 2.0s or 2.7s):
+in slow runs first paint lands near 1.25s with the main thread idle and dropped
+compositor frames in the trace, so it is the headless compositor, not the page.
+No page change was made. Use `VERIFY_LH_RUNS=3` or more before quoting a number.
