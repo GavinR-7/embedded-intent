@@ -1363,3 +1363,28 @@ accessibility and best practices 100 everywhere, CLS 0.000 everywhere. LCP sits
 at 2.9–3.1s on most routes, the top of the bimodal band from the font notes, and
 this machine is slower than the WSL box that measured 98+. Worth a 3-run median
 (`VERIFY_LH_RUNS=3`) before reading anything into it.
+
+## Free-audit generator (`scripts/audit.mjs`)
+
+`node scripts/audit.mjs <url> [--name] [--out audit-output] [--perf auto|psi|lighthouse|skip]`
+fetches a business's homepage and writes a one-page findings email draft plus an
+evidence appendix (`<host>.md`) and the raw results (`<host>.json`). Nothing is
+sent. It is meant to move into lead-finder as `lf audit` once that repo has code
+(only its README is pushed today), so it has no dependencies of its own.
+
+- **Every number comes from the run.** Speed is PageSpeed Insights or Lighthouse
+  output; the rest is read from the served HTML, robots.txt and sitemap. The
+  draft says which tool produced the score. The fixes are generic wording for
+  the finding that triggered them, with no promised outcome.
+- **PageSpeed keyless 429.** The shared daily quota was exhausted from our
+  network, so `--perf auto` tries PSI (using `PAGESPEED_API_KEY` if set), then
+  falls back to a local Lighthouse mobile run, pinned to the same version as
+  `scripts/verify.mjs`, with Chrome found in Playwright's cache. Get a key for
+  reliable runs.
+- **Polite crawling.** Honors robots.txt, identifies itself in the user agent,
+  one homepage GET plus robots, sitemap, an http probe and the www twin.
+- **CAN-SPAM.** The draft carries an opt-out line and a postal-address
+  placeholder that must be filled before sending. The recipient is a placeholder
+  too: Places returns no emails, so a person finds a real contact.
+- **Output is gitignored** (`/audit-output/`). Drafts name real businesses and
+  their problems, so samples live in the private HQ repo, not here.
