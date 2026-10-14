@@ -1363,3 +1363,51 @@ accessibility and best practices 100 everywhere, CLS 0.000 everywhere. LCP sits
 at 2.9–3.1s on most routes, the top of the bimodal band from the font notes, and
 this machine is slower than the WSL box that measured 98+. Worth a 3-run median
 (`VERIFY_LH_RUNS=3`) before reading anything into it.
+
+---
+
+## verify: find the newer Playwright headless shell (2026-10-14)
+
+`scripts/verify.mjs` only looked for `chrome-linux/headless_shell`. Current
+Playwright unpacks `chrome-headless-shell-linux64/chrome-headless-shell`
+instead, so `npm run verify` failed with "no browser" unless `CHROME_BIN` was
+set. `findChrome()` now tries both layouts.
+
+Re-measured `/` (mobile, median of 3) with the same binary: 95 / 2.67s on one
+set of runs, 98 / 2.01s on the next. LCP here is bimodal (about 2.0s or 2.7s):
+in slow runs first paint lands near 1.25s with the main thread idle and dropped
+compositor frames in the trace, so it is the headless compositor, not the page.
+No page change was made. Use `VERIFY_LH_RUNS=3` or more before quoting a number.
+
+---
+
+## Missed-call text-back webhook (2026-10-14)
+
+`lib/textback/` + `app/api/textback/{voice,status,sms}`. Build plan:
+`hq/docs/mike-textback-build-plan.md` (gavin-data). It is our own demo line and
+the base for a client's build.
+
+- **No Twilio SDK.** Sending is one `fetch` to the Messages API and signature
+  checking is `node:crypto` HMAC-SHA1, so there is no new dependency or bundle
+  cost. `fetch` is injected, so tests never touch the network.
+- **Signature first.** The client is looked up by the `To` number (that picks
+  whose token to use), then `X-Twilio-Signature` is verified against that
+  client's token before anything else. Any failure is a bare 403. The signed URL
+  uses `TEXTBACK_PUBLIC_ORIGIN` or the forwarded host headers, because behind
+  Vercel `request.url` may not be the URL Twilio signed.
+- **Per-client config** is `TEXTBACK_CLIENTS` (JSON in an env var, because it
+  holds auth tokens). Invalid config returns no clients, so every webhook 403s.
+  A custom template must contain the word STOP (carrier requirement).
+- **STOP/HELP.** Twilio's default opt-out handling sends the confirmation and
+  blocks later sends (error 21610); we record the opt-out and answer HELP with
+  the business name and STOP wording. START lifts the local opt-out.
+- **Dedupe/opt-out store is in memory** (`store.ts`). That is fine for tests and
+  one warm instance but is NOT durable on serverless, so a caller could be
+  texted more than once per day after a cold start. Twilio still enforces STOP.
+  A durable store (Vercel KV/Postgres) needs Gavin's OK to add a service.
+- **Tests** run with `node --test` and Node's type stripping (Node 22.18+; the
+  site itself still supports 20.9). Hence `allowImportingTsExtensions` in
+  `tsconfig.json` and `.ts` extensions in the relative imports under
+  `lib/textback/`. `npm test` is a step in `npm run verify`.
+- **Not done:** nothing is deployed, no Twilio account, number or env value
+  exists. The routes answer 403 until `TEXTBACK_CLIENTS` is set.
