@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { TextbackDemo } from "@/components/sections/TextbackDemo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { BeforeAfterTable } from "@/components/ui/BeforeAfterTable";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -19,10 +20,12 @@ import {
   services,
 } from "@/content/services";
 import { servicePage } from "@/content/servicePage";
+import { textbackDemo } from "@/content/textbackDemo";
 import { site } from "@/content/site";
 import { gridShape, spanLastIfOdd } from "@/lib/grid";
 import { serviceJsonLd } from "@/lib/jsonLd";
 import { pageMetadata } from "@/lib/seo";
+import { demoLine } from "@/lib/textbackDemo";
 
 /**
  * One page per service, generated at build time from `content/services.ts`.
@@ -71,6 +74,8 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
   const faqs = faqsForService(service.slug);
   const category = getCategory(service.category);
   const symptomGrid = gridShape(service.symptoms.length);
+  // Null unless TEXTBACK_DEMO_NUMBER is set: no visible change until the line is live.
+  const demo = service.slug === textbackDemo.serviceSlug ? demoLine() : null;
 
   return (
     <>
@@ -270,6 +275,8 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           beforeLabel={servicePage.beforeLabel}
           afterLabel={servicePage.afterLabel}
         />
+
+        {demo && <TextbackDemo line={demo} />}
       </Section>
 
       <Section tone="void">
