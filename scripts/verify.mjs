@@ -9,6 +9,7 @@
  *   2. lint                         `npm run lint`
  *   3. build                        `npm run build` (the rest needs it)
  *   4. mobile                       `check:mobile` at 360/390/430, every route
+ *      crawl                        `check:crawl`: robots.txt, sitemap, canonicals
  *   5. screenshots                  every route at 390 and 1440
  *   6. lighthouse                   mobile, every route
  *
@@ -244,6 +245,7 @@ if (!built) {
     paths = await selectedRoutes(ORIGIN);
 
     await step("mobile (360/390/430)", "node", ["scripts/check-mobile.mjs"], env);
+    await step("crawl (robots, sitemap)", "node", ["scripts/check-crawl.mjs"], env);
 
     if (!SKIP_SHOTS) {
       await step("screenshots (390/1440)", "node", ["scripts/screenshots.mjs"], {
