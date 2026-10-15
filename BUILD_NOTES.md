@@ -1363,3 +1363,40 @@ accessibility and best practices 100 everywhere, CLS 0.000 everywhere. LCP sits
 at 2.9–3.1s on most routes, the top of the bimodal band from the font notes, and
 this machine is slower than the WSL box that measured 98+. Worth a 3-run median
 (`VERIFY_LH_RUNS=3`) before reading anything into it.
+
+## Site chat (2026-10-15)
+
+CHATBOT_SPEC.md is the what and why. These are the decisions a reviewer would
+otherwise have to rediscover.
+
+- **Behind `CHAT_ENABLED`, read on the server.** Unset means on in Vercel
+  previews (`VERCEL_ENV=preview`) and off everywhere else. That way a PR
+  preview shows the chat without anyone editing project settings, and
+  production stays off until someone sets it. With the flag off, the layout
+  never renders the widget and `/api/chat` returns 404.
+- **Prices in the chat are a deliberate exception to the "prices only on
+  service pages" rule.** That rule exists so no number gets a second
+  hand-typed copy that can go stale. The chat has no copy at all: it reads
+  `content/services.ts` through the same `formatPricing` / `formatPriceBand`
+  helpers the service pages use. The starter suggestions are questions, never
+  prices.
+- **The guard is the honesty rule as code.** The prompt asks the model not to
+  invent anything. `lib/chat/guard.ts` enforces it: any number, `$` amount,
+  email or domain in a reply that the knowledge block doesn't also contain
+  throws the reply away. It's strict on purpose. It rejects sums the site
+  never states, because a sum is a quote.
+- **No Anthropic SDK.** One `fetch` to the Messages API. The SDK would be a
+  dependency to make a single POST.
+- **A local answerer, so it works without a key.** It does keyword matching
+  over the content modules and fills `content/chat.ts` templates. It covers
+  previews with no key and model outages. It can't say anything the site
+  doesn't, because it has no text of its own.
+- **Handoff goes through sessionStorage, not the URL.** A phone number in a
+  query string ends up in access logs and analytics page views. The audit form
+  reads the handoff once, deletes it, and fills only empty fields.
+- **No motion on the widget.** It opens and closes instantly, which keeps it
+  out of MOTION.md's scope and needs nothing for reduced motion. With the
+  panel closed, it's one fixed button: not the LCP element, and no layout
+  shift.
+- **vitest is new** (dev-only), for the chat's unit tests. `npm test` runs
+  them, and `npm run verify` now runs `npm test` as a step after lint.

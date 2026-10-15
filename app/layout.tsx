@@ -2,10 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { VercelBeacons } from "@/components/analytics/VercelBeacons";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { MotionRuntime } from "@/components/motion/MotionRuntime";
 import { site } from "@/content/site";
+import { chatEnabled } from "@/lib/chat/flag";
 import "./globals.css";
 
 /*
@@ -189,6 +191,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             is the number that matters and the one a lab run on a developer's
             laptop cannot tell you. See ON_VERCEL above for why they are gated. */}
         {ON_VERCEL && <VercelBeacons />}
+
+        {/* The site chat, behind CHAT_ENABLED (lib/chat/flag.ts): off in
+            production until the flag is set, on in Vercel previews. Resolved
+            on the server, so with it off the widget is never rendered and its
+            code is never requested. */}
+        {chatEnabled() && <ChatWidget />}
       </body>
     </html>
   );
