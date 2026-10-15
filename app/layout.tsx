@@ -70,6 +70,13 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
 
+  // Search Console's HTML-tag verification. The token comes from the env so
+  // nothing account-specific is in the repo; unset means no tag. (A Domain
+  // property verified by DNS TXT doesn't need this at all: LAUNCH.md step 8.)
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
+
   // ⚠️ PRE-LAUNCH ONLY — REMOVE BEFORE LAUNCH.
   // app/robots.ts asks crawlers not to *crawl* the site. This asks them not to
   // *index* it, which is a different thing: a URL discovered from an external

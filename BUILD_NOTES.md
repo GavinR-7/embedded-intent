@@ -1363,3 +1363,10 @@ accessibility and best practices 100 everywhere, CLS 0.000 everywhere. LCP sits
 at 2.9–3.1s on most routes, the top of the bimodal band from the font notes, and
 this machine is slower than the WSL box that measured 98+. Worth a 3-run median
 (`VERIFY_LH_RUNS=3`) before reading anything into it.
+
+## Search Console tag and the crawl check (2026-10-15)
+
+- **`GOOGLE_SITE_VERIFICATION`** adds `<meta name="google-site-verification">` through `metadata.verification` only when it is set. It lives in the env, not in code, because the token is tied to one Google account and is useless in a fork. A Domain property (DNS TXT at GoDaddy) needs no tag at all; the env var is for the quicker URL-prefix property. Read at build time, so changing it needs a redeploy.
+- **`scripts/check-crawl.mjs`** (`npm run check:crawl`, and a step in `npm run verify`). It fetches every sitemap URL by path and fails on a non-200, a duplicate, mixed hosts or a canonical that disagrees with the sitemap. Those can break silently: a renamed service leaves a dead sitemap URL that only Search Console reports, weeks later.
+- **The crawler block is reported, not failed, before launch.** `Disallow: /`, `noindex` and the missing sitemap line print as `BLOCKED (pre-launch)`. The launch commit (LAUNCH.md step 7) should run verify with `EXPECT_CRAWLABLE=1`, and later make that the default. After that, either half of the block coming back fails the build check rather than quietly de-indexing the site.
+- The crawler block itself is **not** removed here. LAUNCH.md orders it after a real test lead arrives, and that hasn't happened yet (no MX or Resend DNS as of 2026-10-15).

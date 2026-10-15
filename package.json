@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "check:mobile": "node scripts/check-mobile.mjs",
+    "check:crawl": "node scripts/check-crawl.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "verify": "node scripts/verify.mjs"
   },
