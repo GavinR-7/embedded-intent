@@ -222,6 +222,7 @@ const started = new Date();
 
 await step("typecheck", "npm", ["run", "typecheck"]);
 await step("lint", "npm", ["run", "lint"]);
+await step("unit tests", "npm", ["test"]);
 const fonts = await offlineFonts();
 const built = await step("build", "npm", ["run", "build"], fonts.env);
 fonts.close();

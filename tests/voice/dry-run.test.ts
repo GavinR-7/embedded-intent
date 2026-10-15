@@ -1,0 +1,156 @@
+/**
+ * The dry run: one scripted call driven through both webhooks exactly as
+ * Retell would send it (signed requests, real handlers), with Cal.com and
+ * Twilio replaced by fakes. The caller and agent lines are a script, not a
+ * model; what's real is everything the server does with them.
+ *
+ * It renders docs/receptionist/dry-run.md and docs/receptionist/agent.json
+ * and fails if the committed copies are stale. To refresh them:
+ *   RECEPTIONIST_WRITE_DOCS=1 npx vitest run tests/voice/dry-run.test.ts
+ */
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+
+import { describe, expect, it } from "vitest";
+
+import { receptionist } from "@/content/receptionist";
+import { retellAgentConfig } from "@/lib/voice/agent";
+import { handlePostCall, handleTools, SeenCalls } from "@/lib/voice/handlers";
+import type { RetellCall } from "@/lib/voice/summary";
+
+import { ENV, fakeCal, NOW, retellRequest } from "./fakes";
+
+const DIR = "docs/receptionist";
+const CALLER = "+15165550111";
+const CALL_ID = "call_dryrun0001";
+
+type Line = { who: "Agent" | "Caller" | "Tool call" | "Server"; text: string };
+
+async function simulate() {
+  const { cal, bookings } = fakeCal();
+  const texts: { to: string; body: string }[] = [];
+  const deps = {
+    env: ENV,
+    now: () => NOW,
+    cal,
+    seen: new SeenCalls(),
+    sendSms: async (to: string, body: string) => (texts.push({ to, body }), { ok: true, status: 201 }),
+  };
+  const call = { call_id: CALL_ID, from_number: CALLER, direction: "inbound" };
+  const lines: Line[] = [];
+  const transcript: NonNullable<RetellCall["transcript_with_tool_calls"]> = [];
+  const say = (who: "Agent" | "Caller", text: string) => {
+    lines.push({ who, text });
+    transcript.push({ role: who === "Agent" ? "agent" : "user", content: text });
+  };
+  const tool = async (id: string, name: string, args: Record<string, unknown>) => {
+    lines.push({ who: "Tool call", text: `${name} ${JSON.stringify(args)}` });
+    transcript.push({ role: "tool_call_invocation", tool_call_id: id, name, arguments: JSON.stringify(args) });
+    const res = await handleTools(retellRequest("tools", { name, call, args }), deps);
+    const body = (await res.json()) as { result: string; slots?: { label: string; start: string }[]; booked_start?: string };
+    lines.push({ who: "Server", text: `HTTP ${res.status} ${JSON.stringify(body)}` });
+    transcript.push({ role: "tool_call_result", tool_call_id: id, content: JSON.stringify(body) });
+    return body;
+  };
+
+  say("Agent", receptionist.greeting);
+  say("Caller", "Hi, yeah, I'd like to talk to someone about a website.");
+  say("Agent", "Sure. Can I get your name?");
+  say("Caller", "Dana Ruiz.");
+  say("Agent", "Thanks, Dana. What business is this for, and what do you need?");
+  say("Caller", "Ruiz Plumbing in Hicksville. Our site is old and doesn't work on phones. How much does a new one cost?");
+  say("Agent", "Gavin goes over pricing on the intro call, and every quote is written. Is the number ending in 0111 the best one to reach you?");
+  say("Caller", "Yes.");
+  const slots = await tool("tc_1", "check_slots", {});
+  say("Agent", `I can book you a 15-minute intro call with Gavin. I have ${slots.slots![0]!.label}, or ${slots.slots![1]!.label}. Do either of those work?`);
+  say("Caller", "The Tuesday one.");
+  const booked = await tool("tc_2", "book", {
+    start: slots.slots![1]!.start,
+    name: "Dana Ruiz",
+    business: "Ruiz Plumbing",
+    reason: "Old site doesn't work on phones; wants a new website and asked about price",
+  });
+  say("Agent", `You're booked for ${booked.result.match(/Booked for (.*) Eastern/)![1]} Eastern. Gavin will see the details before the call. Anything else?`);
+  say("Caller", "No, that's it. Thanks.");
+  say("Agent", "Thanks for calling Embedded Intent. Bye now.");
+  lines.push({ who: "Tool call", text: "end_call" });
+
+  const analyzed: RetellCall = {
+    ...call,
+    start_timestamp: NOW.getTime(),
+    duration_ms: 94_000,
+    disconnection_reason: "agent_hangup",
+    transcript_with_tool_calls: transcript,
+    call_analysis: {
+      call_summary: "Dana Ruiz of Ruiz Plumbing booked an intro call about a new website.",
+      in_voicemail: false,
+      custom_analysis_data: { caller_name: "Dana Ruiz", business: "Ruiz Plumbing", reason: "New website; current one doesn't work on phones" },
+    },
+  };
+  const statuses: string[] = [];
+  for (const event of ["call_started", "call_ended", "call_analyzed", "call_analyzed"]) {
+    const res = await handlePostCall(retellRequest("post-call", { event, call: analyzed }), deps);
+    statuses.push(`${event} -> HTTP ${res.status}${res.status === 200 ? ` ${JSON.stringify(await res.json())}` : ""}`);
+  }
+  return { lines, bookings, texts, statuses };
+}
+
+function render(run: Awaited<ReturnType<typeof simulate>>): string {
+  const sms = run.texts[0]!;
+  return [
+    "# Receptionist dry run",
+    "",
+    "Generated by `tests/voice/dry-run.test.ts`. One scripted call sent through both",
+    "webhooks the way Retell sends it: signed requests, the real handlers. Cal.com and",
+    "Twilio are fakes, so nothing was booked or texted. The caller's and agent's lines",
+    "are a script. The tool calls, the server's replies, the booking and the text are",
+    "what the code produced.",
+    "",
+    `Clock: ${NOW.toISOString()} (Monday 9:00 AM Eastern). Caller ID: ${CALLER}.`,
+    "",
+    "## The call",
+    "",
+    ...run.lines.map((l) => (l.who === "Agent" || l.who === "Caller" ? `**${l.who}:** ${l.text}` : `> ${l.who}: \`${l.text}\``)).flatMap((l) => [l, ""]),
+    "## What Cal.com received",
+    "",
+    "```json",
+    JSON.stringify(run.bookings, null, 2),
+    "```",
+    "",
+    "## Post-call webhook (Retell sends each event; the analyzed one is sent twice here, as a retry)",
+    "",
+    ...run.statuses.map((s) => `- ${s}`),
+    "",
+    `## The text Gavin gets (${sms.body.length} characters, to ...${sms.to.slice(-4)})`,
+    "",
+    "```",
+    sms.body,
+    "```",
+    "",
+  ].join("\n");
+}
+
+describe("dry run", () => {
+  it("books the call Dana picked and texts Gavin one summary", async () => {
+    const run = await simulate();
+    expect(run.bookings).toHaveLength(1);
+    expect(run.bookings[0]!.start).toBe("2026-10-20T14:00:00.000Z");
+    expect(run.texts).toHaveLength(1);
+    expect(run.texts[0]!.body).toContain("BOOKED Tue Oct 20 10:00 AM ET");
+    expect(run.texts[0]!.body.length).toBeLessThanOrEqual(300);
+    expect(run.statuses.at(-1)).toContain('"duplicate":true');
+
+    const files = {
+      [`${DIR}/dry-run.md`]: render(run),
+      [`${DIR}/agent.json`]: `${JSON.stringify(retellAgentConfig("https://embeddedintent.com"), null, 2)}\n`,
+    };
+    for (const [path, content] of Object.entries(files)) {
+      if (process.env.RECEPTIONIST_WRITE_DOCS === "1") {
+        mkdirSync(DIR, { recursive: true });
+        writeFileSync(path, content);
+      } else {
+        expect(existsSync(path), `${path} missing: run with RECEPTIONIST_WRITE_DOCS=1`).toBe(true);
+        expect(readFileSync(path, "utf8"), `${path} is stale: run with RECEPTIONIST_WRITE_DOCS=1`).toBe(content);
+      }
+    }
+  });
+});
