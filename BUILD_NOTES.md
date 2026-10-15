@@ -1411,3 +1411,37 @@ the base for a client's build.
   `lib/textback/`. `npm test` is a step in `npm run verify`.
 - **Not done:** nothing is deployed, no Twilio account, number or env value
   exists. The routes answer 403 until `TEXTBACK_CLIENTS` is set.
+
+---
+
+## Text-back: durable store, dry run, "Try it live" flag (2026-10-15)
+
+Plan for our own line: `hq/docs/textback-own-number-plan.md` (gavin-data).
+
+- **The store is async now, and "check then mark" became one `claimText`.**
+  Redis is a network call, and two separate calls (was it texted? mark it) let
+  two retried webhooks both pass the check. `claimText` is `SET key NX PX
+  window` in Redis (atomic, and the key expires on its own) and the same
+  check-and-set in memory.
+- **Upstash over REST with `fetch`, no SDK.** Same reasoning as the Twilio
+  sender: one POST per command, no dependency, injectable for tests (the tests
+  run against a small fake that speaks the same protocol). `storeFromEnv`
+  accepts both the `KV_REST_API_*` names the Vercel Marketplace integration
+  sets and the `UPSTASH_REDIS_REST_*` names a direct database gives. Neither
+  set = the in-memory store, as before.
+- **Redis down = send anyway.** A failed command is logged (command name only;
+  keys contain phone numbers) and answered permissively: claim granted, not
+  opted out. A rare double text beats a lost lead, and Twilio itself refuses to
+  text anyone who replied STOP (21610), so opt-outs still hold.
+- **`TEXTBACK_DRY_RUN=1`** swaps the Twilio sender for a log line with the
+  last four digits of the number. Everything else (signature, dedupe, STOP,
+  owner forwarding) runs, so the live site can be tested before carrier
+  approval without texting anyone.
+- **The demo card is flagged by the number itself.** It renders on
+  `/services/missed-call-text-back` only when `TEXTBACK_DEMO_NUMBER` is a valid
+  +1 number; anything else renders nothing, so a typo can't publish a wrong
+  number and there is no separate on/off switch to forget. The page is
+  prerendered, so the value is read at build time. The card sits inside the
+  "What changes" section (not a section of its own) so the void/surface
+  alternation down the page doesn't change when it appears. Copy is in
+  `content/textbackDemo.ts`; the number is not copy.

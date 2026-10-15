@@ -7,7 +7,7 @@ import {
 } from "./config.ts";
 import { isValidTwilioSignature } from "./signature.ts";
 import { defaultStore, type TextbackStore } from "./store.ts";
-import { createSendSms, type SendSms } from "./twilio.ts";
+import { sendSmsFromEnv, type SendSms } from "./twilio.ts";
 
 export type TextbackKind = "voice" | "status" | "sms";
 
@@ -25,8 +25,8 @@ export interface TextbackDeps {
 export function defaultDeps(): TextbackDeps {
   return {
     clients: () => loadClients(),
-    sendSms: createSendSms(),
-    store: defaultStore,
+    sendSms: sendSmsFromEnv(),
+    store: defaultStore(),
     now: () => Date.now(),
     publicOrigin: process.env.TEXTBACK_PUBLIC_ORIGIN,
     dedupeWindowMs: 24 * 60 * 60 * 1000,
@@ -69,12 +69,11 @@ async function readParams(request: Request): Promise<Record<string, string> | nu
 
 async function textMissedCall(client: TextbackClient, caller: string, deps: TextbackDeps) {
   const { store, now } = deps;
-  if (store.isOptedOut(client.twilioNumber, caller)) return;
-  if (store.wasTextedRecently(client.twilioNumber, caller, now(), deps.dedupeWindowMs)) return;
-  // Mark before sending: a retried webhook must not double-text.
-  store.markTexted(client.twilioNumber, caller, now());
+  if (await store.isOptedOut(client.twilioNumber, caller)) return;
+  // Claim before sending: a retried webhook must not double-text.
+  if (!(await store.claimText(client.twilioNumber, caller, now(), deps.dedupeWindowMs))) return;
   const result = await deps.sendSms(client, caller, missedCallText(client));
-  if (!result.ok && result.code === 21610) store.setOptedOut(client.twilioNumber, caller, true);
+  if (!result.ok && result.code === 21610) await store.setOptedOut(client.twilioNumber, caller, true);
 }
 
 /**
@@ -124,11 +123,11 @@ export async function handleTextback(
   const word = (params.Body ?? "").trim().toUpperCase();
   if (STOP_WORDS.has(word)) {
     // Twilio's own opt-out handling sends the confirmation; we only record it.
-    deps.store.setOptedOut(client.twilioNumber, from, true);
+    await deps.store.setOptedOut(client.twilioNumber, from, true);
     return xml("");
   }
   if (START_WORDS.has(word)) {
-    deps.store.setOptedOut(client.twilioNumber, from, false);
+    await deps.store.setOptedOut(client.twilioNumber, from, false);
     return xml("");
   }
   if (HELP_WORDS.has(word)) {
