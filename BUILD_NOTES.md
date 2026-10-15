@@ -1363,3 +1363,21 @@ accessibility and best practices 100 everywhere, CLS 0.000 everywhere. LCP sits
 at 2.9–3.1s on most routes, the top of the bimodal band from the font notes, and
 this machine is slower than the WSL box that measured 98+. Worth a 3-run median
 (`VERIFY_LH_RUNS=3`) before reading anything into it.
+
+## Phase 7+ — Performance
+
+### `experimental.inlineCss`: tried, measured, rejected (2026-10-15)
+
+Lighthouse charges the CSS `<link>` ~380 ms of render-blocking time on every
+route, and Next's own docs pitch `experimental.inlineCss` as made for exactly
+this site (atomic Tailwind, first-time visitors). Measured on this machine
+(lab, mobile, Lighthouse 13.5.0 via `npm run verify`), it went the wrong way:
+
+- Home, 5-run median **with** inlineCss: perf 86, LCP 3.41 s, TBT 218 ms
+- Home, 3-run median **without**: perf 91, LCP 3.25 s, TBT ~100 ms
+
+The likely reason is in the flag's own caveats: during initial load the styles
+ship twice (a `<style>` tag for SSR plus the RSC payload), so the HTML grows by
+roughly two stylesheets and the parser pays for both on a throttled phone.
+Don't re-enable it without re-measuring; the next real LCP lever here is
+hydration cost (the ~72 KB page chunk), not the stylesheet.
