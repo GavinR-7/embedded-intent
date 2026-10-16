@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 import { audit } from "@/content/audit";
+import { chat } from "@/content/chat";
 import { site } from "@/content/site";
+import { takeChatHandoff } from "@/lib/chat/shared";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -77,9 +79,37 @@ export function AuditForm() {
    * are never punished by this check.
    */
   const stampRef = useRef<HTMLInputElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     if (stampRef.current) stampRef.current.value = String(Date.now());
+  }, []);
+
+  /*
+   * Arriving from the site chat's "Leave your number": fill in what the
+   * visitor already typed there. Read once and removed, written to the DOM
+   * like the stamp above so the inputs stay uncontrolled. Only empty fields
+   * are filled, so nothing typed here is ever overwritten.
+   */
+  useEffect(() => {
+    let handoff: ReturnType<typeof takeChatHandoff> = null;
+    try {
+      handoff = takeChatHandoff(window.sessionStorage);
+    } catch {
+      // Storage blocked: nothing to fill.
+    }
+    const form = formRef.current;
+    if (!handoff || !form) return;
+    const fill = (name: string, value: string) => {
+      const el = form.elements.namedItem(name);
+      if (value && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && !el.value) el.value = value;
+    };
+    fill("name", handoff.name);
+    fill("business", handoff.business);
+    fill("phone", handoff.phone);
+    if (handoff.questions.length) {
+      fill("message", [chat.handoffMessagePrefix, ...handoff.questions.map((q) => `- ${q}`)].join("\n"));
+    }
   }, []);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -147,7 +177,7 @@ export function AuditForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+    <form ref={formRef} onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       <div ref={errorSummaryRef} aria-live="polite">
         {status === "error" && (
           <div className="rounded-card border border-alert/50 bg-surface p-5">
